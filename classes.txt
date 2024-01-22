@@ -1,0 +1,29 @@
+parkovka
+treugolnik
+krug
+glavnaya doroga
+peshehodnyj perehod
+ostanovka i parkovka zapreshena
+viezd na dorogu s odnostorinnim dvizeniem >
+napravlenie dvizheniya po polosam
+ustupi dorogu
+red
+zhilaya zona
+tupik
+polosa dlya obshestvennogo transporta
+blue
+servises
+konec odnostoronnego dvizheniya
+tablichka |
+tablichka __
+ostanovka avtobusa tablichka
+doroga s odnostoronnim dvizheniem
+napravlenie glavnoj dorogi
+nachalo nas punkta bel s dom
+konec nas punkta bel s dom
+nachalo nas punkta bel 
+konec nas punkta bel 
+nachalo nas punkta sin 
+konec nas punkta sin 
+Sbros vseh ogranicheniu
+platnaua doroga
