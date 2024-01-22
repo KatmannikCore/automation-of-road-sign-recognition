@@ -76,6 +76,7 @@ class SignHandler:
         for item in items_for_remove:
             frame.remove(item)
         return  frame
+
     def __add_sign(self, sign):
         new_sign = Sign()
         new_sign.append_data(sign)
