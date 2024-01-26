@@ -26,7 +26,6 @@ from CoordinateCalculation import CoordinateCalculation
 from geojson import Point, Feature, FeatureCollection, dump, LineString
 class MainWindow(QMainWindow):
     def __init__(self):
-
         super().__init__()
         #config.PATH_TO_VIDEO = r"D:\\Urban\\vid\\test\\GOPR0064"
         #config.PATH_TO_GPX = r"D:\\Urban\\vid\\test\\07,07,2021.gpx"

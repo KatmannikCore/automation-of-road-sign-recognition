@@ -12,7 +12,7 @@ from Reader import Reader
 from Converter import Converter
 from SignHandler import SignHandler
 from Frame import Frame
-
+from Turn import Turn
 class View:
     def __init__(self):
         self.detector = Detector()
@@ -54,6 +54,7 @@ class View:
             self.files = files
         self.cap = cv2.VideoCapture(config.PATH_TO_VIDEO + files[config.INDEX_OF_VIDEO])
         self.sign_handler = SignHandler()
+        self.turn = Turn()
         for item in self.classifier:
             config.ClASSIFIER[item] = []
 
@@ -120,6 +121,10 @@ class View:
             cv2.putText(frame, label, (box[0], box[1] - 10),
                        cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
 
+        if self.turn.is_turn():
+            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
+            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
         if frame_for_checking:
-            self.sign_handler.check_the_data_to_add(frame_for_checking)
+            self.turn = self.sign_handler.check_the_data_to_add(frame_for_checking, self.turn)
+
         return rectangles

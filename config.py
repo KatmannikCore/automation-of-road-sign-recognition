@@ -9,6 +9,7 @@ INDEX_OF_SING = 0
 PATH_TO_GEOJSON = "save/myfile.geojson"
 PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
 COUNT_FRAMES = 0
+
 ClASSIFIER = {}
 ###63600
 FEATURES = []

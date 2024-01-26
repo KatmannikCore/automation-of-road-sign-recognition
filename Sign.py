@@ -19,6 +19,7 @@ class Sign:
         self.deletion_counter = 0
         self.is_left = False
         self.azimuth = None
+        self.number_turn = 0
     def get_azimuth(self):
         return self.azimuth
     def __str__(self):
@@ -54,7 +55,7 @@ class Sign:
         self.frame_numbers.append(sign.number_frame)
         self.result_CNN.append(sign.number_sign)
 
-    def concat_2_object(self, sign):
+    def concat_two_object(self, sign):
         for index in range(len(sign.h)):
             self.pixel_coordinates_x.append(sign.pixel_coordinates_x[index])
             self.pixel_coordinates_y.append(sign.pixel_coordinates_y[index])

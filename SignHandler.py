@@ -1,4 +1,5 @@
 import math
+import time
 
 import config
 from Reader import Reader
@@ -16,15 +17,18 @@ class SignHandler:
         self.signs = []
         self.result_signs = []
         self.was_there_turn = False
+        self.is_turn_left = False
 
-    def check_the_data_to_add(self, frame):
+        self.number_turn = 0
+    def check_the_data_to_add(self, frame, Turn):
+        #time.sleep(0.5)
         if frame:
             #Если знаков вообще нету
             if not self.signs:
                 for sign in frame:
                     self.__add_sign(sign)
             else:
-                if frame[0].number_frame == 63:
+                if frame[0].number_frame == 76:
                     ...
                 evidences = self.__check_pixel_coordinates(frame)
                 evidences = self.__remove_collisions(evidences)
@@ -32,26 +36,41 @@ class SignHandler:
                 frame = self.__clean_frame(frame, frame_sign_to_add, evidences)
                 self.__add_new_unknown_element(frame,frame_sign_to_add)
             current_number_frame = frame[0].number_frame
+            for index in  range(len(self.signs)):
+                if self.signs[index].frame_numbers[-1] == current_number_frame:
+                    self.signs[index].number_turn = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
             self.__remove_incorrect_signs(current_number_frame)
-            if not self.__is_turn():
-                if self.was_there_turn:
-                    self.was_there_turn = False
-                    ...
+
+            Turn.signs = self.signs
+            if not Turn.is_turn():
+                if Turn.was_there_turn:
+                    Turn.arr_to_dict()
+                    Turn.was_there_turn = False
+                    if Turn.is_turn_left:
+                        ...
+                    else:
+                        ...
                 self.__move_final_signs(current_number_frame)
+            else:
+                ...
+            return Turn
+
+
+
+
 
     def __is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
 
         delta = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1) - self.Reader.get_azimuth(config.INDEX_OF_GPS)
-
-
         is_turn = abs(delta) > 10
         if is_turn:
-            print("В повороте")
+            print("В повороте", self.Reader.get_current_coordinate(config.INDEX_OF_GPS))
             if delta < 0:
-                print("Лево")
+                self.is_turn_left = True
+                #print("Лево")
             else:
-                print("Право")
+                self.is_turn_left = False
             self.was_there_turn = True
             return True
         else:
@@ -100,10 +119,8 @@ class SignHandler:
                     self.signs[index].append_data(frame[evidences[index][0]])
                     result.append(frame[evidences[index][0]])
         return result
-
     def __distance_on_earth(self,lat1, lon1, lat2, lon2):
         return math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
-
     def int_within_bounds(self, head, sub):
         head = int(round(head,0))
         sub = int(round(sub ,0))
@@ -126,7 +143,7 @@ class SignHandler:
                         distance = self.__distance_on_earth(sign.car_coordinates_x[-1], sign.car_coordinates_y[-1], item.car_coordinates_x[-1], item.car_coordinates_y[-1])
                         if  distance < 20:
                             #print("Соеденены знаки:", self.result_signs[index], "и", sign)
-                            self.result_signs[index].concat_2_object(sign)
+                            self.result_signs[index].concat_two_object(sign)
                             return distance > 20
         return True
     def __move_final_signs(self,current_number_frame):
@@ -195,10 +212,13 @@ class SignHandler:
                     delta_y = item.y - sign.pixel_coordinates_y[-1]
                     #Теорема пифагора
                     vec = round((delta_x**2 +  delta_y**2) ** 0.5, 0)
-                    if vec > 800:
-                        vec = SignHandler.__number_for_incorrect_evidences
+
                     if sign.get_the_most_often(sign.result_yolo) == item.name_sign:
                         vec -= 50
+                    else:
+                        vec += 50
+                    if vec > 800:
+                        vec = SignHandler.__number_for_incorrect_evidences
                     vectors.append(vec)
                 else:
                     vectors.append(SignHandler.__number_for_incorrect_evidences)
