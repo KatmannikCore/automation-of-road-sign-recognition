@@ -19,7 +19,12 @@ class Sign:
         self.deletion_counter = 0
         self.is_left = False
         self.azimuth = None
+
+
+        self.distance = 0
         self.number_turn = 0
+        self.number_turn_start = 0
+        self.number = 0
     def get_azimuth(self):
         return self.azimuth
     def __str__(self):
@@ -34,16 +39,16 @@ class Sign:
                f"frame: {self.frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"
 
-    def calculate_azimuth(self):
-        lat1, lon1 = radians(self.car_coordinates_x[-1]), radians(self.car_coordinates_y[-1])
-        lat2, lon2 = radians(self.car_coordinates_x[-2]), radians(self.car_coordinates_y[-2])
+   #def calculate_azimuth(self):
+   #    lat1, lon1 = radians(self.car_coordinates_x[-1]), radians(self.car_coordinates_y[-1])
+   #    lat2, lon2 = radians(self.car_coordinates_x[-2]), radians(self.car_coordinates_y[-2])
 
-        d_lon = lon2 - lon1
+   #    d_lon = lon2 - lon1
 
-        y = math.sin(d_lon) * math.cos(lat2)
-        x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(d_lon)
-        bearing = atan2(y, x)
-        self.azimuth = (degrees(bearing) + 360) % 360
+   #    y = math.sin(d_lon) * math.cos(lat2)
+   #    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(d_lon)
+   #    bearing = atan2(y, x)
+   #    self.azimuth = (degrees(bearing) + 360) % 360
 
     def append_data(self, sign):
         self.pixel_coordinates_x.append(sign.x)

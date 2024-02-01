@@ -5,6 +5,8 @@ import config
 from Reader import Reader
 from Sign import Sign
 from itertools import groupby
+
+from geopy.distance import geodesic
 class SignHandler:
     __number_for_incorrect_evidences = 9999.99
     __screen_width = 1920
@@ -44,7 +46,7 @@ class SignHandler:
             Turn.signs = self.signs
             if not Turn.is_turn():
                 if Turn.was_there_turn:
-                    Turn.arr_to_dict()
+                    Turn.handle_turn()
                     Turn.was_there_turn = False
                     if Turn.is_turn_left:
                         ...
@@ -52,12 +54,10 @@ class SignHandler:
                         ...
                 self.__move_final_signs(current_number_frame)
             else:
+                Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
+
                 ...
             return Turn
-
-
-
-
 
     def __is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
@@ -98,6 +98,7 @@ class SignHandler:
 
     def __add_sign(self, sign):
         new_sign = Sign()
+        new_sign.number_turn_start = self.Reader.get_azimuth(config.INDEX_OF_GPS)
         new_sign.append_data(sign)
         self.signs.append(new_sign)
    
@@ -119,8 +120,10 @@ class SignHandler:
                     self.signs[index].append_data(frame[evidences[index][0]])
                     result.append(frame[evidences[index][0]])
         return result
-    def __distance_on_earth(self,lat1, lon1, lat2, lon2):
-        return math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
+    def __calculation_distance(self,lat1, lon1, lat2, lon2):
+        #geodesic((lat2 - lat1), (lon2 - lon1)).meters
+        print(geodesic((lat1, lon1), (lat2 , lon2)).meters)
+        return geodesic((lat1, lon1), (lat2 , lon2)).meters#math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
     def int_within_bounds(self, head, sub):
         head = int(round(head,0))
         sub = int(round(sub ,0))
@@ -129,18 +132,14 @@ class SignHandler:
         print(head, sub, lower, upper)
         return head in range(lower, upper)
     def check_presence_of_nearby_sign(self, sign):
-        #sign.calculate_azimuth()
         for index in range(len(self.result_signs)):
             item = self.result_signs[index]
-
             average_item = sum(item.pixel_coordinates_x) / len(item.pixel_coordinates_x)
             average_sign = sum(sign.pixel_coordinates_x) / len(sign.pixel_coordinates_x)
             if average_sign != average_item:
                 if item.is_left == sign.is_left:
                     if item.get_the_most_often(item.result_CNN) == sign.get_the_most_often(sign.result_CNN):
-                        #item.calculate_azimuth()
-                        #if not self.int_within_bounds(sign.get_azimuth(), item.get_azimuth()):
-                        distance = self.__distance_on_earth(sign.car_coordinates_x[-1], sign.car_coordinates_y[-1], item.car_coordinates_x[-1], item.car_coordinates_y[-1])
+                        distance = self.__calculation_distance(sign.car_coordinates_x[-1], sign.car_coordinates_y[-1], item.car_coordinates_x[-1], item.car_coordinates_y[-1])
                         if  distance < 20:
                             #print("Соеденены знаки:", self.result_signs[index], "и", sign)
                             self.result_signs[index].concat_two_object(sign)

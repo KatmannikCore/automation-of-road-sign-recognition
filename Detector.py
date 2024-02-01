@@ -60,7 +60,6 @@ class Detector:
         result = []
         for (class_id, score, box) in zip(classes, scores, boxes):
             minImg = self.__get_minImg(box, frame)
-            cv2.imshow('minImg', minImg)
             img = cv2.resize(minImg, dsize=(28, 28))
             img = rgb2gray(img)
             res = self.__find_sign(img, class_id, minImg)

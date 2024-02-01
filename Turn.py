@@ -1,5 +1,7 @@
 import config
 from Reader import Reader
+
+from geopy.distance import geodesic
 class Turn:
     def __init__(self):
         self.signs = []
@@ -9,7 +11,8 @@ class Turn:
         self.azimuths = []
         self.was_there_turn = False
         self.is_turn_left = True
-
+        self.turn_distance = 0
+        self.frames = []
     def append_azimuths(self, item):
         if not self.azimuths:
             self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
@@ -24,6 +27,20 @@ class Turn:
         else:
             if item != self.coordinates[-1]:
                 self.coordinates.append(item)
+
+    def calculate_turn_distance(self):
+        result_distance = 0
+        for i in range(len(self.coordinates) - 1):
+            result_distance += geodesic(self.coordinates[i], self.coordinates[i + 1]).meters
+        return result_distance
+
+    def calculate_sign_distance_from_start_to_sign(self, sign):
+        try:
+            number = self.frames.index(sign.frame_numbers[-1])
+            #result = (self.turn_distance / (len(self.frames)- 1)) * number
+            return number
+        except Exception as e:
+            return 0
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
 
@@ -42,12 +59,18 @@ class Turn:
             return False
 
     def handle_turn(self):
-        for item in self.signs:
-            number = self.handle_sing(item)
-
+        for index in range(len(self.signs)):
+            self.signs[index].number = self.handle_sing(self.signs[index])
+            try:
+                self.signs[index].distance  = self.frames.index(self.signs[index].frame_numbers[-1])
+            except Exception as e:
+                self.signs[index].distance  = 0
     def handle_sing(self, sign):
+
         if self.calculation_different_x(sign) > 1500:
             return 7
+        if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
+            return 8
         else:
             max_size = self.calculation_max_size(sign)
             min_size = self.calculation_min_size(sign)

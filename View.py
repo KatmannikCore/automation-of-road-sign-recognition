@@ -103,7 +103,7 @@ class View:
             detections.append([x, y, w, h])
 
             x1, y1 = self.Reader.get_current_coordinate(config.INDEX_OF_GPS)
-            x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
+            #x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
 
             object_frame = Frame()
             object_frame.x = x

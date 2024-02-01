@@ -175,7 +175,7 @@ class MainWindow(QMainWindow):
         count_gpx = self.Reader.get_count_dot()
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
-            print(config.FRAME_STEP, end='\r')
+            #print(config.FRAME_STEP, end='\r')
             try:
                 ret, frame = self.view.cap.read()
                 if ret == True:
