@@ -242,10 +242,10 @@ class MainWindow(QMainWindow):
     def final_data_processing(self):
         count = 0
         features = []
-        path = r"D:\Urban\concat.geojson"
+        path = r"D:\Urban\change.geojson"
 
         grouped_objects = {}
-        for obj in  self.view.sign_handler.result_sings:
+        for obj in  self.view.sign_handler.result_signs:
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             if key in grouped_objects:
                 grouped_objects[key].append(obj)

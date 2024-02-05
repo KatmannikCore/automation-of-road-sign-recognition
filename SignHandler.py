@@ -6,6 +6,7 @@ from Reader import Reader
 from Sign import Sign
 from itertools import groupby
 
+from Converter import Converter
 from geopy.distance import geodesic
 class SignHandler:
     __number_for_incorrect_evidences = 9999.99
@@ -20,7 +21,7 @@ class SignHandler:
         self.result_signs = []
         self.was_there_turn = False
         self.is_turn_left = False
-
+        self.Converter = Converter()
         self.number_turn = 0
     def check_the_data_to_add(self, frame, Turn):
         #time.sleep(0.5)
@@ -42,22 +43,20 @@ class SignHandler:
                 if self.signs[index].frame_numbers[-1] == current_number_frame:
                     self.signs[index].number_turn = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
             self.__remove_incorrect_signs(current_number_frame)
-
-            Turn.signs = self.signs
-            if not Turn.is_turn():
-                if Turn.was_there_turn:
-                    Turn.handle_turn()
-                    Turn.was_there_turn = False
-                    if Turn.is_turn_left:
-                        ...
-                    else:
-                        ...
-                self.__move_final_signs(current_number_frame)
-            else:
-                Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
-
-                ...
-            return Turn
+            self.__move_final_signs(current_number_frame)
+            #Turn.signs = self.signs
+            #if not Turn.is_turn():
+            #    if Turn.was_there_turn:
+            #        Turn.handle_turn()
+            #        Turn.was_there_turn = False
+            #        if Turn.is_turn_left:
+            #            ...
+            #        else:
+            #            ...
+            #    self.__move_final_signs(current_number_frame)
+            #else:
+            #    Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
+            #return Turn
 
     def __is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
@@ -122,6 +121,9 @@ class SignHandler:
         return result
     def __calculation_distance(self,lat1, lon1, lat2, lon2):
         #geodesic((lat2 - lat1), (lon2 - lon1)).meters
+        lat1, lon1 = self.Converter.coordinateConverter(lat1, lon1, "epsg:32635", "epsg:4326")
+        lat2, lon2 = self.Converter.coordinateConverter(lat2, lon2, "epsg:32635", "epsg:4326")
+
         print(geodesic((lat1, lon1), (lat2 , lon2)).meters)
         return geodesic((lat1, lon1), (lat2 , lon2)).meters#math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
     def int_within_bounds(self, head, sub):

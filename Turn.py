@@ -13,6 +13,7 @@ class Turn:
         self.is_turn_left = True
         self.turn_distance = 0
         self.frames = []
+        self.segment_length = 0
     def append_azimuths(self, item):
         if not self.azimuths:
             self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
@@ -28,19 +29,19 @@ class Turn:
             if item != self.coordinates[-1]:
                 self.coordinates.append(item)
 
-    def calculate_turn_distance(self):
-        result_distance = 0
-        for i in range(len(self.coordinates) - 1):
-            result_distance += geodesic(self.coordinates[i], self.coordinates[i + 1]).meters
-        return result_distance
+    #def calculate_turn_distance(self):
+    #    result_distance = 0
+    #    for i in range(len(self.coordinates) - 1):
+    #        result_distance += geodesic(self.coordinates[i], self.coordinates[i + 1]).meters
+    #    return result_distance
 
-    def calculate_sign_distance_from_start_to_sign(self, sign):
-        try:
-            number = self.frames.index(sign.frame_numbers[-1])
-            #result = (self.turn_distance / (len(self.frames)- 1)) * number
-            return number
-        except Exception as e:
-            return 0
+   #def calculate_sign_distance_from_start_to_sign(self, sign):
+   #    try:
+   #        number = self.frames.index(sign.frame_numbers[-1])
+   #        #result = (self.turn_distance / (len(self.frames)- 1)) * number
+   #        return number
+   #    except Exception as e:
+   #        return 0
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
 
@@ -59,26 +60,38 @@ class Turn:
             return False
 
     def handle_turn(self):
+        self.segment_length = len(self.frames) / 3
         for index in range(len(self.signs)):
             self.signs[index].number = self.handle_sing(self.signs[index])
-            try:
-                self.signs[index].distance  = self.frames.index(self.signs[index].frame_numbers[-1])
-            except Exception as e:
-                self.signs[index].distance  = 0
-    def handle_sing(self, sign):
 
-        if self.calculation_different_x(sign) > 1500:
-            return 7
+    def handle_sing(self, sign):
+        max_size = self.calculation_max_size(sign)
+        min_size = self.calculation_min_size(sign)
+        coefficient_frames = self.calculation_coefficient_frames(sign, min_size, max_size)
+
+        #if self.calculation_different_x(sign) > 1500:
+        #    return 7
+        #else:
+        if sign.frame_numbers[-1] in self.frames:
+            sign.distance  = self.frames.index(sign.frame_numbers[-1])
+
+        else:
+            sign.distance  = -1
+        if (sign.distance / self.segment_length) >= 2:
+            if coefficient_frames < 150:
+                return 5
+            else:
+                return 8
+
         if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
             return 8
+
         else:
-            max_size = self.calculation_max_size(sign)
-            min_size = self.calculation_min_size(sign)
+
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
             if coefficient_size < 3:
                 return 5.1
             else:
-                coefficient_frames = self.calculation_coefficient_frames(sign, min_size, max_size)
                 if coefficient_frames > 250:
                     return 3
                 elif coefficient_frames < 150:
