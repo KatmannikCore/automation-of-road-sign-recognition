@@ -176,48 +176,49 @@ class MainWindow(QMainWindow):
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             #print(config.FRAME_STEP, end='\r')
-            try:
-                ret, frame = self.view.cap.read()
-                if ret == True:
-                    config.FRAME_STEP = round(self.k * speed + self.b, 0)
-                    #print(config.INDEX_OF_FRAME)
-                    if self.count_empty > 5 :
-                        config.FRAME_STEP += config.FRAME_STEP
-                    self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
+           # try:
+            ret, frame = self.view.cap.read()
+            if ret == True:
+                config.FRAME_STEP = round(self.k * speed + self.b, 0)
+                #print(config.INDEX_OF_FRAME)
+                if self.count_empty > 5 :
+                    config.FRAME_STEP += config.FRAME_STEP
+                self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
 
-                    config.INDEX_OF_FRAME += config.FRAME_STEP
-                    config.INDEX_OF_All_FRAME += config.FRAME_STEP
+                config.INDEX_OF_FRAME += config.FRAME_STEP
+                config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
-                    self.label.setPixmap(self.convert_cv_qt(frame))
-                    count_frame_for_gps =config.INDEX_OF_All_FRAME-  (config.INDEX_OF_GPS *60)
-                    if self.counter_progress < config.INDEX_OF_All_FRAME:
-                        #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
-                        #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
-                        #print("percent_frames: ",round(percent_frames,2))
-                        #print("percent_gpx: ",round(percent_gpx,2))
-                        self.counter_progress += 5000
+                self.label.setPixmap(self.convert_cv_qt(frame))
+                count_frame_for_gps =config.INDEX_OF_All_FRAME-  (config.INDEX_OF_GPS *60)
+                if self.counter_progress < config.INDEX_OF_All_FRAME:
+                    #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
+                    #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
+                    #print("percent_frames: ",round(percent_frames,2))
+                    #print("percent_gpx: ",round(percent_gpx,2))
+                    self.counter_progress += 5000
 
-                    if count_frame_for_gps > 60 :
-                        config.INDEX_OF_GPS += 1
-                    if self.view.switch_video():
-                        break
+                if count_frame_for_gps > 60 :
+                    config.INDEX_OF_GPS += 1
+                if self.view.switch_video():
+                    break
 
-                    if round(speed,0) == 0:
-                        continue
-                    config.COUNT_PROCESSED_FRAMES += 1
-                    retangles = self.view.draw_rectangles(frame)
-                    self.label.setPixmap(self.convert_cv_qt(frame))
-                    if not retangles:
-                        self.count_empty += 1
-                    else:
-                        self.count_empty = 0
+                if round(speed,0) == 0:
+                    continue
+                config.COUNT_PROCESSED_FRAMES += 1
+                retangles = self.view.draw_rectangles(frame)
+                self.label.setPixmap(self.convert_cv_qt(frame))
+                if not retangles:
+                    self.count_empty += 1
+                else:
+                    self.count_empty = 0
 
-                    cv2.waitKey(1)
                 cv2.waitKey(1)
-                while not self.is_play:
-                    pass
-            except Exception as e:
-                print("error", e)
+            cv2.waitKey(1)
+            while not self.is_play:
+                pass
+            #except Exception as e:
+
+                #print("error", e)
 
     def convert_cv_qt(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -242,7 +243,7 @@ class MainWindow(QMainWindow):
     def final_data_processing(self):
         count = 0
         features = []
-        path = r"D:\Urban\change.geojson"
+        path = r"D:\Urban\text.geojson"
 
         grouped_objects = {}
         for obj in  self.view.sign_handler.result_signs:
@@ -261,7 +262,10 @@ class MainWindow(QMainWindow):
                     x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
                     coefficient += 1
                     line = LineString([(y1, x1), (y2, x2)])
-                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}"})
+                    text_on_sign = item.get_the_most_often(item.text_on_sign)
+                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}",
+                                                                 "MVALUE": f"{text_on_sign}",
+                                                                 "SEM250": f"{text_on_sign}"})
                     features.append(feature)
         feature_collection = FeatureCollection(features)
 

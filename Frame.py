@@ -9,3 +9,4 @@ class Frame:
         self.longitude = 0
         self.number_frame = 0
         self.number_sign = 0
+        self.text_on_sign = ''

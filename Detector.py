@@ -4,7 +4,10 @@ import cv2
 from tensorflow.keras.models import load_model
 from skimage.color import rgb2gray
 import numpy as np
-import cv2
+import re
+import easyocr
+reader = easyocr.Reader(['ru'])
+
 from Reader import Reader
 model = load_model('./test_c171_r10_e80.h5')
 model_krug = load_model('./models_200_10/krug.h5')
@@ -60,15 +63,24 @@ class Detector:
         result = []
         for (class_id, score, box) in zip(classes, scores, boxes):
             minImg = self.__get_minImg(box, frame)
+
             img = cv2.resize(minImg, dsize=(28, 28))
             img = rgb2gray(img)
             res = self.__find_sign(img, class_id, minImg)
+            text_on_sign = ''
+            if res == '3.24':
+                text_on_sign = reader.readtext(minImg)
+                if len(text_on_sign) != 0:
+                    #оставить только цифры
+                    text_on_sign = re.sub(r'\D', '', text_on_sign[0][1])
+            if text_on_sign == []:
+                text_on_sign = ''
             color = self.COLORS[int(class_id) % len(self.COLORS)]
             label = "%s : %f" % (self.class_name[class_id], score)
             #if max(res[0]).numpy() > 0.4:
             #label += f"\n-----{np.argmax(res)}----- {max(res[0]).numpy()}"
-            item = [box, color, label, self.class_name[class_id]]
-            item.append(res)
+            item = [box, color, label, self.class_name[class_id], res, text_on_sign]
+            #item.append(res)
             result.append(item)
         return result
 

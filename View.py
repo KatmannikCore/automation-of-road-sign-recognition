@@ -98,7 +98,7 @@ class View:
 
         detections = []
         frame_for_checking = []
-        for box, color, label, name_sign, number_sign in rectangles:
+        for box, color, label, name_sign, number_sign, text_on_sign in rectangles:
             x, y, w, h = box
             detections.append([x, y, w, h])
 
@@ -115,7 +115,9 @@ class View:
             object_frame.longitude = y1
             object_frame.number_frame = config.COUNT_PROCESSED_FRAMES
             object_frame.number_sign = number_sign
-            frame_for_checking.append(object_frame)#([x, y, w, h, name_sign,  x1, y1, config.COUNT_PROCESSED_FRAMES, number_sign])
+            object_frame.text_on_sign = text_on_sign
+
+            frame_for_checking.append(object_frame)
 
             cv2.rectangle(frame, box, color, 1)
             cv2.putText(frame, label, (box[0], box[1] - 10),
