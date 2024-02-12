@@ -39,7 +39,16 @@ type_signs_yolo = {
     "konec odnostoronnego dvizheniya" : "5.6",
     "ostanovka avtobusa tablichka" : "5.16",
     "doroga s odnostoronnim dvizheniem" : "5.5",
-    "napravlenie glavnoj dorogi" : "7.13.1", 
+    "napravlenie glavnoj dorogi" : "7.13.1",
+    "Sbros vseh ogranicheniu" : "3.31",
+    "viezd na dorogu s odnostorinnim dvizeniem >": "5.7.2",
+
+    "nachalo nas punkta bel s dom" : "5.22.2",
+    "konec nas punkta bel s dom" : "5.23.2",
+    "nachalo nas punkta bel" : "5.22.1",
+    "konec nas punkta bel" : "5.23.1",
+    "nachalo nas punkta sin" : "5.23.3",
+    "konec nas punkta sin" : "5.25.3"
 }
 class Detector:
     def __init__(self):
@@ -67,14 +76,9 @@ class Detector:
             img = cv2.resize(minImg, dsize=(28, 28))
             img = rgb2gray(img)
             res = self.__find_sign(img, class_id, minImg)
-            text_on_sign = ''
-            if res == '3.24':
-                text_on_sign = reader.readtext(minImg)
-                if len(text_on_sign) != 0:
-                    #оставить только цифры
-                    text_on_sign = re.sub(r'\D', '', text_on_sign[0][1])
-            if text_on_sign == []:
-                text_on_sign = ''
+
+            text_on_sign = self.text_handler(minImg, res, class_id)
+
             color = self.COLORS[int(class_id) % len(self.COLORS)]
             label = "%s : %f" % (self.class_name[class_id], score)
             #if max(res[0]).numpy() > 0.4:
@@ -83,7 +87,22 @@ class Detector:
             #item.append(res)
             result.append(item)
         return result
+    def text_handler(self,minImg, res, class_id):
+        type_signs_with_text = ['3.24', '3.11', '3.12', '3.13', '3.14', '3.15', '8.1.4', '8.1.3', '8.2.1', '8.2.2', '8.2.5', '8.2.6', '7.1.2', '7.7.1', '8.1.1', '7.9.1', '', '', '']
+        name_signs_with_text = [ "nachalo nas punkta bel s dom", "konec nas punkta bel s dom", "nachalo nas punkta bel", "konec nas punkta bel", "nachalo nas punkta sin", "konec nas punkta sin"]
+        result = ''
+        if res in type_signs_with_text or self.class_name[class_id] in name_signs_with_text:
+            result = self.read_text(minImg)
+        if result == []:
+            result = ''
+        return result
 
+    def read_text(self, minImg):
+        result = reader.readtext(minImg)
+        if len(result) != 0:
+            # оставить только цифры
+            result = re.sub(r'\D', '', result[0][1])
+        return result
     def __get_minImg(self, box, frame):
         x, y, w, h = box
         x1 = x + w
