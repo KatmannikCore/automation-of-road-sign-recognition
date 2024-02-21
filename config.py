@@ -5,6 +5,7 @@ COUNT_PROCESSED_FRAMES = 0
 INDEX_OF_All_FRAME = 37800 + 63600 * 2 - 60
 INDEX_OF_GPS = 640 + 1060 * 2 - 1
 INDEX_OF_VIDEO = 2
+
 INDEX_OF_SING = 0
 PATH_TO_GEOJSON = "save/myfile.geojson"
 PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"

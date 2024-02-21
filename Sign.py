@@ -20,8 +20,11 @@ class Sign:
         self.is_left = False
         self.azimuth = None
 
+
         self.is_turn = False
         self.is_turn_left = False
+        self.text_on_sign = []
+
         self.distance = 0
         self.number_turn = 0
         self.number_turn_start = 0
@@ -60,6 +63,8 @@ class Sign:
         self.set_car_coordinate(sign.latitude, sign.longitude)
         self.frame_numbers.append(sign.number_frame)
         self.result_CNN.append(sign.number_sign)
+        self.text_on_sign.append(sign.text_on_sign)
+
 
     def concat_two_object(self, sign):
         for index in range(len(sign.h)):
@@ -70,6 +75,7 @@ class Sign:
             self.result_yolo.append(sign.result_yolo[index])
             self.frame_numbers.append(sign.frame_numbers[index])
             self.result_CNN.append(sign.result_CNN[index])
+            self.text_on_sign.append(sign.text_on_sign[index])
         self.__append_car_coordinates(sign)
     def __append_car_coordinates(self, sign):
         for index in range(len(sign.car_coordinates_x)):

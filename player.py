@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
     def final_data_processing(self):
         count = 0
         features = []
-        path = r"D:\Urban\change.geojson"
+        path = r"D:\Urban\text.geojson"
 
         grouped_objects = {}
         for obj in  self.view.sign_handler.result_signs:
@@ -255,13 +255,15 @@ class MainWindow(QMainWindow):
         for key in grouped_objects:
             items = grouped_objects[key]
             coefficient = 2
-            print('\n')
             for item in items:
                 if len(item.car_coordinates_y) != 1:
                     x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
                     coefficient += 1
                     line = LineString([(y1, x1), (y2, x2)])
-                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}"})
+                    text_on_sign = item.get_the_most_often(item.text_on_sign)
+                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}",
+                                                                 "MVALUE": f"{text_on_sign}",
+                                                                 "SEM250": f"{text_on_sign}"})
                     features.append(feature)
         feature_collection = FeatureCollection(features)
 
