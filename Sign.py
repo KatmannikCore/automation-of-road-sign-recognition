@@ -20,7 +20,8 @@ class Sign:
         self.is_left = False
         self.azimuth = None
 
-
+        self.is_turn = False
+        self.is_turn_left = False
         self.distance = 0
         self.number_turn = 0
         self.number_turn_start = 0

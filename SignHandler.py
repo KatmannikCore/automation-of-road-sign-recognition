@@ -5,7 +5,7 @@ import config
 from Reader import Reader
 from Sign import Sign
 from itertools import groupby
-
+import copy
 from Converter import Converter
 from geopy.distance import geodesic
 class SignHandler:
@@ -19,6 +19,7 @@ class SignHandler:
         self.Reader = Reader(config.PATH_TO_GPX )
         self.signs = []
         self.result_signs = []
+        self.turns = []
         self.was_there_turn = False
         self.is_turn_left = False
         self.Converter = Converter()
@@ -31,8 +32,19 @@ class SignHandler:
                 for sign in frame:
                     self.__add_sign(sign)
             else:
-                if frame[0].number_frame == 76:
-                    ...
+                current_number_frame = frame[0].number_frame
+                if not Turn.is_turn():
+                    if Turn.was_there_turn:
+                        self.__remove_incorrect_signs(current_number_frame)
+                        Turn.signs = self.signs
+                        Turn.handle_turn()
+                        Turn.set_direction_signs()
+                        self.signs = []
+                        self.turns.append(copy.copy(Turn))
+                        Turn.clean()
+                        Turn.was_there_turn = False
+
+
                 evidences = self.__check_pixel_coordinates(frame)
                 evidences = self.__remove_collisions(evidences)
                 frame_sign_to_add = self.__combine_frame_data_with_signs(evidences,frame)
@@ -43,20 +55,14 @@ class SignHandler:
                 if self.signs[index].frame_numbers[-1] == current_number_frame:
                     self.signs[index].number_turn = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
             self.__remove_incorrect_signs(current_number_frame)
-            self.__move_final_signs(current_number_frame)
-            #Turn.signs = self.signs
-            #if not Turn.is_turn():
-            #    if Turn.was_there_turn:
-            #        Turn.handle_turn()
-            #        Turn.was_there_turn = False
-            #        if Turn.is_turn_left:
-            #            ...
-            #        else:
-            #            ...
-            #    self.__move_final_signs(current_number_frame)
-            #else:
-            #    Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
-            #return Turn
+            #self.__move_final_signs(current_number_frame)
+
+            if not Turn.is_turn():
+                self.__move_final_signs(current_number_frame)
+            else:
+                Turn.signs = self.signs
+                Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
+            return Turn
 
     def __is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра

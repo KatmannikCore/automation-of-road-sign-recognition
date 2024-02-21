@@ -14,6 +14,17 @@ class Turn:
         self.turn_distance = 0
         self.frames = []
         self.segment_length = 0
+    def clean(self):
+        self.signs = []
+        self.signs_dict = {}
+        self.Reader = Reader(config.PATH_TO_GPX)
+        self.coordinates = []
+        self.azimuths = []
+        self.was_there_turn = False
+        self.is_turn_left = True
+        self.turn_distance = 0
+        self.frames = []
+        self.segment_length = 0
     def append_azimuths(self, item):
         if not self.azimuths:
             self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
@@ -21,7 +32,10 @@ class Turn:
         else:
             if item != self.azimuths[-1]:
                 self.azimuths.append(item)
-
+    def set_direction_signs(self):
+        for index in range(len(self.signs)):
+            self.signs[index].is_turn = True
+            self.signs[index].is_turn_left = self.is_turn_left
     def append_coordinates(self, item):
         if not self.coordinates:
             self.coordinates.append(item)
@@ -74,7 +88,6 @@ class Turn:
         #else:
         if sign.frame_numbers[-1] in self.frames:
             sign.distance  = self.frames.index(sign.frame_numbers[-1])
-
         else:
             sign.distance  = -1
         if (sign.distance / self.segment_length) >= 2:

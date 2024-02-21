@@ -121,9 +121,9 @@ class View:
             cv2.putText(frame, label, (box[0], box[1] - 10),
                        cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
 
-        #if self.turn.is_turn():
-        #    self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
-        #    self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
+        if self.turn.is_turn():
+            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
+            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
         if frame_for_checking:
             self.turn = self.sign_handler.check_the_data_to_add(frame_for_checking, self.turn)
 
