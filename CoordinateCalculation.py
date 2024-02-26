@@ -2,7 +2,7 @@ import math
 from Reader import Reader
 from Converter import Converter
 import config as config
-
+from pyproj import Geod
 class CoordinateCalculation:
     __one_radian = 57.2958
     def __init__(self):
@@ -14,13 +14,19 @@ class CoordinateCalculation:
 
 
         #delta_x, delta_y = CoordinateCalculation.__normalize_distance(delta_x, delta_y)
-        x1, y1, x2, y2 = CoordinateCalculation.__calculate_sign_coordinates(sign, coefficient)
-
+        if sign.number == 0:
+            x1, y1, x2, y2 = self.__calculate_sign_coordinates(sign, coefficient)
+        else:
+            if sign.is_turn_left:
+                self.__calculate_coordinates_sign_left_turn()
+            else:
+                self.__calculate_coordinates_sign_right_turn()
+            ...
         x1, y1 = self.converter.coordinateConverter(x1, y1,  "epsg:32635", "epsg:4326")
         x2, y2 = self.converter.coordinateConverter(x2, y2, "epsg:32635", "epsg:4326")
         return x1, y1, x2, y2
 
-    @staticmethod
+
     def __calculate_sign_coordinates(self,sign, coefficient):
         if sign.is_turn:
             if sign.is_turn_left:
@@ -28,15 +34,15 @@ class CoordinateCalculation:
             else:
                 return self.__calculate_coordinates_sign_right_turn()
         else:
-            return self.calculate_coordinates_sign_moving_straight(sign,coefficient)
+            return self.__calculate_coordinates_sign_moving_straight(sign,coefficient)
 
-    @staticmethod
-    def __get_current_coordinates_for_moving_straight(sign):
+
+    def __get_current_coordinates_for_moving_straight(self,sign):
         return sign.car_coordinates_x[-1], sign.car_coordinates_y[-1]
-    @staticmethod
-    def __get_prev_coordinates_for_moving_straight(sign):
+
+    def __get_prev_coordinates_for_moving_straight(self,sign):
         return sign.car_coordinates_x[-2], sign.car_coordinates_y[-2]
-    @staticmethod
+
     def __calculate_coordinates_sign_moving_straight(self, sign,coefficient):
         x_current, y_current = self.__get_current_coordinates_for_moving_straight(sign)
         #TODO Ошибка если у занака только одна пара координат
@@ -46,7 +52,7 @@ class CoordinateCalculation:
         x1, y1, x2, y2 = self.__calculate_result_line_for_moving_straight(sign, coefficient, x_current, y_current,x_prev, y_prev)
         return x1, y1, x2, y2
 
-    @staticmethod
+
     def __calculate_result_line_for_moving_straight(self, sign, coefficient, x_current, y_current,x_prev, y_prev):
         delta_x = x_current - x_prev
         delta_y = y_current - y_prev
@@ -65,30 +71,38 @@ class CoordinateCalculation:
             x2 = x_current + delta_y * (coefficient + 1)
             y2 = y_current - delta_x * (coefficient + 1)
         return x1, y1, x2, y2
-    @staticmethod
-    def __calculate_coordinates_sign_left_turn(self):
+    def calculate_prew_point(self, lat, lon, az):
+        # Дистанция между точками в метрах
+        distance = 5
+        # Радиус Земли в метрах
+        earth_radius = 6371000
+        # Координаты первой точки
+        lat1 = math.radians(lat)  # широта в радианах
+        lon1 = math.radians(lon)  # долгота в радианах
+        # Азимут в градусах
+        azimuth = math.radians(az)
+        # Вычисление координат второй точки
+        lat_result = math.asin(math.sin(lat1) * math.cos(distance / earth_radius) + math.cos(lat1) * math.sin(
+            distance / earth_radius) * math.cos(azimuth))
+        lon_result = lon1 + math.atan2(math.sin(azimuth) * math.sin(distance / earth_radius) * math.cos(lat1),
+                                 math.cos(distance / earth_radius) - math.sin(lat1) * math.sin(lat_result))
+        # Переводим координаты обратно в градусы
+        lat_result = math.degrees(lat_result)
+        lon_result = math.degrees(lon_result)
+        print(lat_result, lon_result)
+        return lat_result, lon_result
+
+    def __calculate_coordinates_sign_left_turn(self, sign,coefficient):
+        start_point = 0
+        end_point = 1
+
         pass
 
     @staticmethod
     def __calculate_coordinates_sign_right_turn(self):
         pass
 
-    @staticmethod
-    def __calculate_center_turn(self, start_point, end_point):
-        # Находим координаты центра квадрата
-        center_x = (start_point[0] + end_point[0]) / 2
-        center_y = (start_point[1] + end_point[1]) / 2
 
-        # Вычисляем разницу по x и y между центром и одной из вершин
-        delta_x = start_point[0] - center_x
-        delta_y = start_point[1] - center_y
-
-        # Находим координаты  вершины квадрата
-        x1, y1 = (center_x - delta_y, center_y + delta_x)
-        x2, y2 = end_point
-        midpoint_x = (x1 + x2) / 2
-        midpoint_y = (y1 + y2) / 2
-        return midpoint_x, midpoint_y
 
     def distance_on_earth(self, lat1, lon1, lat2, lon2):
         R = 6371  # Радиус Земли в километрах
@@ -99,3 +113,8 @@ class CoordinateCalculation:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
         return round(distance * 1000, 3)
+
+#point = [53.94484, 27.472816667, 292.0]
+#point = [53.944831667, 27.472708333, 208.800003]
+#point = [53.944891181489105, 27.47275026718458, 292.0]
+#point = [53.944864738583284, 27.472715784359313, 208.800003]

@@ -34,16 +34,14 @@ class SignHandler:
             else:
                 current_number_frame = frame[0].number_frame
                 if not Turn.is_turn():
-                    if Turn.was_there_turn:
+                    if Turn.was_there_turn and len(Turn.coordinates) > 2:
                         self.__remove_incorrect_signs(current_number_frame)
                         Turn.signs = self.signs
                         Turn.handle_turn()
                         Turn.set_direction_signs()
                         self.signs = []
                         self.turns.append(copy.copy(Turn))
-                        Turn.clean()
-                        Turn.was_there_turn = False
-
+                    Turn.clean()
 
                 evidences = self.__check_pixel_coordinates(frame)
                 evidences = self.__remove_collisions(evidences)
@@ -91,7 +89,9 @@ class SignHandler:
             for item in not_added_signs:
                 if self.signs[index].get_the_most_often(self.signs[index].result_yolo) == item.name_sign:
                     delta_x = item.x - self.signs[index].pixel_coordinates_x[-1]
+
                     delta_y = item.y - self.signs[index].pixel_coordinates_y[-1]
+
                     # Теорема пифагора
                     vec = round((delta_x ** 2 + delta_y ** 2) ** 0.5, 0)
                     if abs(vec - (evidences[index][1])) <= 30 and vec != 0:

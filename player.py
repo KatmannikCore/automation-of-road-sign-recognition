@@ -265,6 +265,12 @@ class MainWindow(QMainWindow):
                                                                  "MVALUE": f"{text_on_sign}",
                                                                  "SEM250": f"{text_on_sign}"})
                     features.append(feature)
+
+        for turn in self.view.sign_handler.turns:
+            for lat, lon, az in  turn.calculate_current_points():
+                self.calculation.calculate_prew_point(lat, lon, az)
+
+            #prev_points =  self.calculation.calculate_current_point(current_point)
         feature_collection = FeatureCollection(features)
 
         with open(path, 'w', encoding='cp1251') as f:

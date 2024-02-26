@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 from geopy.point import Point
 from pyproj import Geod
 
@@ -35,7 +35,7 @@ geod = Geod(ellps='WGS84')
 #print("Новые координаты:")
 #print("Широта:", new_lat)
 #print("Долгота:", new_lon)
-=======
+
 from PIL import Image
 import pytesseract
 
@@ -64,4 +64,4 @@ result = reader.readtext(image_path)
 # Вывод результатов
 for (bbox, text, prob) in result:
     print(f'Текст: {text} (Вероятность: {prob:.2f})')
->>>>>>> 48e6b004521951915f98beb351a8a4b4d0873ffa
+

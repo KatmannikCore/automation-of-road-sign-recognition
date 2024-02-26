@@ -1,6 +1,9 @@
 import config
 from Reader import Reader
 
+from pygeoguz.simplegeo import *
+from pygeoguz.objects import *
+from Converter import Converter
 from geopy.distance import geodesic
 class Turn:
     def __init__(self):
@@ -14,10 +17,10 @@ class Turn:
         self.turn_distance = 0
         self.frames = []
         self.segment_length = 0
+        self.Converter = Converter()
     def clean(self):
         self.signs = []
         self.signs_dict = {}
-        self.Reader = Reader(config.PATH_TO_GPX)
         self.coordinates = []
         self.azimuths = []
         self.was_there_turn = False
@@ -25,6 +28,44 @@ class Turn:
         self.turn_distance = 0
         self.frames = []
         self.segment_length = 0
+
+    def calculate_azimuth_change(self, old_azimuth, new_azimuth):
+        azimuth_change = new_azimuth - old_azimuth
+        if azimuth_change > 180:
+            azimuth_change = azimuth_change - 360
+        elif azimuth_change < -180:
+            azimuth_change = azimuth_change + 360
+        return azimuth_change
+
+    def calculate_current_points(self):
+        lat1, lon1 = self.coordinates[0]  #start_point
+        lat2, lon2 = self.coordinates[-1] #end_point
+        start_point = [lat1, lon1, self.azimuths[0] +90]
+        end_point   = [lat2, lon2, self.azimuths[-1]+90 ]
+        x1, y1= self.Converter.coordinateConverter(lat1, lon1, "epsg:4326", "epsg:32635")
+        x2, y2= self.Converter.coordinateConverter(lat2, lon2, "epsg:4326", "epsg:32635")
+        p1 = Point2D(y1, x1)
+        p2 = Point2D(y2, x2)
+        line = ogz(point_a=p1, point_b=p2)
+        length = line.length
+        direction = line.direction
+        azimuth_offset = 60
+        if self.calculate_azimuth_change(self.azimuths[-1], self.azimuths[0]) < 0:
+            azimuth_offset = -60
+
+        revers_start_point = self.calculate_revers_dot(azimuth_offset, length, p1, direction)
+        revers_end_point = self.calculate_revers_dot(azimuth_offset / 2, length, p1, direction)
+
+        revers_start_point.append(self.azimuths[0])
+        revers_end_point.append(self.azimuths[-1])
+        return start_point, end_point, revers_start_point, revers_end_point
+    def calculate_revers_dot(self, azimuth_offset, length, p1, direction):
+        azimuth = direction + azimuth_offset
+        line = Line2D(length=length, direction=azimuth)
+        p2 = pgz(point=p1, line=line)
+        x, y = self.Converter.coordinateConverter(p2.y, p2.x, "epsg:32635", "epsg:4326")
+        return [x, y]
+
     def append_azimuths(self, item):
         if not self.azimuths:
             self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
@@ -95,12 +136,9 @@ class Turn:
                 return 5
             else:
                 return 8
-
         if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
             return 8
-
         else:
-
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
             if coefficient_size < 3:
                 return 5.1
