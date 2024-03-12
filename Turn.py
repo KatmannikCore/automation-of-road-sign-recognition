@@ -18,6 +18,7 @@ class Turn:
         self.frames = []
         self.segment_length = 0
         self.Converter = Converter()
+        self.last_index_of_gps = 0
     def clean(self):
         self.signs = []
         self.signs_dict = {}
@@ -28,6 +29,7 @@ class Turn:
         self.turn_distance = 0
         self.frames = []
         self.segment_length = 0
+        self.last_index_of_gps = 0
 
     def calculate_azimuth_change(self, old_azimuth, new_azimuth):
         azimuth_change = new_azimuth - old_azimuth
@@ -40,8 +42,8 @@ class Turn:
     def calculate_current_points(self):
         lat1, lon1 = self.coordinates[0]  #start_point
         lat2, lon2 = self.coordinates[-1] #end_point
-        start_point = [lat1, lon1, self.azimuths[0] +90]
-        end_point   = [lat2, lon2, self.azimuths[-1]+90 ]
+        start_point = [lat1, lon1, self.azimuths[0] ]
+        end_point   = [lat2, lon2, self.azimuths[-1]  ]
         x1, y1= self.Converter.coordinateConverter(lat1, lon1, "epsg:4326", "epsg:32635")
         x2, y2= self.Converter.coordinateConverter(lat2, lon2, "epsg:4326", "epsg:32635")
         p1 = Point2D(y1, x1)
@@ -79,6 +81,7 @@ class Turn:
             self.signs[index].is_turn_left = self.is_turn_left
     def append_coordinates(self, item):
         if not self.coordinates:
+            self.coordinates.append(self.Reader.get_current_coordinate(config.INDEX_OF_GPS))
             self.coordinates.append(item)
         else:
             if item != self.coordinates[-1]:
@@ -105,19 +108,20 @@ class Turn:
         if is_turn:
             if delta < 0:
                 self.is_turn_left = True
-                # print("Лево")
+
             else:
                 self.is_turn_left = False
             self.was_there_turn = True
             return True
         else:
-            print("Прямо", end='\r')
+
             return False
 
     def handle_turn(self):
         self.segment_length = len(self.frames) / 3
         for index in range(len(self.signs)):
-            self.signs[index].number = self.handle_sing(self.signs[index])
+            if len(self.signs[index].frame_numbers) > 3:
+                self.signs[index].number = self.handle_sing(self.signs[index])
 
     def handle_sing(self, sign):
         max_size = self.calculation_max_size(sign)
@@ -140,15 +144,15 @@ class Turn:
             return 8
         else:
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
-            if coefficient_size < 3:
-                return 5.1
+            if coefficient_size < 5:
+                return 5
             else:
                 if coefficient_frames > 250:
-                    return 3
+                    return 2
                 elif coefficient_frames < 150:
                     return 5
                 else:
-                    return "out of categories"
+                    return 2#"out of categories"
     def calculation_different_x(self, sing):
         return sing.pixel_coordinates_x[-1] - sing.pixel_coordinates_x[0]
     def calculation_max_size(self, sing):

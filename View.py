@@ -85,7 +85,6 @@ class View:
         if self.cap.get(cv2.CAP_PROP_FRAME_COUNT) <= config.INDEX_OF_FRAME:
             if len(self.files) - 1 >= config.INDEX_OF_VIDEO + 1:
                 config.INDEX_OF_VIDEO += 1
-                print(config.PATH_TO_VIDEO + self.files[config.INDEX_OF_VIDEO])
                 self.cap = cv2.VideoCapture(config.PATH_TO_VIDEO + self.files[config.INDEX_OF_VIDEO])
                 config.INDEX_OF_FRAME = 0
                 return False
@@ -99,33 +98,35 @@ class View:
         detections = []
         frame_for_checking = []
         for box, color, label, name_sign, number_sign, text_on_sign in rectangles:
-            x, y, w, h = box
-            detections.append([x, y, w, h])
+            if name_sign != 'peshehodnyj perehod':
+                x, y, w, h = box
+                detections.append([x, y, w, h])
 
-            x1, y1 = self.Reader.get_current_coordinate(config.INDEX_OF_GPS)
-            x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
+                x1, y1 = self.Reader.get_current_coordinate(config.INDEX_OF_GPS)
+                x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
 
-            object_frame = Frame()
-            object_frame.x = x
-            object_frame.y = y
-            object_frame.w = w
-            object_frame.h = h
-            object_frame.name_sign = name_sign
-            object_frame.latitude = x1
-            object_frame.longitude = y1
-            object_frame.number_frame = config.COUNT_PROCESSED_FRAMES
-            object_frame.number_sign = number_sign
-            object_frame.text_on_sign = text_on_sign
+                object_frame = Frame()
+                object_frame.x = x
+                object_frame.y = y
+                object_frame.w = w
+                object_frame.h = h
+                object_frame.name_sign = name_sign
+                object_frame.latitude = x1
+                object_frame.longitude = y1
+                object_frame.number_frame = config.COUNT_PROCESSED_FRAMES
+                object_frame.number_sign = number_sign
+                object_frame.text_on_sign = text_on_sign
 
-            frame_for_checking.append(object_frame)
+                frame_for_checking.append(object_frame)
 
-            cv2.rectangle(frame, box, color, 1)
-            cv2.putText(frame, label, (box[0], box[1] - 10),
-                       cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
-
-        if self.turn.is_turn():
-            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
-            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
+                cv2.rectangle(frame, box, color, 1)
+                cv2.putText(frame, label, (box[0], box[1] - 10),
+                           cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
+        if rectangles:
+            if self.turn.is_turn():
+                self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
+                self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
+                self.turn.last_index_of_gps = config.INDEX_OF_GPS
         if frame_for_checking:
             self.turn = self.sign_handler.check_the_data_to_add(frame_for_checking, self.turn)
 

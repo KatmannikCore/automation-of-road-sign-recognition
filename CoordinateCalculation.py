@@ -11,8 +11,6 @@ class CoordinateCalculation:
 
     def get_line(self, sign, coefficient):
         feature_collection = []
-
-
         #delta_x, delta_y = CoordinateCalculation.__normalize_distance(delta_x, delta_y)
         if sign.number == 0:
             x1, y1, x2, y2 = self.__calculate_sign_coordinates(sign, coefficient)
@@ -45,15 +43,16 @@ class CoordinateCalculation:
 
     def __calculate_coordinates_sign_moving_straight(self, sign,coefficient):
         x_current, y_current = self.__get_current_coordinates_for_moving_straight(sign)
-        #TODO Ошибка если у занака только одна пара координат
-        #if len(sign.car_coordinates_x) == 1:
-        #    return x_current, y_current
-        x_prev, y_prev = self.__get_prev_coordinates_for_moving_straight(sign)
-        x1, y1, x2, y2 = self.__calculate_result_line_for_moving_straight(sign, coefficient, x_current, y_current,x_prev, y_prev)
+        x_prev, y_prev  = self.converter.coordinateConverter(x_current, y_current, "epsg:32635", "epsg:4326")
+        az = (sign.number_turn + 180 ) % 360
+        x_prev, y_prev = self.calculate_prew_point(x_prev, y_prev, az)
+        x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
+        x1, y1, x2, y2 = self.calculate_result_line_for_moving_straight(sign, coefficient, x_current, y_current,x_prev, y_prev)
         return x1, y1, x2, y2
 
 
-    def __calculate_result_line_for_moving_straight(self, sign, coefficient, x_current, y_current,x_prev, y_prev):
+    @staticmethod
+    def calculate_result_line_for_moving_straight(sign, coefficient, x_current, y_current, x_prev, y_prev):
         delta_x = x_current - x_prev
         delta_y = y_current - y_prev
         if sign.is_left:
@@ -89,19 +88,8 @@ class CoordinateCalculation:
         # Переводим координаты обратно в градусы
         lat_result = math.degrees(lat_result)
         lon_result = math.degrees(lon_result)
-        print(lat_result, lon_result)
+
         return lat_result, lon_result
-
-    def __calculate_coordinates_sign_left_turn(self, sign,coefficient):
-        start_point = 0
-        end_point = 1
-
-        pass
-
-    @staticmethod
-    def __calculate_coordinates_sign_right_turn(self):
-        pass
-
 
 
     def distance_on_earth(self, lat1, lon1, lat2, lon2):
