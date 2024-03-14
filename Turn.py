@@ -135,24 +135,28 @@ class Turn:
                 sign.distance  = self.frames.index(sign.frame_numbers[-1])
             else:
                 sign.distance  = -1
-            if (sign.distance / self.segment_length) >= 2:
+            if (sign.distance / (self.segment_length)) >= 2:
                 if coefficient_frames < 150:
                     return 5
                 else:
                     return 8
+            #TODO dangerous construction
             if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
-                return 8
+                if sign.is_turn_left:
+                    return 8
+                elif coefficient_frames > 250:
+                    return 7
+
+            coefficient_size = self.calculation_coefficient_size(min_size, max_size)
+            if coefficient_size < 5:
+                return 5
             else:
-                coefficient_size = self.calculation_coefficient_size(min_size, max_size)
-                if coefficient_size < 5:
+                if coefficient_frames > 250:
+                    return 2
+                elif coefficient_frames < 150:
                     return 5
                 else:
-                    if coefficient_frames > 250:
-                        return 2
-                    elif coefficient_frames < 150:
-                        return 5
-                    else:
-                        return 2#"out of categories"
+                    return 2#"out of categories"
     def calculation_different_x(self, sing):
         return sing.pixel_coordinates_x[-1] - sing.pixel_coordinates_x[0]
     def calculation_max_size(self, sing):
