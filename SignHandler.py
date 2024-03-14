@@ -33,30 +33,34 @@ class SignHandler:
                     self.__add_sign(sign)
             else:
                 current_number_frame = frame[0].number_frame
-                if not Turn.is_turn():
-                    if Turn.was_there_turn and len(Turn.coordinates) >= 2:
-                        self.__remove_incorrect_signs(current_number_frame)
-                        Turn.signs = []
-                        new_sign = []
-                        for item in self.signs:
-                            if len(item.result_CNN) > 7 or (SignHandler.__difference_frames_for_move_sign + item.frame_numbers[-1]) < Turn.frames[-1]:
-                                Turn.signs.append(item)
-                            else:
-                                new_sign.append(item)
-                        self.signs = new_sign
-                        Turn.handle_turn()
-                        Turn.set_direction_signs()
-                        Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+2))
-                        Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+2))
+                if Turn.was_there_turn and not Turn.is_turn():
+                    if  Turn.signs:#Is there a turn sign?
+                        if len(Turn.coordinates) >= 2:
 
-                        Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+3))
-                        Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+3))
+                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+2))
+                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+2))
 
-                        Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+4))
-                        Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+4))
-                        #TODO должен быть перенос коротких знаков
-                        self.signs = []
-                        self.turns.append(copy.copy(Turn))
+                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+3))
+                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+3))
+
+                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+4))
+                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+4))
+
+                            self.__remove_incorrect_signs(current_number_frame)
+                            Turn.signs = []
+                            new_sign = []
+                            for item in self.signs:
+                                if len(item.result_CNN) >= 7 and item.frame_numbers[-1] < Turn.frames[-1]:
+                                    Turn.signs.append(item)
+                                else:
+                                    item.replace_car_coordinates(Turn)
+                                    new_sign.append(item)
+                            self.signs = new_sign
+                            Turn.handle_turn()
+                            Turn.set_direction_signs()
+
+                            #TODO должен быть перенос коротких знаков
+                            self.turns.append(copy.copy(Turn))
                     Turn.clean()
 
                 evidences = self.__check_pixel_coordinates(frame)
@@ -164,29 +168,34 @@ class SignHandler:
     def __move_final_signs(self,current_number_frame):
         signs_for_delete = []
         for index in range(len(self.signs)):
-            different_frame = SignHandler.__difference_frames_for_move_sign + current_number_frame
-            frame_for_sign = self.signs[index].frame_numbers[-1] + 20 #+ 10
-            #Проверка на коректность добовления добовляемого знака через:
-            # 1)Изменение высоны расположения 2) Длинна объеиа 3) Разнать текущего номера кадра и последнего зафиксированного для знака
-            if( self.signs[index].is_sign_on_edge_of_screen() or len(self.signs[index].result_yolo) > 7) and frame_for_sign < different_frame: #or len(self.signs[index].result_yolo) > 7:
-                #if frame_for_sign < different_frame:
-                    if len(self.signs[index].result_yolo) >= SignHandler.__frame_gap_between_sign:
-                        difference_in_screen_width_x_sign = SignHandler.__screen_width - self.signs[index].w[-1]
-                        difference_in_screen_width_and_last_character_position = SignHandler.__screen_width - \
-                                                                                 self.signs[index].pixel_coordinates_x[-1]
-                        # Проверка 2х знаков на принадлежность к одной и тойже части экрана
-                        if  len(self.signs[index].result_yolo) == 1:
-                            self.signs[index].is_left = (difference_in_screen_width_x_sign <= SignHandler.__half_screen_width) == (
-                                difference_in_screen_width_and_last_character_position <= SignHandler.__half_screen_width)
-                        else:
-                            self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - self.signs[index].pixel_coordinates_x[-1] > 0
-                        # TODO Проверка есть ли рядор знак
-                        if self.check_presence_of_nearby_sign(self.signs[index]):
-                            self.result_signs.append(self.signs[index])
+            if self.turns and self.signs[index].frame_numbers[-1] == self.turns[-1].frames[-1]:
+                signs_for_delete.append(self.signs[index])
+                self.signs[index].number = 8
+                self.turns[-1].signs.append(self.signs[index])
+            else:
+                different_frame = SignHandler.__difference_frames_for_move_sign + current_number_frame
+                frame_for_sign = self.signs[index].frame_numbers[-1] + 20 #+ 10
+                #Проверка на коректность добовления добовляемого знака через:
+                # 1)Изменение высоны расположения 2) Длинна объеиа 3) Разнать текущего номера кадра и последнего зафиксированного для знака
+                if( self.signs[index].is_sign_on_edge_of_screen() or len(self.signs[index].result_yolo) > 7) and frame_for_sign < different_frame: #or len(self.signs[index].result_yolo) > 7:
+                    #if frame_for_sign < different_frame:
+                        if len(self.signs[index].result_yolo) >= SignHandler.__frame_gap_between_sign:
+                            difference_in_screen_width_x_sign = SignHandler.__screen_width - self.signs[index].w[-1]
+                            difference_in_screen_width_and_last_character_position = SignHandler.__screen_width - \
+                                                                                     self.signs[index].pixel_coordinates_x[-1]
+                            # Проверка 2х знаков на принадлежность к одной и тойже части экрана
+                            if  len(self.signs[index].result_yolo) == 1:
+                                self.signs[index].is_left = (difference_in_screen_width_x_sign <= SignHandler.__half_screen_width) == (
+                                    difference_in_screen_width_and_last_character_position <= SignHandler.__half_screen_width)
+                            else:
+                                self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - self.signs[index].pixel_coordinates_x[-1] > 0
+                            # TODO Проверка есть ли рядор знак
+                            if self.check_presence_of_nearby_sign(self.signs[index]):
+                                self.result_signs.append(self.signs[index])
 
-                        #self.signs[index].car_coordinates_x = [el for el, _ in groupby(self.signs[index].car_coordinates_x)]
-                        #self.signs[index].car_coordinates_y = [el for el, _ in groupby(self.signs[index].car_coordinates_y)]
-                        signs_for_delete.append(self.signs[index])
+                            #self.signs[index].car_coordinates_x = [el for el, _ in groupby(self.signs[index].car_coordinates_x)]
+                            #self.signs[index].car_coordinates_y = [el for el, _ in groupby(self.signs[index].car_coordinates_y)]
+                            signs_for_delete.append(self.signs[index])
         self.__signs_delete(signs_for_delete)
   
     def __remove_repeating_coordinates(self, sign):

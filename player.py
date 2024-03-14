@@ -180,8 +180,6 @@ class MainWindow(QMainWindow):
             try:
                 ret, frame = self.view.cap.read()
                 if ret == True:
-                    if config.INDEX_OF_FRAME == 22540.0:
-                        pass
                     config.FRAME_STEP = round(self.k * speed + self.b, 0)
                     #print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :

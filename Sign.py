@@ -43,17 +43,13 @@ class Sign:
                f"frame: {self.frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"
 
-   #def calculate_azimuth(self):
-   #    lat1, lon1 = radians(self.car_coordinates_x[-1]), radians(self.car_coordinates_y[-1])
-   #    lat2, lon2 = radians(self.car_coordinates_x[-2]), radians(self.car_coordinates_y[-2])
-
-   #    d_lon = lon2 - lon1
-
-   #    y = math.sin(d_lon) * math.cos(lat2)
-   #    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(d_lon)
-   #    bearing = atan2(y, x)
-   #    self.azimuth = (degrees(bearing) + 360) % 360
-
+    def replace_car_coordinates(self, turn):
+        self.car_coordinates_x = []
+        self.car_coordinates_y = []
+        for x, y in turn.coordinates:
+            x, y = self.converter.coordinateConverter(x, y,"epsg:4326", "epsg:32635")
+            self.car_coordinates_x.append(x)
+            self.car_coordinates_y.append(y)
     def append_data(self, sign):
         self.pixel_coordinates_x.append(sign.x)
         self.pixel_coordinates_y.append(sign.y)
