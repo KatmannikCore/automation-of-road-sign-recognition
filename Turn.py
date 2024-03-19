@@ -158,7 +158,7 @@ class Turn:
                 else:
                     return 2#"out of categories"
     def calculation_different_x(self, sing):
-        return sing.pixel_coordinates_x[-1] - sing.pixel_coordinates_x[0]
+        return sing.pixel_coordinates_x[-2] - min(sing.pixel_coordinates_x)
     def calculation_max_size(self, sing):
         max_index = sing.w.index(max(sing.w))
         return sing.w[max_index] * sing.h[max_index]

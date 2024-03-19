@@ -78,6 +78,9 @@ class SignHandler:
             if not Turn.is_turn():
                 self.__move_final_signs(current_number_frame)
             else:
+                if len(Turn.frames) <= 1:
+                    self.__move_final_signs(current_number_frame)
+
                 Turn.signs = self.signs
                 Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
             return Turn
