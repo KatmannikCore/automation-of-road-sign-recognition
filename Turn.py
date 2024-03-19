@@ -135,17 +135,24 @@ class Turn:
                 sign.distance  = self.frames.index(sign.frame_numbers[-1])
             else:
                 sign.distance  = -1
+                return 2
             if (sign.distance / (self.segment_length)) >= 2:
+                if not self.is_turn_left:
+                    if  sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] < 0:
+                        return  7
                 if coefficient_frames < 150:
                     return 5
                 else:
                     return 8
             #TODO dangerous construction
+
             if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
                 if sign.is_turn_left:
                     return 8
                 elif coefficient_frames > 250:
                     return 7
+            elif not self.is_turn_left:
+                return 7
 
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
             if coefficient_size < 5:
