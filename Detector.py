@@ -17,15 +17,25 @@ model_treugolnik = load_model('./models_200_10/treugolnik.h5')
 model_servises = load_model('./models_200_10/servises.h5')
 model_tabl_I = load_model('./models_200_10/tabl l.h5')
 model_tabl__ = load_model('./models_200_10/tab.h5')
+model_danger = load_model('./models_200_10/treugolnik/danger.h5')
+model_pimicanie = load_model('./models_200_10/treugolnik/pimicanie.h5')
+model_suzenie = load_model('./models_200_10/treugolnik/suzenie.h5')
+
 name_signs_cnn = {
     "blue": ["4.1.4", "4.3","4.2.2", "4.1.6", "4.1.3", "4.1.1", "4.1.4", "0000010420", "4.2.1","4.1.2"],
     "krug": ["3.2", "3.24", "3.18.2", "3.13", "3.5", "3.4", "3.20.1",  "empty", "3.18.1", "3.9"],
     "red": ["2.5","3.1"],
-    "treugolnik": ["1.21", "1.29", "1.23", "empty", "1.17", "1.29","1.32", "1.20",  "1.5", "1.1"],
+    "treugolnik": ["1.21", "1.23", "1.29", "1.8", "1.17", "suzenie","1.32", "1.5", "pimicanie", "danger"],
     "servises": ["5.16", "7.1", "7.3", "7.5", "7.4", "7.11", "7.18", "7.2", "5.14.2", "7.15", "7.7", "6.12.2", "7.16"],
     "tablichka __" : ["8.12", "8.3.1",  "8.8", "8.10", "8.2.6", "8.2.1", "8.3.2", "8.5.7", "8.1.3", "7.14.1", "8.1.1", "8.15" ],
     "tablichka |": ["8.2.4", "8.2.3", "8.2.2"]
 }
+name_sub_signs_cnn = {
+    "suzenie": ['1.11.2', '1.11.1', '1.12.2'],
+    "pimicanie": ['2.3.3', '2.3.2', '2.3.1'],
+    "danger":['1.20.2','1.20.3','1.20.2']
+}
+
 type_signs_yolo = {
     "parkovka": "6.4",
     "glavnaya doroga": "2.1",
@@ -81,10 +91,8 @@ class Detector:
 
             color = self.COLORS[int(class_id) % len(self.COLORS)]
             label = "%s : %f" % (self.class_name[class_id], score)
-            #if max(res[0]).numpy() > 0.4:
-            #label += f"\n-----{np.argmax(res)}----- {max(res[0]).numpy()}"
+
             item = [box, color, label, self.class_name[class_id], res, text_on_sign]
-            #item.append(res)
             result.append(item)
         return result
     def text_handler(self,minImg, res, class_id):
@@ -111,27 +119,27 @@ class Detector:
         return minImg
     def __find_sign(self,img, class_id,  minImg):
         self.counter +=1
-        result_type = ""
         if self.class_name[class_id] == "blue":
             number_result = np.argmax(model_blue.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["blue"][number_result]
-            #res = model_blue.predict_step(np.expand_dims(img, axis=0))
-            #cv2.imwrite(rf'test2\blue\{str(self.counter)}_{max(res[0]).numpy()}_{np.argmax(res)}%.jpg', minImg)
         elif self.class_name[class_id] == "treugolnik":
             number_result = np.argmax(model_treugolnik.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["treugolnik"][number_result]
-            #res = model_treugolnik.predict_step(np.expand_dims(img, axis=0))
-            #cv2.imwrite(rf'test2\treugolnik\{str(self.counter)}_{max(res[0]).numpy()}_{np.argmax(res)}%.jpg', minImg)
+            if result_type == 'danger':
+                number_result = np.argmax(model_danger.predict_step(np.expand_dims(img, axis=0)))
+                result_type = name_sub_signs_cnn['danger'][number_result]
+            elif result_type == 'pimicanie':
+                number_result = np.argmax(model_pimicanie.predict_step(np.expand_dims(img, axis=0)))
+                result_type = name_sub_signs_cnn['pimicanie'][number_result]
+            elif result_type == 'suzenie':
+                number_result = np.argmax(model_suzenie.predict_step(np.expand_dims(img, axis=0)))
+                result_type = name_sub_signs_cnn['suzenie'][number_result]
         elif self.class_name[class_id] == "krug":
             number_result = np.argmax(model_krug.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["krug"][number_result]
-            #res = model_krug.predict_step(np.expand_dims(img, axis=0))
-            #cv2.imwrite(rf'test2\krug\{str(self.counter)}_{max(res[0]).numpy()}_{np.argmax(res)}%.jpg', minImg)
         elif self.class_name[class_id] == "red":
             number_result = np.argmax(model_red.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["red"][number_result]
-            #res = model_red.predict_step(np.expand_dims(img, axis=0))
-            #cv2.imwrite(rf'test2\red\{str(self.counter)}_{max(res[0]).numpy()}_{np.argmax(res)}%.jpg', minImg)
         elif self.class_name[class_id] == "servises":
             number_result = np.argmax(model_servises.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["servises"][number_result]
@@ -145,6 +153,4 @@ class Detector:
             result_type = type_signs_yolo[self.class_name[class_id] ]
         if result_type == "":
             result_type = "empty"
-            #res = model.predict_step(np.expand_dims(img, axis=0))
-            #cv2.imwrite(rf'test2\{str(self.counter)}_{max(res[0]).numpy()}_{np.argmax(res)}%.jpg', minImg)
         return result_type

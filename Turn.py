@@ -87,19 +87,6 @@ class Turn:
             if item != self.coordinates[-1]:
                 self.coordinates.append(item)
 
-    #def calculate_turn_distance(self):
-    #    result_distance = 0
-    #    for i in range(len(self.coordinates) - 1):
-    #        result_distance += geodesic(self.coordinates[i], self.coordinates[i + 1]).meters
-    #    return result_distance
-
-   #def calculate_sign_distance_from_start_to_sign(self, sign):
-   #    try:
-   #        number = self.frames.index(sign.frame_numbers[-1])
-   #        #result = (self.turn_distance / (len(self.frames)- 1)) * number
-   #        return number
-   #    except Exception as e:
-   #        return 0
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
 

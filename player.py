@@ -168,18 +168,23 @@ class MainWindow(QMainWindow):
             dump(json, f)
         QMessageBox.about(self, "Сообщение", "Сохранено"  )
 
-
+    import time
     def treatment(self):
 
         self.view = View()
         self.view.count_frames()
         count_gpx = self.Reader.get_count_dot()
+        start_time = time.time()
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             #print(config.FRAME_STEP, end='\r')
             try:
                 ret, frame = self.view.cap.read()
                 if ret == True:
+                    if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        print('Elapsed time: ', elapsed_time/60)
                     config.FRAME_STEP = round(self.k * speed + self.b, 0)
                     #print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :
