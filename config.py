@@ -1,12 +1,15 @@
-PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0083"
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+PATH_TO_VIDEO = r"D:\Urban\vid\test\Testing\partizan\100GOPRO"
 FRAME_STEP = 5
-INDEX_OF_FRAME = 0#1980 - 60
+INDEX_OF_FRAME =0# 24000 #37800 - 60
 COUNT_PROCESSED_FRAMES = 0
-INDEX_OF_All_FRAME = 0#1980 + 63600 * 1 - 60
-INDEX_OF_GPS = 0 #33 + 1060 * 1 - 1
-INDEX_OF_VIDEO = 0 #1
+INDEX_OF_All_FRAME = 0#24000 + 63600 * 2#37800 + 63600 * 2 - 60
+INDEX_OF_GPS = 0#400 + 1060  * 2#630 + 1060 * 2 - 1
+INDEX_OF_VIDEO = 0#1 * 2#2
+
 INDEX_OF_SING = 0
-PATH_TO_GEOJSON = "save/myfile.geojson"
+PATH_TO_GEOJSON =  r"D:\Urban\vid\test\Testing\14,03,24-Миколаевщина\Миколаевщина.geojson"
 PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
 COUNT_FRAMES = 0
 

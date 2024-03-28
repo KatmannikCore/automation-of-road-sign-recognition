@@ -1,7 +1,7 @@
 import json
 import random
 import time
-
+from Converter import Converter
 from PyQt5.QtCore import QUrl
 import cv2
 from PyQt5.QtGui import QFont
@@ -27,6 +27,7 @@ from geojson import Point, Feature, FeatureCollection, dump, LineString
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.converter = Converter()
         #config.PATH_TO_VIDEO = r"D:\\Urban\\vid\\test\\GOPR0064"
         #config.PATH_TO_GPX = r"D:\\Urban\\vid\\test\\07,07,2021.gpx"
         #self.Reader = Reader(config.PATH_TO_GPX )
@@ -167,18 +168,23 @@ class MainWindow(QMainWindow):
             dump(json, f)
         QMessageBox.about(self, "Сообщение", "Сохранено"  )
 
-
+    import time
     def treatment(self):
 
         self.view = View()
         self.view.count_frames()
         count_gpx = self.Reader.get_count_dot()
+        start_time = time.time()
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             #print(config.FRAME_STEP, end='\r')
             try:
                 ret, frame = self.view.cap.read()
                 if ret == True:
+                    if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        print('Elapsed time: ', elapsed_time/60)
                     config.FRAME_STEP = round(self.k * speed + self.b, 0)
                     #print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :
@@ -218,6 +224,7 @@ class MainWindow(QMainWindow):
                     pass
             except Exception as e:
                 print("error", e)
+                print('frame', config.INDEX_OF_FRAME)
 
     def convert_cv_qt(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -239,34 +246,69 @@ class MainWindow(QMainWindow):
         config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = dirlist
-    def final_data_processing(self):
-        count = 0
-        features = []
-        path = r"D:\Urban\text.geojson"
-
+    def handling_signs(self):
         grouped_objects = {}
-        for obj in  self.view.sign_handler.result_signs:
+        features = []
+        # Обработка результатов знаков
+        for obj in self.view.sign_handler.result_signs:
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
-            if key in grouped_objects:
-                grouped_objects[key].append(obj)
-            else:
-                grouped_objects[key] = [obj]
+            grouped_objects.setdefault(key, []).append(obj)
 
-        for key in grouped_objects:
-            items = grouped_objects[key]
+        for key, items in grouped_objects.items():
             coefficient = 2
             for item in items:
-                if len(item.car_coordinates_y) != 1:
-                    x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
-                    coefficient += 1
-                    line = LineString([(y1, x1), (y2, x2)])
-                    text_on_sign = item.get_the_most_often(item.text_on_sign)
-                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}",
-                                                                 "MVALUE": f"{text_on_sign}",
-                                                                 "SEM250": f"{text_on_sign}"})
-                    features.append(feature)
-        feature_collection = FeatureCollection(features)
+                x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
+                coefficient += 1
 
+                feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
+                features.append(feature)
+        return features
+    def handling_turns(self):
+        grouped_objects = {}
+        features = []
+        # Обработка поворотов
+        for turn in self.view.sign_handler.turns:
+            result_points = [list(map(round, point, [5] * 4)) for point in turn.calculate_current_points()]
+            [start_point, end_point, revers_start_point, revers_end_point] = result_points
+
+            temp_obj = {
+                "0": start_point, "1": start_point, "2": start_point,
+                "3": revers_end_point, "4": revers_end_point, "5": revers_start_point,
+                "5.1": revers_start_point, "6": revers_start_point,
+                "7": revers_end_point, "8": revers_end_point
+            }
+
+            for obj in turn.signs:
+                key = str(obj.number)
+                grouped_objects.setdefault(key, []).append(obj)
+
+            for key, items in grouped_objects.items():
+                x_current, y_current, x_prev, y_prev = temp_obj[key]
+                x_current, y_current = self.converter.coordinateConverter(x_current, y_current, "epsg:4326",
+                                                                          "epsg:32635")
+                x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
+
+                coefficient = 2
+                for item in items:
+                    x1, y1, x2, y2 = self.calculation.calculate_result_line(item, coefficient,
+                                                                            x_prev, y_prev,
+                                                                            x_current, y_current)
+                    x1, y1 = self.converter.coordinateConverter(x1, y1, "epsg:32635", "epsg:4326")
+                    x2, y2 = self.converter.coordinateConverter(x2, y2, "epsg:32635", "epsg:4326")
+
+                    feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
+                    features.append(feature)
+        return features
+
+    def final_data_processing(self):
+        path = config.PATH_TO_GEOJSON
+
+        features_signs = self.handling_signs()
+        features_turns = self.handling_turns()
+
+        features = features_signs + features_turns
+
+        feature_collection = FeatureCollection(features)
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
 
