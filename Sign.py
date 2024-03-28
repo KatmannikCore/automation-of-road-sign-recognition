@@ -20,14 +20,11 @@ class Sign:
         self.is_left = False
         self.azimuth = None
 
-
         self.is_turn = False
-        self.is_turn_left = False
+        self.turn_directions = 'straight'
         self.text_on_sign = []
 
         self.distance = 0
-        self.number_turn = 0
-        self.number_turn_start = 0
         self.number = 0
     def get_azimuth(self):
         return self.azimuth
@@ -60,7 +57,6 @@ class Sign:
         self.frame_numbers.append(sign.number_frame)
         self.result_CNN.append(sign.number_sign)
         self.text_on_sign.append(sign.text_on_sign)
-
 
     def concat_two_object(self, sign):
         for index in range(len(sign.h)):

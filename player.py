@@ -246,83 +246,69 @@ class MainWindow(QMainWindow):
         config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = dirlist
-    def final_data_processing(self):
-        features = []
-        path = config.PATH_TO_GEOJSON
-
+    def handling_signs(self):
         grouped_objects = {}
-        for obj in  self.view.sign_handler.result_signs:
+        features = []
+        # Обработка результатов знаков
+        for obj in self.view.sign_handler.result_signs:
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
-            if key in grouped_objects:
-                grouped_objects[key].append(obj)
-            else:
-                grouped_objects[key] = [obj]
+            grouped_objects.setdefault(key, []).append(obj)
 
-        for key in grouped_objects:
-            items = grouped_objects[key]
-            #Что такое коэфицент???
+        for key, items in grouped_objects.items():
             coefficient = 2
             for item in items:
                 x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
                 coefficient += 1
-                line = LineString([(y1, x1), (y2, x2)])
-                text_on_sign = item.get_the_most_often(item.text_on_sign)
-                feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}",
-                                                             "MVALUE": f"{text_on_sign}",
-                                                             "SEM250": f"{text_on_sign}"})
+
+                feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                 features.append(feature)
-    
+        return features
+    def handling_turns(self):
+        grouped_objects = {}
+        features = []
+        # Обработка поворотов
         for turn in self.view.sign_handler.turns:
-            result_points = []
-            for lat1, lon1, az in  turn.calculate_current_points():
-                lat2, lon2 =self.calculation.calculate_prew_point(lat1, lon1, az)
-                lat1 = round(lat1, 5)
-                lon1 = round(lon1, 5)
-                lat2 = round(lat2, 5)
-                lon2 = round(lon2, 5)
-                result_points.append([lat1, lon1, lat2, lon2])
-            start_point, end_point, revers_start_point, revers_end_point = result_points
+            result_points = [list(map(round, point, [5] * 4)) for point in turn.calculate_current_points()]
+            [start_point, end_point, revers_start_point, revers_end_point] = result_points
+
             temp_obj = {
-                "0":start_point,
-                "1":start_point,
-                "2":start_point,
-                "3":revers_end_point,
-                "4":revers_end_point,
-                "5":revers_start_point,
-                "5.1": revers_start_point,
-                "6":revers_start_point,
-                "7":revers_end_point,
-                "8":revers_end_point
+                "0": start_point, "1": start_point, "2": start_point,
+                "3": revers_end_point, "4": revers_end_point, "5": revers_start_point,
+                "5.1": revers_start_point, "6": revers_start_point,
+                "7": revers_end_point, "8": revers_end_point
             }
-            grouped_objects = {}
+
             for obj in turn.signs:
                 key = str(obj.number)
-                if key in grouped_objects:
-                    grouped_objects[key].append(obj)
-                else:
-                    grouped_objects[key] = [obj]
-            for key in grouped_objects:
-                items = grouped_objects[key]
+                grouped_objects.setdefault(key, []).append(obj)
+
+            for key, items in grouped_objects.items():
                 x_current, y_current, x_prev, y_prev = temp_obj[key]
                 x_current, y_current = self.converter.coordinateConverter(x_current, y_current, "epsg:4326",
                                                                           "epsg:32635")
                 x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
+
                 coefficient = 2
                 for item in items:
-                    x1, y1, x2, y2 = self.calculation.calculate_result_line_for_moving_straight(item, coefficient, x_prev, y_prev,x_current, y_current)
+                    x1, y1, x2, y2 = self.calculation.calculate_result_line(item, coefficient,
+                                                                            x_prev, y_prev,
+                                                                            x_current, y_current)
                     x1, y1 = self.converter.coordinateConverter(x1, y1, "epsg:32635", "epsg:4326")
                     x2, y2 = self.converter.coordinateConverter(x2, y2, "epsg:32635", "epsg:4326")
 
-                    coefficient += 1
-                    line = LineString([(y1, x1), (y2, x2)])
-                    text_on_sign = item.get_the_most_often(item.text_on_sign)
-                    feature = Feature(geometry=line, properties={"type": f"{item.get_the_most_often(item.result_CNN)}",
-                                                                 "MVALUE": f"{text_on_sign}",
-                                                                 "SEM250": f"{text_on_sign}"})
+                    feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                     features.append(feature)
+        return features
+
+    def final_data_processing(self):
+        path = config.PATH_TO_GEOJSON
+
+        features_signs = self.handling_signs()
+        features_turns = self.handling_turns()
+
+        features = features_signs + features_turns
 
         feature_collection = FeatureCollection(features)
-
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
 

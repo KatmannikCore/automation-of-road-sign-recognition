@@ -2,12 +2,10 @@
 # -*- coding: cp1251 -*-
 import cv2
 import os
-from geojson import Point, Feature, FeatureCollection, dump, LineString
-import json
+from geojson import Feature, FeatureCollection, dump, LineString
 import config as config
 from CoordinateCalculation import CoordinateCalculation
 from Detector import Detector
-import random
 from Reader import Reader
 from Converter import Converter
 from SignHandler import SignHandler
@@ -70,10 +68,7 @@ class View:
         #создание объукта описывающего ДЗ
         feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING})
         config.FEATURES.append(feature)
-
         config.INDEX_OF_SING += 1
-        #with open('data.txt', 'w') as fw:
-        #    json.dump(config.ClASSIFIER, fw)
 
     def write_geoJson(self):
         #Создание объекта хронящего все ДЗ
