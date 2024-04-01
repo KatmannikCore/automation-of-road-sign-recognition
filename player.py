@@ -268,8 +268,7 @@ class MainWindow(QMainWindow):
         features = []
         # Обработка поворотов
         for turn in self.view.sign_handler.turns:
-            result_points = [list(map(round, point, [5] * 4)) for point in turn.calculate_current_points()]
-            [start_point, end_point, revers_start_point, revers_end_point] = result_points
+            [start_point, end_point, revers_start_point, revers_end_point] = self.calculation.calculation_four_dots(turn)
 
             temp_obj = {
                 "0": start_point, "1": start_point, "2": start_point,
@@ -277,7 +276,7 @@ class MainWindow(QMainWindow):
                 "5.1": revers_start_point, "6": revers_start_point,
                 "7": revers_end_point, "8": revers_end_point
             }
-
+            grouped_objects = {}
             for obj in turn.signs:
                 key = str(obj.number)
                 grouped_objects.setdefault(key, []).append(obj)
@@ -295,7 +294,7 @@ class MainWindow(QMainWindow):
                                                                             x_current, y_current)
                     x1, y1 = self.converter.coordinateConverter(x1, y1, "epsg:32635", "epsg:4326")
                     x2, y2 = self.converter.coordinateConverter(x2, y2, "epsg:32635", "epsg:4326")
-
+                    coefficient += 1
                     feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                     features.append(feature)
         return features

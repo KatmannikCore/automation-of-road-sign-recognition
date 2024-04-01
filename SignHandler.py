@@ -62,8 +62,9 @@ class SignHandler:
                 Turn.add_points()
                 self.__remove_incorrect_signs(current_number_frame)
                 self.signs, Turn.signs = self.separation_signs(Turn)
-                Turn.handle_turn()
                 Turn.set_direction_signs()
+                Turn.handle_turn()
+
                 # TODO должен быть перенос коротких знаков
                 self.turns.append(copy.copy(Turn))
         Turn.clean()

@@ -2,6 +2,8 @@ import math
 from Reader import Reader
 from Converter import Converter
 import config as config
+from pygeoguz.simplegeo import *
+from pygeoguz.objects import *
 
 from geojson import Feature, LineString
 class CoordinateCalculation:
@@ -88,7 +90,7 @@ class CoordinateCalculation:
         line = LineString([(y1, x1), (y2, x2)])
         text_on_sign = sign.get_the_most_often(sign.text_on_sign)
         type = sign.get_the_most_often(sign.result_CNN)
-        if text_on_sign != 0:
+        if text_on_sign != "":
             feature = Feature(geometry=line, properties={
                 "type": f"{type}",
                 "MVALUE": f"{text_on_sign}",
@@ -97,3 +99,52 @@ class CoordinateCalculation:
         else:
             feature = Feature(geometry=line, properties={"type": f"{type}" })
         return feature
+
+    def calculation_four_dots(self, Turn):
+        result_points = []
+        for lat1, lon1, az in self.calculate_current_points(Turn):
+            lat2, lon2 = self.calculate_prew_point(lat1, lon1, az)
+            lat1 = round(lat1, 5)
+            lon1 = round(lon1, 5)
+            lat2 = round(lat2, 5)
+            lon2 = round(lon2, 5)
+            result_points.append([lat1, lon1, lat2, lon2])
+        return result_points
+
+    def calculate_current_points(self, Turn):
+        lat1, lon1 = Turn.coordinates[0]  #start_point
+        lat2, lon2 = Turn.coordinates[-1] #end_point
+        start_point = [lat1, lon1, Turn.azimuths[0] ]
+        end_point   = [lat2, lon2, Turn.azimuths[-1]  ]
+        x1, y1= self.converter.coordinateConverter(lat1, lon1, "epsg:4326", "epsg:32635")
+        x2, y2= self.converter.coordinateConverter(lat2, lon2, "epsg:4326", "epsg:32635")
+        p1 = Point2D(y1, x1)
+        p2 = Point2D(y2, x2)
+        line = ogz(point_a=p1, point_b=p2)
+        length = line.length
+        direction = line.direction
+        azimuth_offset = 60
+        if self.calculate_azimuth_change(Turn.azimuths[-1], Turn.azimuths[0]) < 0:
+            azimuth_offset = -60
+
+        revers_start_point = self.calculate_revers_points(azimuth_offset, length, p1, direction)
+        revers_end_point = self.calculate_revers_points(azimuth_offset / 2, length, p1, direction)
+
+        revers_start_point.append(Turn.azimuths[0])
+        revers_end_point.append(Turn.azimuths[-1])
+        return start_point, end_point, revers_start_point, revers_end_point
+
+    def calculate_revers_points(self, azimuth_offset, length, p1, direction):
+        azimuth = direction + azimuth_offset
+        line = Line2D(length=length, direction=azimuth)
+        p2 = pgz(point=p1, line=line)
+        x, y = self.converter.coordinateConverter(p2.y, p2.x, "epsg:32635", "epsg:4326")
+        return [x, y]
+
+    def calculate_azimuth_change(self, old_azimuth, new_azimuth):
+        azimuth_change = new_azimuth - old_azimuth
+        if azimuth_change > 180:
+            azimuth_change = azimuth_change - 360
+        elif azimuth_change < -180:
+            azimuth_change = azimuth_change + 360
+        return azimuth_change

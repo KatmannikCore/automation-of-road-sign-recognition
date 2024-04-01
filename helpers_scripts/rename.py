@@ -19,4 +19,4 @@ def rename_files(directory):
 
 # Пример использования
 
-rename_files(r'D:\Urban\yolov4\yolov4-opencv-python\train\tupic\3')
+rename_files(r'D:\Ur2\test10\39а')
