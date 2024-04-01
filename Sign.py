@@ -19,11 +19,12 @@ class Sign:
         self.deletion_counter = 0
         self.is_left = False
         self.azimuth = None
+
+        self.is_turn = False
+        self.turn_directions = 'straight'
         self.text_on_sign = []
 
         self.distance = 0
-        self.number_turn = 0
-        self.number_turn_start = 0
         self.number = 0
     def get_azimuth(self):
         return self.azimuth
@@ -39,17 +40,13 @@ class Sign:
                f"frame: {self.frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"
 
-   #def calculate_azimuth(self):
-   #    lat1, lon1 = radians(self.car_coordinates_x[-1]), radians(self.car_coordinates_y[-1])
-   #    lat2, lon2 = radians(self.car_coordinates_x[-2]), radians(self.car_coordinates_y[-2])
-
-   #    d_lon = lon2 - lon1
-
-   #    y = math.sin(d_lon) * math.cos(lat2)
-   #    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(d_lon)
-   #    bearing = atan2(y, x)
-   #    self.azimuth = (degrees(bearing) + 360) % 360
-
+    def replace_car_coordinates(self, turn):
+        self.car_coordinates_x = []
+        self.car_coordinates_y = []
+        for x, y in turn.coordinates:
+            x, y = self.converter.coordinateConverter(x, y,"epsg:4326", "epsg:32635")
+            self.car_coordinates_x.append(x)
+            self.car_coordinates_y.append(y)
     def append_data(self, sign):
         self.pixel_coordinates_x.append(sign.x)
         self.pixel_coordinates_y.append(sign.y)
@@ -59,24 +56,23 @@ class Sign:
         self.set_car_coordinate(sign.latitude, sign.longitude)
         self.frame_numbers.append(sign.number_frame)
         self.result_CNN.append(sign.number_sign)
-        self.text_on_sign.append(sign.text_on_sign)
-
+        if sign.text_on_sign != "":
+            self.text_on_sign.append(sign.text_on_sign)
 
     def concat_two_object(self, sign):
-        for index in range(len(sign.h)):
-            self.pixel_coordinates_x.append(sign.pixel_coordinates_x[index])
-            self.pixel_coordinates_y.append(sign.pixel_coordinates_y[index])
-            self.h.append(sign.h[index])
-            self.w.append(sign.w[index])
-            self.result_yolo.append(sign.result_yolo[index])
-            self.frame_numbers.append(sign.frame_numbers[index])
-            self.result_CNN.append(sign.result_CNN[index])
-            self.text_on_sign.append(sign.text_on_sign[index])
+        #for index in range(len(sign.h)):
+        self.pixel_coordinates_x += sign.pixel_coordinates_x
+        self.pixel_coordinates_y += sign.pixel_coordinates_y
+        self.h += sign.h
+        self.w += sign.w
+        self.result_yolo += sign.result_yolo
+        self.frame_numbers += sign.frame_numbers
+        self.result_CNN += sign.result_CNN
+        self.text_on_sign += sign.text_on_sign
         self.__append_car_coordinates(sign)
     def __append_car_coordinates(self, sign):
-        for index in range(len(sign.car_coordinates_x)):
-            self.car_coordinates_x.append(sign.car_coordinates_x[index])
-            self.car_coordinates_y.append(sign.car_coordinates_y[index])
+        self.car_coordinates_x += sign.car_coordinates_x
+        self.car_coordinates_y += sign.car_coordinates_y
     def set_car_coordinate(self, x, y):
         if len(self.car_coordinates_x) == 0:
             self.car_coordinates_x.append(x)
@@ -87,7 +83,10 @@ class Sign:
                 self.car_coordinates_y.append(y)
 
     def get_the_most_often(self, arr):
-        return Counter(arr).most_common(1)[0][0]
+        if arr:
+            return Counter(arr).most_common(1)[0][0]
+        else:
+            return ''
 
     def is_sign_on_edge_of_screen(self):
         half_screen_width = 960

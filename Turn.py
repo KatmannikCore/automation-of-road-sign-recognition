@@ -1,6 +1,9 @@
 import config
 from Reader import Reader
 
+from pygeoguz.simplegeo import *
+from pygeoguz.objects import *
+from Converter import Converter
 from geopy.distance import geodesic
 class Turn:
     def __init__(self):
@@ -10,10 +13,25 @@ class Turn:
         self.coordinates = []
         self.azimuths = []
         self.was_there_turn = False
-        self.is_turn_left = True
+        self.turn_directions = 'straight'
         self.turn_distance = 0
         self.frames = []
         self.segment_length = 0
+        self.Converter = Converter()
+        self.last_index_of_gps = 0
+    def clean(self):
+        self.signs = []
+        self.signs_dict = {}
+        self.coordinates = []
+        self.azimuths = []
+        self.was_there_turn = False
+        self.turn_directions = 'straight'
+        self.turn_distance = 0
+        self.frames = []
+        self.segment_length = 0
+        self.last_index_of_gps = 0
+
+
     def append_azimuths(self, item):
         if not self.azimuths:
             self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
@@ -21,85 +39,81 @@ class Turn:
         else:
             if item != self.azimuths[-1]:
                 self.azimuths.append(item)
-
+    def set_direction_signs(self):
+        for index in range(len(self.signs)):
+            self.signs[index].is_turn = True
+            self.signs[index].turn_directions = self.turn_directions
     def append_coordinates(self, item):
         if not self.coordinates:
+            self.coordinates.append(self.Reader.get_current_coordinate(config.INDEX_OF_GPS))
             self.coordinates.append(item)
         else:
             if item != self.coordinates[-1]:
                 self.coordinates.append(item)
 
-    #def calculate_turn_distance(self):
-    #    result_distance = 0
-    #    for i in range(len(self.coordinates) - 1):
-    #        result_distance += geodesic(self.coordinates[i], self.coordinates[i + 1]).meters
-    #    return result_distance
-
-   #def calculate_sign_distance_from_start_to_sign(self, sign):
-   #    try:
-   #        number = self.frames.index(sign.frame_numbers[-1])
-   #        #result = (self.turn_distance / (len(self.frames)- 1)) * number
-   #        return number
-   #    except Exception as e:
-   #        return 0
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
-
         delta = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1) - self.Reader.get_azimuth(config.INDEX_OF_GPS)
         is_turn = abs(delta) > 10
         if is_turn:
             if delta < 0:
-                self.is_turn_left = True
-                # print("Лево")
+                self.turn_directions = 'right'
             else:
-                self.is_turn_left = False
+                self.turn_directions = 'left'
             self.was_there_turn = True
             return True
         else:
-            print("Прямо", end='\r')
             return False
 
     def handle_turn(self):
         self.segment_length = len(self.frames) / 3
         for index in range(len(self.signs)):
-            self.signs[index].number = self.handle_sing(self.signs[index])
+            if len(self.signs[index].frame_numbers) > 3:
+                self.signs[index].number = self.handle_sing(self.signs[index])
 
     def handle_sing(self, sign):
         max_size = self.calculation_max_size(sign)
         min_size = self.calculation_min_size(sign)
         coefficient_frames = self.calculation_coefficient_frames(sign, min_size, max_size)
 
-        #if self.calculation_different_x(sign) > 1500:
-        #    return 7
-        #else:
-        if sign.frame_numbers[-1] in self.frames:
-            sign.distance  = self.frames.index(sign.frame_numbers[-1])
-
+        if self.calculation_different_x(sign) > 1000 and coefficient_frames > 150:
+            return 7
         else:
-            sign.distance  = -1
-        if (sign.distance / self.segment_length) >= 2:
-            if coefficient_frames < 150:
-                return 5
+            if sign.frame_numbers[-1] in self.frames:
+                sign.distance = self.frames.index(sign.frame_numbers[-1])
             else:
-                return 8
+                sign.distance = -1
+                return 2
+            if (sign.distance / (self.segment_length)) >= 2:
+                if  self.turn_directions == 'right':
+                    if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] < 0:
+                        return 7
+                if coefficient_frames < 150:
+                    return 5
+                else:
+                    return 8
+            # TODO dangerous construction
 
-        if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
-            return 8
-
-        else:
+            if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
+                if sign.is_turn_left:
+                    return 8
+                elif coefficient_frames > 250:
+                    return 7
+            #elif self.turn_directions == "right":
+            #    return 7
 
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
-            if coefficient_size < 3:
-                return 5.1
+            if coefficient_size < 5:
+                return 5
             else:
                 if coefficient_frames > 250:
-                    return 3
+                    return 2
                 elif coefficient_frames < 150:
                     return 5
                 else:
-                    return "out of categories"
+                    return 2  # "out of categories"
     def calculation_different_x(self, sing):
-        return sing.pixel_coordinates_x[-1] - sing.pixel_coordinates_x[0]
+        return sing.pixel_coordinates_x[-2] - min(sing.pixel_coordinates_x)
     def calculation_max_size(self, sing):
         max_index = sing.w.index(max(sing.w))
         return sing.w[max_index] * sing.h[max_index]
@@ -115,7 +129,15 @@ class Turn:
 
     def arr_to_dict(self):
         for item in self.signs:
-            if int(item.number_turn) in self.signs_dict:
-                self.signs_dict[int(item.number_turn)].append(item)
+            if int(item.azimuth) in self.signs_dict:
+                self.signs_dict[int(item.azimuth)].append(item)
             else:
-                self.signs_dict[int(item.number_turn)] = [item]
+                self.signs_dict[int(item.azimuth)] = [item]
+
+    def add_points(self):
+        count_points = 3
+        coordinate_offset = 2
+        for index in range(count_points):
+            index_of_gpx = self.last_index_of_gps + index + coordinate_offset
+            self.append_coordinates( self.Reader.get_current_coordinate( index_of_gpx))
+            self.append_azimuths(self.Reader.get_azimuth(index_of_gpx))

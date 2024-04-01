@@ -1,28 +1,28 @@
-from PIL import Image
-import pytesseract
+def levenshtein_distance(s1, s2):
+    m = len(s1)
+    n = len(s2)
 
-# Укажите путь к исполняемому файлу tesseract.exe
-pytesseract.pytesseract.tesseract_cmd = r'C:\Users\Urbanovich\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+    # Создаем матрицу размером (m+1) x (n+1) и заполняем ее нулями
+    dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
 
-# Укажите путь к изображению, с которого нужно считать текст
-image_path = r'D:\Urban\yolov4\yolov4-opencv-python\train\54\0_1.0%.jpg'
+    # Инициализируем первую строку и первый столбец матрицы
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
 
-# Открываем изображение
-img = Image.open(image_path)
+    # Заполняем матрицу по правилам алгоритма Левенштейна
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            cost = 0 if s1[i - 1] == s2[j - 1] else 1
+            dp[i][j] = min(dp[i - 1][j] + 1,  # удаление
+                           dp[i][j - 1] + 1,  # вставка
+                           dp[i - 1][j - 1] + cost)  # замена или совпадение
 
-# Используем pytesseract для извлечения текста с изображения
-text = pytesseract.image_to_string(img, lang='rus')
+    return dp[m][n]
 
-print(text)
 
-import easyocr
-
-# Инициализация ридера
-reader = easyocr.Reader(['ru'])  # Укажите язык или языки, которые вы хотите распознавать
-
-# Чтение текста с изображения
-result = reader.readtext(image_path)
-
-# Вывод результатов
-for (bbox, text, prob) in result:
-    print(f'Текст: {text} (Вероятность: {prob:.2f})')
+# Пример использования
+s1 = "НОВОРОЛАЦК"
+s2 = "НОВОПОЛОЦК"
+print(levenshtein_distance(s1, s2))  # Расстояние Левенштейна между "кот" и "скот"
