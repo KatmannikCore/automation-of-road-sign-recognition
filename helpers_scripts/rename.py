@@ -18,4 +18,5 @@ def rename_files(directory):
             print(f'{file_path} renamed to {new_file_path}')
 
 # Пример использования
-rename_files(r'D:\Urban\yolov4\yolov4-opencv-python\train\tabl')
+
+rename_files(r'D:\Ur2\test10\39а')
