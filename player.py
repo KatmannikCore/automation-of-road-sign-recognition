@@ -247,6 +247,7 @@ class MainWindow(QMainWindow):
         config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = dirlist
+<<<<<<< HEAD
 
     def handling_signs(self):
         grouped_objects = {}
@@ -263,6 +264,15 @@ class MainWindow(QMainWindow):
         #}
         #with open("sample.json", "w") as outfile:
         #    json.dump(json_objects, outfile, ensure_ascii=False,indent=4, default=int)
+=======
+    def handling_signs(self):
+        grouped_objects = {}
+        features = []
+        # Обработка результатов знаков
+        for obj in self.view.sign_handler.result_signs:
+            key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
+            grouped_objects.setdefault(key, []).append(obj)
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
 
         for key, items in grouped_objects.items():
             coefficient = 2
@@ -274,6 +284,10 @@ class MainWindow(QMainWindow):
                 features.append(feature)
         return features
     def handling_turns(self):
+<<<<<<< HEAD
+=======
+        grouped_objects = {}
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
         features = []
         # Обработка поворотов
         for turn in self.view.sign_handler.turns:

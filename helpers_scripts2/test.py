@@ -3,6 +3,7 @@ def levenshtein_distance(s1, s2):
     n = len(s2)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import json
 
 data = {
@@ -68,6 +69,17 @@ with open('data.json', 'w') as f:
     for j in range(n + 1):
         dp[0][j] = j
 
+=======
+    # Создаем матрицу размером (m+1) x (n+1) и заполняем ее нулями
+    dp = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
+
+    # Инициализируем первую строку и первый столбец матрицы
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
     # Заполняем матрицу по правилам алгоритма Левенштейна
     for i in range(1, m + 1):
         for j in range(1, n + 1):
@@ -82,5 +94,9 @@ with open('data.json', 'w') as f:
 # Пример использования
 s1 = "НОВОРОЛАЦК"
 s2 = "НОВОПОЛОЦК"
+<<<<<<< HEAD
+print(levenshtein_distance(s1, s2))  # Расстояние Левенштейна между "кот" и "скот"
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
+=======
 print(levenshtein_distance(s1, s2))  # Расстояние Левенштейна между "кот" и "скот"
 >>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8

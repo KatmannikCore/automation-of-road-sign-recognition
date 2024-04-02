@@ -57,9 +57,15 @@ class Turn:
         is_turn = abs(delta) > 10
         if is_turn:
             if delta < 0:
+<<<<<<< HEAD
                 self.turn_directions = 'left'
             else:
                 self.turn_directions = 'right'
+=======
+                self.turn_directions = 'right'
+            else:
+                self.turn_directions = 'left'
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
             self.was_there_turn = True
             return True
         else:
@@ -84,7 +90,11 @@ class Turn:
             else:
                 sign.distance = -1
                 return 2
+<<<<<<< HEAD
             if (sign.distance / round(self.segment_length, 0)) >= 2:
+=======
+            if (sign.distance / (self.segment_length)) >= 2:
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
                 if  self.turn_directions == 'right':
                     if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] < 0:
                         return 7
@@ -99,8 +109,13 @@ class Turn:
                     return 8
                 elif coefficient_frames > 250:
                     return 7
+<<<<<<< HEAD
             elif self.turn_directions == "right" and coefficient_frames > 150:
                 return 7
+=======
+            #elif self.turn_directions == "right":
+            #    return 7
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
 
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
             if coefficient_size < 5:

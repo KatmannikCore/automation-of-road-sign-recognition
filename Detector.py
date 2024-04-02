@@ -31,9 +31,15 @@ name_signs_cnn = {
     "tablichka |": ["8.2.4", "8.2.3", "8.2.2"]
 }
 name_sub_signs_cnn = {
+<<<<<<< HEAD
     "danger": ['1.11.2', '1.11.1', '1.12.2'],
     "pimicanie": ['2.3.3', '2.3.2', '2.3.1'],
     "suzenie":['1.20.2','1.20.3','1.20.2']
+=======
+    "suzenie": ['1.11.2', '1.11.1', '1.12.2'],
+    "pimicanie": ['2.3.3', '2.3.2', '2.3.1'],
+    "danger":['1.20.2','1.20.3','1.20.2']
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
 }
 
 type_signs_yolo = {
@@ -125,7 +131,10 @@ class Detector:
         elif self.class_name[class_id] == "treugolnik":
             number_result = np.argmax(model_treugolnik.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["treugolnik"][number_result]
+<<<<<<< HEAD
 
+=======
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
             if result_type == 'danger':
                 number_result = np.argmax(model_danger.predict_step(np.expand_dims(img, axis=0)))
                 result_type = name_sub_signs_cnn['danger'][number_result]
@@ -135,7 +144,10 @@ class Detector:
             elif result_type == 'suzenie':
                 number_result = np.argmax(model_suzenie.predict_step(np.expand_dims(img, axis=0)))
                 result_type = name_sub_signs_cnn['suzenie'][number_result]
+<<<<<<< HEAD
 
+=======
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
         elif self.class_name[class_id] == "krug":
             number_result = np.argmax(model_krug.predict_step(np.expand_dims(img, axis=0)))
             result_type = name_signs_cnn["krug"][number_result]

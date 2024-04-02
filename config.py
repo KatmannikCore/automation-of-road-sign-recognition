@@ -3,16 +3,28 @@
 PATH_TO_VIDEO = r"D:\Urban\vid\test\Testing\partizan\100GOPRO"
 FRAME_STEP = 5
 
+<<<<<<< HEAD
 INDEX_OF_FRAME = 37800 - 60
 COUNT_PROCESSED_FRAMES = 0
 INDEX_OF_All_FRAME = 37800 + 63600 * 1 - 60
 INDEX_OF_GPS = 640 + 1060 * 1 - 1
 INDEX_OF_VIDEO = 1
+=======
+INDEX_OF_FRAME = 21600 - 60
+COUNT_PROCESSED_FRAMES = 0
+INDEX_OF_All_FRAME = 21600 + 63600 * 2 - 60
+INDEX_OF_GPS = 360 + 1060 * 2 - 1
+INDEX_OF_VIDEO = 2
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
 
 
 
 INDEX_OF_SING = 0
+<<<<<<< HEAD
 PATH_TO_GEOJSON =  r"D:\Urban\trags\12.geojson"
+=======
+PATH_TO_GEOJSON =  r"D:\Urban\trags\11.geojson"
+>>>>>>> 998a996f7b9ff34b8162bd56787139ef7b4beec8
 PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
 COUNT_FRAMES = 0
 
