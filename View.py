@@ -2,12 +2,10 @@
 # -*- coding: cp1251 -*-
 import cv2
 import os
-from geojson import Point, Feature, FeatureCollection, dump, LineString
-import json
+from geojson import Feature, FeatureCollection, dump, LineString
 import config as config
 from CoordinateCalculation import CoordinateCalculation
 from Detector import Detector
-import random
 from Reader import Reader
 from Converter import Converter
 from SignHandler import SignHandler
@@ -70,10 +68,7 @@ class View:
         #создание объукта описывающего ДЗ
         feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING})
         config.FEATURES.append(feature)
-
         config.INDEX_OF_SING += 1
-        #with open('data.txt', 'w') as fw:
-        #    json.dump(config.ClASSIFIER, fw)
 
     def write_geoJson(self):
         #Создание объекта хронящего все ДЗ
@@ -122,11 +117,12 @@ class View:
                 cv2.rectangle(frame, box, color, 1)
                 cv2.putText(frame, label, (box[0], box[1] - 10),
                            cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
-        if rectangles:
-            if self.turn.is_turn():
-                self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
-                self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
-                self.turn.last_index_of_gps = config.INDEX_OF_GPS
+        #if rectangles:
+        if self.turn.is_turn():
+            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS+1))
+            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS+1))
+            self.turn.last_index_of_gps = config.INDEX_OF_GPS
+            self.turn.frames.append(config.COUNT_PROCESSED_FRAMES)
         if frame_for_checking:
             self.turn = self.sign_handler.check_the_data_to_add(frame_for_checking, self.turn)
 

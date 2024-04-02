@@ -21,9 +21,9 @@ class SignHandler:
         self.result_signs = []
         self.turns = []
         self.was_there_turn = False
-        self.is_turn_left = False
+        self.turn_directions = 'straight'
         self.Converter = Converter()
-        self.number_turn = 0
+        self.azimuth = 0
     def check_the_data_to_add(self, frame, Turn):
         #time.sleep(0.5)
         if frame:
@@ -34,34 +34,7 @@ class SignHandler:
             else:
                 current_number_frame = frame[0].number_frame
                 if Turn.was_there_turn and not Turn.is_turn():
-                    if  Turn.signs:#Is there a turn sign?
-                        if len(Turn.coordinates) >= 2:
-
-                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+2))
-                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+2))
-
-                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+3))
-                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+3))
-
-                            Turn.append_coordinates(self.Reader.get_current_coordinate(Turn.last_index_of_gps+4))
-                            Turn.append_azimuths(self.Reader.get_azimuth(Turn.last_index_of_gps+4))
-
-                            self.__remove_incorrect_signs(current_number_frame)
-                            Turn.signs = []
-                            new_sign = []
-                            for item in self.signs:
-                                if len(item.result_CNN) >= 7 and item.frame_numbers[-1] < Turn.frames[-1]:
-                                    Turn.signs.append(item)
-                                else:
-                                    item.replace_car_coordinates(Turn)
-                                    new_sign.append(item)
-                            self.signs = new_sign
-                            Turn.handle_turn()
-                            Turn.set_direction_signs()
-
-                            #TODO должен быть перенос коротких знаков
-                            self.turns.append(copy.copy(Turn))
-                    Turn.clean()
+                    Turn = self.handling_turn_after_end(Turn, current_number_frame)
 
                 evidences = self.__check_pixel_coordinates(frame)
                 evidences = self.__remove_collisions(evidences)
@@ -71,20 +44,42 @@ class SignHandler:
             current_number_frame = frame[0].number_frame
             for index in  range(len(self.signs)):
                 if self.signs[index].frame_numbers[-1] == current_number_frame:
-                    self.signs[index].number_turn = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
+                    self.signs[index].azimuth = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
             self.__remove_incorrect_signs(current_number_frame)
-            #self.__move_final_signs(current_number_frame)
 
             if not Turn.is_turn():
                 self.__move_final_signs(current_number_frame)
             else:
                 if len(Turn.frames) <= 1:
                     self.__move_final_signs(current_number_frame)
-
                 Turn.signs = self.signs
-                Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
+                #Turn.frames.append(config.COUNT_PROCESSED_FRAMES)
             return Turn
 
+    def handling_turn_after_end(self, Turn, current_number_frame):
+        if Turn.signs:  # Is there a turn sign?
+            if len(Turn.coordinates) >= 2:
+                Turn.add_points()
+                self.__remove_incorrect_signs(current_number_frame)
+                self.signs, Turn.signs = self.separation_signs(Turn)
+                Turn.set_direction_signs()
+                Turn.handle_turn()
+
+                # TODO должен быть перенос коротких знаков
+                self.turns.append(copy.copy(Turn))
+        Turn.clean()
+        return Turn
+
+    def separation_signs(self, Turn):
+        straight_signs = []
+        turn_signs = []
+        for item in self.signs:
+            if len(item.result_CNN) >= 7 and item.frame_numbers[-1] < Turn.frames[-1]:
+                turn_signs.append(item)
+            else:
+                item.replace_car_coordinates(Turn)
+                straight_signs.append(item)
+        return straight_signs, turn_signs
     def __is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
 
@@ -92,9 +87,9 @@ class SignHandler:
         is_turn = abs(delta) > 10
         if is_turn:
             if delta < 0:
-                self.is_turn_left = True
+                self.turn_directions = 'left'
             else:
-                self.is_turn_left = False
+                self.turn_directions = 'right'
             self.was_there_turn = True
             return True
         else:
@@ -122,7 +117,6 @@ class SignHandler:
 
     def __add_sign(self, sign):
         new_sign = Sign()
-        new_sign.number_turn_start = self.Reader.get_azimuth(config.INDEX_OF_GPS)
         new_sign.append_data(sign)
         self.signs.append(new_sign)
    
@@ -180,7 +174,7 @@ class SignHandler:
                 frame_for_sign = self.signs[index].frame_numbers[-1] + 20 #+ 10
                 #Проверка на коректность добовления добовляемого знака через:
                 # 1)Изменение высоны расположения 2) Длинна объеиа 3) Разнать текущего номера кадра и последнего зафиксированного для знака
-                if( self.signs[index].is_sign_on_edge_of_screen() or len(self.signs[index].result_yolo) > 7) and frame_for_sign < different_frame: #or len(self.signs[index].result_yolo) > 7:
+                if( self.signs[index].is_sign_on_edge_of_screen() or len(self.signs[index].result_yolo) > 7) and frame_for_sign < different_frame:
                     #if frame_for_sign < different_frame:
                         if len(self.signs[index].result_yolo) >= SignHandler.__frame_gap_between_sign:
                             difference_in_screen_width_x_sign = SignHandler.__screen_width - self.signs[index].w[-1]
@@ -196,22 +190,18 @@ class SignHandler:
                             if self.check_presence_of_nearby_sign(self.signs[index]):
                                 self.result_signs.append(self.signs[index])
 
-                            #self.signs[index].car_coordinates_x = [el for el, _ in groupby(self.signs[index].car_coordinates_x)]
-                            #self.signs[index].car_coordinates_y = [el for el, _ in groupby(self.signs[index].car_coordinates_y)]
                             signs_for_delete.append(self.signs[index])
         self.__signs_delete(signs_for_delete)
   
     def __remove_repeating_coordinates(self, sign):
         return [el for el, _ in groupby(sign)]
-  
-  
+
     def __remove_incorrect_signs(self,current_number_frame):
         signs_for_delete = []
         for sign in self.signs:
             if sign.frame_numbers[-1] < (current_number_frame - SignHandler.__difference_frames_for_remove_sign):
                 if len(sign.result_yolo) <= SignHandler.__frame_gap_between_sign:
                     signs_for_delete.append(sign)
-                    #print("Удаленный знак:",sign,'\n')
         self.__signs_delete(signs_for_delete)
 
  
@@ -229,16 +219,13 @@ class SignHandler:
         for sign in self.signs:
             vectors = []
             for item in frame:
-
                 #Проверка на отрицательную высоту
                 delta_h = item.y - sign.pixel_coordinates_y[-1]
                 if delta_h <= 5:
-
                     delta_x = item.x - sign.pixel_coordinates_x[-1]
                     delta_y = item.y - sign.pixel_coordinates_y[-1]
                     #Теорема пифагора
                     vec = round((delta_x**2 +  delta_y**2) ** 0.5, 0)
-
                     if sign.get_the_most_often(sign.result_yolo) == item.name_sign:
                         vec -= 50
                     else:

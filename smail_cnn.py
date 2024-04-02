@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 import random
 import csv
 import cv2 as cv
@@ -33,15 +35,14 @@ VALIDATION_SPLIT = 0.3
 INIT_LR = 0.001
 BATCH_SIZE = 256
 SET_DECAY = True
-path_txt = 'D:\\Urban\\yolov4\\yolov4-opencv-python\\train\\tabl\\'
-path_test = 'D:\\Urban\\yolov4\\yolov4-opencv-python\\train\\tabl\\'
+path_txt = r'D:\Urban\yolov4\yolov4-opencv-python\train\treugolnik\a9'
+path_test = r'D:\Urban\yolov4\yolov4-opencv-python\train\treugolnik\a9'
 path_dir_arr = os.listdir(path_txt)
-name = './models_200_10/tab.h5'
+name = './models_200_10/treugolnik/suzenie.h5'
 
 with alive_bar(len(os.listdir(path_txt) *10), force_tty=True) as bar_dir:
     for i in range(0, 10):
         for filename in os.listdir(path_txt):
-            print(filename)
             bar_dir()
             path = os.path.join(path_txt,filename)
             imagePaths = os.listdir(path)
@@ -217,16 +218,20 @@ model.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["a
 test_images = [] # images
 test_labels = [] # corresponding labels
 
+
 with alive_bar(len(imagePaths), force_tty=True) as bar_img:
-    for filename in os.listdir(path_test):
-        bar_img()
-        path = os.path.join(path_test, filename)
-        imagePaths = os.listdir(path)
-        for img in imagePaths:
-            img = cv.imread(path + '/'+ img)
-            test_images.append(cv.resize(img, (28, 28)))
-            #index = path_dir_arr.index(filename)
-            test_labels.append(1)
+    try:
+        for filename in os.listdir(path_test):
+            bar_img()
+            path = os.path.join(path_test, filename)
+            imagePaths = os.listdir(path)
+            for img in imagePaths:
+                img = cv.imread(path + '/'+ img)
+                test_images.append(cv.resize(img, (28, 28)))
+                index = path_dir_arr.index(filename)
+                test_labels.append(index)
+    except Exception as e:
+        print("error", e)
 test_X = np.asarray(test_images)
 test_X = test_X / 255
 test_X = np.asarray(test_X, dtype = "float32")
