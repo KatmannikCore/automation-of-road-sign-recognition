@@ -1,6 +1,5 @@
 from collections import Counter
-from geopy.distance import geodesic
-from math import atan2, degrees, radians
+import numpy as np
 import math
 from Converter import Converter
 class Sign:
@@ -39,6 +38,18 @@ class Sign:
                f"name2: {self.result_CNN},\n" \
                f"frame: {self.frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"
+
+    def json(self):
+        json_object = {
+            "name_one": self.get_the_most_often(self.result_yolo),
+            "name_two": self.get_the_most_often(self.result_CNN),
+            "w": self.w ,
+            "h": self.h ,
+            "x": self.pixel_coordinates_x,
+            "y": self.pixel_coordinates_y,
+            "length": int(len(self.frame_numbers))
+        }
+        return json_object
 
     def replace_car_coordinates(self, turn):
         self.car_coordinates_x = []
