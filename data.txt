@@ -1,1 +1,0 @@
-{"parkovka": [], "treugolnik": [], "krug": [], "glavnaya doroga": [], "peshehodnyj perehod": [], "ostanovka i parkovka zapreshena": [], "viezd na dorogu s odnostorinnim dvizeniem >": [], "napravlenie dvizheniya po polosam": [], "ustupi dorogu": [], "red": [], "zhilaya zona": [], "tupik": [], "polosa dlya obshestvennogo transporta": [], "blue": [[
