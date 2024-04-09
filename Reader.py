@@ -1,6 +1,6 @@
 import gpxpy.gpx
 
-import config
+from configs import config
 from Converter import Converter
 
 

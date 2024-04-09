@@ -1,7 +1,4 @@
-import math
-import time
-
-import config
+from configs import config
 from Reader import Reader
 from Sign import Sign
 from itertools import groupby
@@ -16,7 +13,7 @@ class SignHandler:
     __difference_frames_for_move_sign = 5
     __frame_gap_between_sign = 5
     def __init__(self):
-        self.Reader = Reader(config.PATH_TO_GPX )
+        self.Reader = Reader(config.PATH_TO_GPX)
         self.signs = []
         self.result_signs = []
         self.turns = []
@@ -175,6 +172,8 @@ class SignHandler:
                                 self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - self.signs[index].pixel_coordinates_x[-1] > 0
                             # TODO Проверка есть ли рядор знак
                             if self.check_presence_of_nearby_sign(self.signs[index]):
+                                #TODO удалить номер знака
+                                self.signs[index].number_sign = config.INDEX_OF_All_FRAME
                                 self.result_signs.append(self.signs[index])
 
                             signs_for_delete.append(self.signs[index])

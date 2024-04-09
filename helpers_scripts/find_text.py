@@ -15,7 +15,7 @@ dir_for_read = [r"D:\Urban\learning\100\img\GOPR0108 (18.04.2023 8-31-09)",
                 r"D:\Urban\learning\100\img\GP040108 (18.04.2023 8-23-13)",
                 ]
 
-reader = easyocr.Reader(["ru"])
+reader = easyocr.Reader(["be"])
 for dir in dir_for_read:
     imgList = os.listdir(dir)
     for img_path in imgList:

@@ -1,10 +1,9 @@
-import math
 from Reader import Reader
 from Converter import Converter
-import config as config
+from configs import config as config
 from pygeoguz.simplegeo import *
 from pygeoguz.objects import *
-
+from configs.sign_config import name_signs_city
 from geojson import Feature, LineString
 class CoordinateCalculation:
     __one_radian = 57.2958
@@ -88,8 +87,12 @@ class CoordinateCalculation:
 
     def create_feature_object(self, x1, x2, y1, y2, sign):
         line = LineString([(y1, x1), (y2, x2)])
-        text_on_sign = sign.get_the_most_often(sign.text_on_sign)
+        if sign.get_the_most_often(sign.result_yolo) in name_signs_city:
+            text_on_sign = sign.get_name_city()
+        else:
+            text_on_sign = sign.get_the_most_often(sign.text_on_sign)
         type = sign.get_the_most_often(sign.result_CNN)
+
         if text_on_sign != "":
             feature = Feature(geometry=line, properties={
                 "type": f"{type}",

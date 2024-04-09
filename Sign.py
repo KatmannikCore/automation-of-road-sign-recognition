@@ -1,6 +1,5 @@
 from collections import Counter
-import numpy as np
-import math
+
 from Converter import Converter
 class Sign:
     def __init__(self):
@@ -25,6 +24,8 @@ class Sign:
 
         self.distance = 0
         self.number = 0
+
+        self.number_sign = 0
     def get_azimuth(self):
         return self.azimuth
     def __str__(self):
@@ -47,7 +48,8 @@ class Sign:
             "h": self.h ,
             "x": self.pixel_coordinates_x,
             "y": self.pixel_coordinates_y,
-            "length": int(len(self.frame_numbers))
+            "length": int(len(self.frame_numbers)),
+            "number" : int(round(self.number_sign, 0))
         }
         return json_object
 
@@ -98,6 +100,36 @@ class Sign:
             return Counter(arr).most_common(1)[0][0]
         else:
             return ''
+    def get_name_city(self):
+        grouped_names = {}
+        for item in self.text_on_sign:
+            for accuracy, name in item:
+                #if accuracy == 1.0:
+                #    return name
+                #else:
+                grouped_names[name] = self.create_object_city(grouped_names, accuracy, name)
+        result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        return result_name
+    @staticmethod
+    def create_object_city(grouped_names, accuracy, name):
+
+        if name in grouped_names:
+            new_accuracy = grouped_names[name]["accuracy"]
+            new_accuracy += accuracy
+            new_count = grouped_names[name]["count"]
+            new_count += 1
+            object_city = {
+                "accuracy": new_accuracy,
+                "count": new_count
+            }
+        else:
+            object_city= {
+                "accuracy": accuracy,
+                "count": 0
+            }
+        return object_city
+
+
 
     def is_sign_on_edge_of_screen(self):
         half_screen_width = 960

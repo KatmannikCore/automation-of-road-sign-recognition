@@ -6,7 +6,8 @@
     <file url="file://$PROJECT_DIR$/Detector.py" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/Reader.py" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/View.py" charset="windows-1251" />
-    <file url="file://$PROJECT_DIR$/config.py" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/configs/config.py" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/configs/config.py" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/image.jpg" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/player.py" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/save/myfile.geojson" charset="windows-1251" />

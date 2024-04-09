@@ -3,13 +3,13 @@ import os
 import pandas as pd
 from alive_progress import alive_bar
 import random
-import config
+from configs import config
 from PIL import Image
 import shutil
 path = r"D:\Urban\test\try\\"
 path_tresh = r"D:\Urban\test\try_trash"
 content = os.listdir(path)
-myvar = pd.DataFrame(config.DEVIATION_RANGE, index=["range_min_h", "range_max_h", "range_min_w", "range_max_w",])
+myvar = pd.DataFrame(config.DEVIATION_RANGE, index=["range_min_h", "range_max_h", "range_min_w", "range_max_w", ])
 print(myvar)
 myvar.to_csv('myvar.csv')
 files = []

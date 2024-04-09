@@ -1,5 +1,4 @@
 import json
-import random
 import time
 from Converter import Converter
 from PyQt5.QtCore import QUrl
@@ -10,8 +9,8 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QVBoxLayout,QMainWindow,QApplication,QLabel, QMessageBox
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMainWindow,QApplication,QLabel, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from qtpy import QtGui
@@ -19,11 +18,13 @@ from qtpy import QtGui
 from json import dump
 from threading import Thread
 
-import config
+from configs import config
 from Reader import Reader
 from View import View
 from CoordinateCalculation import CoordinateCalculation
-from geojson import Point, Feature, FeatureCollection, dump, LineString
+from geojson import FeatureCollection, dump
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -160,7 +161,7 @@ class MainWindow(QMainWindow):
             'index_of_video': config.INDEX_OF_VIDEO,
             'index_of_sing': config.INDEX_OF_SING,
             'path_to_geojson': config.PATH_TO_GEOJSON,
-            'path_to_gpx':config.PATH_TO_GPX,
+            'path_to_gpx': config.PATH_TO_GPX,
             'count_frame': config.COUNT_FRAMES,
             'classifier':  config.ClASSIFIER
         }
@@ -168,7 +169,6 @@ class MainWindow(QMainWindow):
             dump(json, f)
         QMessageBox.about(self, "Сообщение", "Сохранено"  )
 
-    import time
     def treatment(self):
 
         self.view = View()
@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
                     config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
                     self.label.setPixmap(self.convert_cv_qt(frame))
-                    count_frame_for_gps =config.INDEX_OF_All_FRAME-  (config.INDEX_OF_GPS *60)
+                    count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
                     if self.counter_progress < config.INDEX_OF_All_FRAME:
                         #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
                         #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
@@ -238,7 +238,7 @@ class MainWindow(QMainWindow):
     def open_GPX(self):
         gpx_path = QtWidgets.QFileDialog.getOpenFileName()
         config.PATH_TO_GPX = gpx_path[0].replace('/', '\\')
-        self.Reader = Reader(config.PATH_TO_GPX )
+        self.Reader = Reader(config.PATH_TO_GPX)
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
     def getDirectory(self):
@@ -249,10 +249,17 @@ class MainWindow(QMainWindow):
     def handling_signs(self):
         grouped_objects = {}
         features = []
+       # objects = []
         # Обработка результатов знаков
         for obj in self.view.sign_handler.result_signs:
+            #objects.append(obj.json())
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             grouped_objects.setdefault(key, []).append(obj)
+        #json = {
+        #    "objects" : objects
+        #}
+        #with open("helpers_scripts3/sample.json", "w") as outfile:
+        #    dump(json, outfile, ensure_ascii=False, default=int)
 
         for key, items in grouped_objects.items():
             coefficient = 2
@@ -264,7 +271,7 @@ class MainWindow(QMainWindow):
                 features.append(feature)
         return features
     def handling_turns(self):
-        grouped_objects = {}
+
         features = []
         # Обработка поворотов
         for turn in self.view.sign_handler.turns:

@@ -1,10 +1,9 @@
-import config
+from configs import config
 from Reader import Reader
 
-from pygeoguz.simplegeo import *
-from pygeoguz.objects import *
 from Converter import Converter
-from geopy.distance import geodesic
+
+
 class Turn:
     def __init__(self):
         self.signs = []
