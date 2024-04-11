@@ -35,15 +35,15 @@ class Sign:
                f"y: {self.pixel_coordinates_y},\n" \
                f"h: {self.h},\n" \
                f"w: {self.w},\n" \
-               f"name1: {self.get_the_most_often(self.result_yolo)},\n" \
+               f"name1: {self.get_the_most_often(self.result_yolo)['name']},\n" \
                f"name2: {self.result_CNN},\n" \
                f"frame: {self.frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"
 
     def json(self):
         json_object = {
-            "name_one": self.get_the_most_often(self.result_yolo),
-            "name_two": self.get_the_most_often(self.result_CNN),
+            "name_one": self.get_the_most_often(self.result_yolo)['name'],
+            "name_two": self.get_the_most_often(self.result_CNN)['name'],
             "w": self.w ,
             "h": self.h ,
             "x": self.pixel_coordinates_x,
@@ -97,9 +97,11 @@ class Sign:
 
     def get_the_most_often(self, arr):
         if arr:
-            return Counter(arr).most_common(1)[0][0]
+            text_object = Counter(arr).most_common(1)[0]
+            result_dict = {"name" : text_object[0], "count" : text_object[1] }
+            return result_dict
         else:
-            return ''
+            return {"name" : "", "count" :0}
     def get_name_city(self):
         grouped_names = {}
         for item in self.text_on_sign:

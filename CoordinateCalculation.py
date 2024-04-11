@@ -87,11 +87,16 @@ class CoordinateCalculation:
 
     def create_feature_object(self, x1, x2, y1, y2, sign):
         line = LineString([(y1, x1), (y2, x2)])
-        if sign.get_the_most_often(sign.result_yolo) in name_signs_city:
+        if sign.get_the_most_often(sign.result_yolo)["name"] in name_signs_city:
             text_on_sign = sign.get_name_city()
         else:
-            text_on_sign = sign.get_the_most_often(sign.text_on_sign)
-        type = sign.get_the_most_often(sign.result_CNN)
+            #TODO если табличка и город
+            #TODO игнарировать если очень разные знаки или мало одинаковых совпадений
+            if len(sign.text_on_sign) <= 4:
+                text_on_sign = ""
+            else:
+                text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
+        type = sign.get_the_most_often(sign.result_CNN)['name']
 
         if text_on_sign != "":
             feature = Feature(geometry=line, properties={

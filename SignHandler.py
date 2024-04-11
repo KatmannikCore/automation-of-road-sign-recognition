@@ -12,10 +12,12 @@ class SignHandler:
     __difference_frames_for_remove_sign = 10
     __difference_frames_for_move_sign = 5
     __frame_gap_between_sign = 5
+    __min_length_sign = 4
     def __init__(self):
         self.Reader = Reader(config.PATH_TO_GPX)
         self.signs = []
         self.result_signs = []
+        self.side_signs = []
         self.turns = []
         self.was_there_turn = False
         self.turn_directions = 'straight'
@@ -71,6 +73,7 @@ class SignHandler:
         straight_signs = []
         turn_signs = []
         for item in self.signs:
+            #TODO 7 Заменить на __min_length_sign result_CNN на get_the_most_often
             if len(item.result_CNN) >= 7 and item.frame_numbers[-1] < Turn.frames[-1]:
                 turn_signs.append(item)
             else:
@@ -86,10 +89,9 @@ class SignHandler:
         items_for_remove = []
         for index in range(len(evidences)):
             for item in not_added_signs:
-                if self.signs[index].get_the_most_often(self.signs[index].result_yolo) == item.name_sign:
+                if self.signs[index].get_the_most_often(self.signs[index].result_yolo)['name'] == item.name_sign:
                     delta_x = item.x - self.signs[index].pixel_coordinates_x[-1]
                     delta_y = item.y - self.signs[index].pixel_coordinates_y[-1]
-
                     # Теорема пифагора
                     vec = round((delta_x ** 2 + delta_y ** 2) ** 0.5, 0)
                     if abs(vec - (evidences[index][1])) <= 30 and vec != 0:
@@ -140,7 +142,7 @@ class SignHandler:
             average_sign = sum(sign.pixel_coordinates_x) / len(sign.pixel_coordinates_x)
             if average_sign != average_item:
                 if item.is_left == sign.is_left:
-                    if item.get_the_most_often(item.result_CNN) == sign.get_the_most_often(sign.result_CNN):
+                    if item.get_the_most_often(item.result_CNN)['name'] == sign.get_the_most_often(sign.result_CNN)['name']:
                         distance = self.__calculation_distance(sign.car_coordinates_x[-1], sign.car_coordinates_y[-1], item.car_coordinates_x[-1], item.car_coordinates_y[-1])
                         if  distance < 20:
                             self.result_signs[index].concat_two_object(sign)
@@ -154,29 +156,30 @@ class SignHandler:
                 self.signs[index].number = 8
                 self.turns[-1].signs.append(self.signs[index])
             else:
-                different_frame = SignHandler.__difference_frames_for_move_sign + current_number_frame
-                frame_for_sign = self.signs[index].frame_numbers[-1] + 20 #+ 10
+                different_frame =  current_number_frame
+                frame_for_sign = self.signs[index].frame_numbers[-1] + SignHandler.__difference_frames_for_move_sign #+ 20 #+ 10
                 #Проверка на коректность добовления добовляемого знака через:
                 # 1)Изменение высоны расположения 2) Длинна объеиа 3) Разнать текущего номера кадра и последнего зафиксированного для знака
-                if( self.signs[index].is_sign_on_edge_of_screen() or len(self.signs[index].result_yolo) > 7) and frame_for_sign < different_frame:
-                    #if frame_for_sign < different_frame:
-                        if len(self.signs[index].result_yolo) >= SignHandler.__frame_gap_between_sign:
-                            difference_in_screen_width_x_sign = SignHandler.__screen_width - self.signs[index].w[-1]
-                            difference_in_screen_width_and_last_character_position = SignHandler.__screen_width - \
-                                                                                     self.signs[index].pixel_coordinates_x[-1]
-                            # Проверка 2х знаков на принадлежность к одной и тойже части экрана
-                            if  len(self.signs[index].result_yolo) == 1:
-                                self.signs[index].is_left = (difference_in_screen_width_x_sign <= SignHandler.__half_screen_width) == (
-                                    difference_in_screen_width_and_last_character_position <= SignHandler.__half_screen_width)
-                            else:
-                                self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - self.signs[index].pixel_coordinates_x[-1] > 0
-                            # TODO Проверка есть ли рядор знак
-                            if self.check_presence_of_nearby_sign(self.signs[index]):
-                                #TODO удалить номер знака
-                                self.signs[index].number_sign = config.INDEX_OF_All_FRAME
-                                self.result_signs.append(self.signs[index])
+                if( self.signs[index].is_sign_on_edge_of_screen() or
+                    self.signs[index].get_the_most_often(self.signs[index].result_CNN)['count'] >= self.__min_length_sign):
+                    if frame_for_sign < different_frame:
+                        difference_in_screen_width_x_sign = SignHandler.__screen_width - self.signs[index].w[-1]
+                        difference_in_screen_width_and_last_character_position = SignHandler.__screen_width - \
+                                                                                 self.signs[index].pixel_coordinates_x[-1]
+                        # Проверка 2х знаков на принадлежность к одной и тойже части экрана
+                        if  len(self.signs[index].result_yolo) == 1:
+                            self.signs[index].is_left = (difference_in_screen_width_x_sign <= SignHandler.__half_screen_width) == (
+                                difference_in_screen_width_and_last_character_position <= SignHandler.__half_screen_width)
+                        else:
+                            self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - self.signs[index].pixel_coordinates_x[-1] > 0
+                        # TODO Проверка есть ли рядор знак
+                        if self.check_presence_of_nearby_sign(self.signs[index]):
 
-                            signs_for_delete.append(self.signs[index])
+                            #TODO удалить номер знака
+                            self.signs[index].number_sign = config.INDEX_OF_All_FRAME
+                            self.result_signs.append(self.signs[index])
+
+                        signs_for_delete.append(self.signs[index])
         self.__signs_delete(signs_for_delete)
   
     def __remove_repeating_coordinates(self, sign):
@@ -186,7 +189,7 @@ class SignHandler:
         signs_for_delete = []
         for sign in self.signs:
             if sign.frame_numbers[-1] < (current_number_frame - SignHandler.__difference_frames_for_remove_sign):
-                if len(sign.result_yolo) <= SignHandler.__frame_gap_between_sign:
+                if sign.get_the_most_often(sign.result_CNN)['count'] < SignHandler.__min_length_sign:
                     signs_for_delete.append(sign)
         self.__signs_delete(signs_for_delete)
 
@@ -212,7 +215,7 @@ class SignHandler:
                     delta_y = item.y - sign.pixel_coordinates_y[-1]
                     #Теорема пифагора
                     vec = round((delta_x**2 +  delta_y**2) ** 0.5, 0)
-                    if sign.get_the_most_often(sign.result_yolo) == item.name_sign:
+                    if sign.get_the_most_often(sign.result_yolo)['name'] == item.name_sign:
                         vec -= 50
                     else:
                         vec += 50
@@ -241,7 +244,7 @@ class SignHandler:
         for sign in self.signs:
             arr = []
             for index in range(len(frame)):
-                if sign.get_the_most_often(sign.result_yolo) == frame[index].name_sign:
+                if sign.get_the_most_often(sign.result_yolo)['name'] == frame[index].name_sign:
                     arr.append(index)
             matrix.append(arr)
         return matrix

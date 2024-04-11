@@ -178,7 +178,8 @@ class MainWindow(QMainWindow):
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             #print(config.FRAME_STEP, end='\r')
-            try:
+            #try:
+            if True:
                 ret, frame = self.view.cap.read()
                 if ret == True:
                     if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
@@ -222,9 +223,9 @@ class MainWindow(QMainWindow):
                 cv2.waitKey(1)
                 while not self.is_play:
                     pass
-            except Exception as e:
-                print("error", e)
-                print('frame', config.INDEX_OF_FRAME)
+            #except Exception as e:
+            #    print("error", e)
+            #    print('frame', config.INDEX_OF_FRAME)
 
     def convert_cv_qt(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -249,17 +250,17 @@ class MainWindow(QMainWindow):
     def handling_signs(self):
         grouped_objects = {}
         features = []
-       # objects = []
+        objects = []
         # Обработка результатов знаков
         for obj in self.view.sign_handler.result_signs:
-            #objects.append(obj.json())
+            objects.append(obj.json())
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             grouped_objects.setdefault(key, []).append(obj)
-        #json = {
-        #    "objects" : objects
-        #}
-        #with open("helpers_scripts3/sample.json", "w") as outfile:
-        #    dump(json, outfile, ensure_ascii=False, default=int)
+        json = {
+            "objects" : objects
+        }
+        with open("helpers_scripts3/sample.json", "w") as outfile:
+            dump(json, outfile, ensure_ascii=False, default=int)
 
         for key, items in grouped_objects.items():
             coefficient = 2
