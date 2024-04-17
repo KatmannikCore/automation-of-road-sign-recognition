@@ -39,20 +39,21 @@ class CoordinateCalculation:
     def calculate_result_line(sign, coefficient, x_current, y_current, x_prev, y_prev):
         delta_x = x_current - x_prev
         delta_y = y_current - y_prev
+        #sign.is_sign_side = True
         if sign.is_left:
             if coefficient == 2:
-                x2 = x_current
-                y2 = y_current
+                x2 = x_prev if sign.is_sign_side else x_current
+                y2 = y_prev if sign.is_sign_side else y_current
             else:
-                x2 = x_current - delta_y * (coefficient - 2)
-                y2 = y_current + delta_x * (coefficient - 2)
+                x2 = ( x_prev if sign.is_sign_side else x_current) - delta_y * (coefficient - 2)
+                y2 = ( y_prev if sign.is_sign_side else y_current) + delta_x * (coefficient - 2)
             x1 = x_current - delta_y * (coefficient - 1)
             y1 = y_current + delta_x * (coefficient - 1)
         else:
             x1 = x_current + delta_y * coefficient
             y1 = y_current - delta_x * coefficient
-            x2 = x_current + delta_y * (coefficient + 1)
-            y2 = y_current - delta_x * (coefficient + 1)
+            x2 = (x_prev if sign.is_sign_side else x_current)  + delta_y *  (coefficient + (0 if sign.is_sign_side else 1 ))
+            y2 = (y_prev if sign.is_sign_side else y_current)  - delta_x *  (coefficient + (0 if sign.is_sign_side else 1 ))
         return x1, y1, x2, y2
     def calculate_prew_point(self, lat, lon, az):
         # Дистанция между точками в метрах
@@ -102,10 +103,36 @@ class CoordinateCalculation:
             feature = Feature(geometry=line, properties={
                 "type": f"{type}",
                 "MVALUE": f"{text_on_sign}",
-                "SEM250": f"{text_on_sign}"
+                "SEM250": f"{text_on_sign}",
+                "length": f"{len(sign.w)}",
+                "side" : f"{sign.is_sign_side}",
+                "turn" : f"{sign.turn_directions}",
+                "left": f"{sign.is_turn}",
+                "num" : f"{sign.number_sign}",
+                "pixel_coordinates_x":f"{sign.pixel_coordinates_x}",
+                "pixel_coordinates_y":f"{sign.pixel_coordinates_y}",
+                "h":f"{sign.h}",
+                "w":f"{sign.w}",
+                "car_coordinates_x":f"{sign.car_coordinates_x}",
+                "car_coordinates_y":f"{sign.car_coordinates_y}",
+                "frame_numbers":f"{sign.frame_numbers}",
             })
         else:
-            feature = Feature(geometry=line, properties={"type": f"{type}" })
+            feature = Feature(geometry=line, properties={
+                "type": f"{type}",
+                "length":  f"{len(sign.w)}",
+                "side": f"{sign.is_sign_side}",
+                "turn": f"{sign.turn_directions}",
+                "left": f"{sign.is_turn}",
+                "num": f"{sign.number_sign}",
+                "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
+                "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
+                "h": f"{sign.h}",
+                "w": f"{sign.w}",
+                "car_coordinates_x": f"{sign.car_coordinates_x}",
+                "car_coordinates_y": f"{sign.car_coordinates_y}",
+                "frame_numbers": f"{sign.frame_numbers}",
+            })
         return feature
 
     def calculation_four_dots(self, Turn):

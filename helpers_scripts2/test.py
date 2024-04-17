@@ -1,6 +1,3 @@
-arr = ("name", 2)
-obj = {
-    "name" : arr[0],
-    "count": arr[1]
-}
-print(obj.name, obj["count"])
+arr = [1,2,3,4,5]
+a = f"{arr}"
+print(a)

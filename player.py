@@ -187,7 +187,7 @@ class MainWindow(QMainWindow):
                         elapsed_time = end_time - start_time
                         print('Elapsed time: ', elapsed_time/60)
                     config.FRAME_STEP = round(self.k * speed + self.b, 0)
-                    #print(config.INDEX_OF_FRAME)
+                    print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :
                         config.FRAME_STEP += config.FRAME_STEP
                     self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
@@ -256,11 +256,11 @@ class MainWindow(QMainWindow):
             objects.append(obj.json())
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             grouped_objects.setdefault(key, []).append(obj)
-        json = {
-            "objects" : objects
-        }
-        with open("helpers_scripts3/sample.json", "w") as outfile:
-            dump(json, outfile, ensure_ascii=False, default=int)
+        #json = {
+        #    "objects" : objects
+        #}
+        #with open("helpers_scripts3/sample.json", "w") as outfile:
+        #    dump(json, outfile, ensure_ascii=False, default=int)
 
         for key, items in grouped_objects.items():
             coefficient = 2
@@ -271,8 +271,24 @@ class MainWindow(QMainWindow):
                 feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                 features.append(feature)
         return features
-    def handling_turns(self):
+    def  handling_side(self):
+        grouped_objects = {}
+        features = []
+        for obj in self.view.sign_handler.side_signs:
+            key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
+            grouped_objects.setdefault(key, []).append(obj)
+            for key, items in grouped_objects.items():
+                coefficient = 2
+                for item in items:
+                    x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
+                    coefficient += 1
 
+                    feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
+                    features.append(feature)
+        return features
+
+
+    def handling_turns(self):
         features = []
         # Обработка поворотов
         for turn in self.view.sign_handler.turns:
@@ -312,8 +328,8 @@ class MainWindow(QMainWindow):
 
         features_signs = self.handling_signs()
         features_turns = self.handling_turns()
-
-        features = features_signs + features_turns
+        features_side = self.handling_side()
+        features = features_signs + features_turns + features_side
 
         feature_collection = FeatureCollection(features)
         with open(path, 'w', encoding='cp1251') as f:

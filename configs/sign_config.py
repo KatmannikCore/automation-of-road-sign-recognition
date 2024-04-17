@@ -58,3 +58,4 @@ type_signs_yolo = {
 
 type_signs_with_text = ['3.24', '3.11', '3.12', '3.13', '3.14', '3.15', '8.1.4', '8.1.3', '8.2.1', '8.2.2', '8.2.5', '8.2.6', '7.1.2', '7.7.1', '8.1.1', '7.9.1']
 name_signs_city = [ "nachalo nas punkta bel s dom", "konec nas punkta bel s dom", "nachalo nas punkta bel", "konec nas punkta bel", "nachalo nas punkta sin", "konec nas punkta sin"]
+names_signs_for_side = ["parkovka", "ostanovka i parkovka zapreshena", "krug", "red", "tupik", "zhilaya zona", "red"]

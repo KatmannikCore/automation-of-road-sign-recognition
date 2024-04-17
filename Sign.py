@@ -26,6 +26,8 @@ class Sign:
         self.number = 0
 
         self.number_sign = 0
+
+        self.is_sign_side = False
     def get_azimuth(self):
         return self.azimuth
     def __str__(self):
