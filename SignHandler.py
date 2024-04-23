@@ -189,26 +189,73 @@ class SignHandler:
                             self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - \
                                                         self.signs[index].pixel_coordinates_x[-1] > 0
                         # TODO Проверка есть ли рядор знак
-                        if self.check_presence_of_nearby_sign(self.signs[index]):
-                            max_w = max(self.signs[index].w)
-                            max_h = max(self.signs[index].h)
-                            if not self.signs[index].is_left and \
-                                    max_w / max_h < 10 and\
-                                    (max_w * max_h) < 20000 and\
-                                    self.signs[index].car_coordinates_x[0] > 1000 and \
-                                    10 > len(self.signs[index].w) > 4 and \
-                                    self.signs[index].get_the_most_often(self.signs[index].result_yolo)['name'] in names_signs_for_side:
-                                #print( self.signs[index])
+
+                            if self.check_on_side(self.signs[index]):
                                 self.signs[index].is_sign_side = True
+                                self.azimuth = (self.azimuth + 90) % 360
                                 self.side_signs.append(self.signs[index])
                             else:
                                 # TODO удалить номер знака
-                                self.signs[index].number_sign = config.INDEX_OF_All_FRAME
-                                self.result_signs.append(self.signs[index])
+                                if self.check_presence_of_nearby_sign(self.signs[index]):
+                                    self.signs[index].number_sign = config.INDEX_OF_All_FRAME
+                                    self.result_signs.append(self.signs[index])
 
                         signs_for_delete.append(self.signs[index])
         self.__signs_delete(signs_for_delete)
 
+    def split_array(self,arr):
+        mid = len(arr) // 2
+        left = arr[:mid]
+        right = arr[mid:]
+        return left, right
+
+    def printt(self, sign):
+        max_w = max(sign.w)
+        max_h = max(sign.h)
+        min_w = min(sign.w)
+        min_h = min(sign.h)
+        CS = (max_w * max_h) / (min_h * min_w)
+        proportions = [sign.w[index]/sign.h[index] for index in range(len(sign.h))]
+        left_half, right_half = self.split_array(proportions)
+        different_left =  abs(min(left_half ) - max(left_half))
+        different_right = abs(min(right_half) - max(right_half))
+        average = sum(proportions) / len(proportions)
+
+        print("CS", CS < 10, CS)
+        print("(max_w * max_h) < 20000 )", (max_w * max_h) < 20000, max_w * max_h)
+        print("self.signs[index].pixel_coordinates_x[0] > 1000)", sign.pixel_coordinates_x[0] > 1000,
+              sign.pixel_coordinates_x[0])
+        print("len(self.signs[index].w) >= 4)", len(sign.w) >= 4, len(sign.w))
+        print("self.signs[index].get_the_most_often(self.signs[index].result_yolo)['name'] in names_signs_for_side)",
+              sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side)
+        print("different_left > different_right",(different_left > different_right or  average < 0.9 ))
+        print(different_left, different_right)
+        print("proportions", proportions)
+        print("average", average < 0.9, average)
+        print("self.signs[index])", sign)
+
+
+
+    def check_on_side(self, sign):
+        max_w = max(sign.w)
+        max_h = max(sign.h)
+        min_w = min(sign.w)
+        min_h = min(sign.h)
+        CS = (max_w * max_h) / (min_h * min_w)
+        proportions = [sign.w[index]/sign.h[index] for index in range(len(sign.h))]
+        left_half, right_half = self.split_array(proportions)
+        different_left =  abs(min(left_half ) - max(left_half))
+        different_right = abs(min(right_half) - max(right_half))
+        average = sum(proportions) / len(proportions)
+        if not sign.is_left and \
+                CS < 10 and \
+                (max_w * max_h) < 20500 and \
+                sign.pixel_coordinates_x[0] > 1000 and \
+                len(sign.w) >= 4 and \
+                sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side and \
+                (different_left > different_right or  average < 0.9 ):
+            return True
+        return False
     def __remove_repeating_coordinates(self, sign):
         return [el for el, _ in groupby(sign)]
 

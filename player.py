@@ -23,7 +23,7 @@ from Reader import Reader
 from View import View
 from CoordinateCalculation import CoordinateCalculation
 from geojson import FeatureCollection, dump
-
+import os
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -109,6 +109,14 @@ class MainWindow(QMainWindow):
         self.pixmap = QPixmap('../cnt.png')
         self.label.resize(960, 540)
 
+        config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
+        self.Reader = Reader(config.PATH_TO_GPX)
+        self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
+
+        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0064\\"
+        self.label_dir.setText("{}".format( config.PATH_TO_VIDEO))
+        self.Files =  os.listdir(config.PATH_TO_VIDEO)
+
         self.show()
     def set_speed_frame(self):
         speed_value  = int(self.speed_frame_box.text())
@@ -186,8 +194,8 @@ class MainWindow(QMainWindow):
                         end_time = time.time()
                         elapsed_time = end_time - start_time
                         print('Elapsed time: ', elapsed_time/60)
-                    config.FRAME_STEP = round(self.k * speed + self.b, 0)
-                    print(config.INDEX_OF_FRAME)
+                    config.FRAME_STEP = 7#round(self.k * speed + self.b, 0)
+                    #print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :
                         config.FRAME_STEP += config.FRAME_STEP
                     self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
@@ -209,8 +217,8 @@ class MainWindow(QMainWindow):
                     if self.view.switch_video():
                         break
 
-                    if round(speed,0) == 0:
-                        continue
+                    #if round(speed,0) == 0:
+                    #    continue
                     config.COUNT_PROCESSED_FRAMES += 1
                     retangles = self.view.draw_rectangles(frame)
                     self.label.setPixmap(self.convert_cv_qt(frame))

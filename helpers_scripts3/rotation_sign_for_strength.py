@@ -1,6 +1,15 @@
 import json
 file_path = 'sample.json'
 from termcolor import colored
+
+
+def split_array( arr):
+    mid = len(arr) // 2
+    left = arr[:mid]
+    right = arr[mid:]
+    return left, right
+
+
 with open(file_path, 'r') as file:
     # Загружаем данные из JSON файла
     data = json.load(file)['objects']
@@ -15,6 +24,8 @@ with open(file_path, 'r') as file:
         y = item['y']
 
         length = item['length']
+        if length < 4:
+            continue
         number = item['number'] - 63600
         if number > 63600:
             number = number - 63600
@@ -22,21 +33,31 @@ with open(file_path, 'r') as file:
         minute = int(frame / 60)
         part_seconds = (frame / 60 ) - minute
         seconds = int(60 * part_seconds)
+        max_w = max(w)
+        max_h = max(h)
+        min_w = min(w)
+        min_h = min(h)
+        names_signs_for_side = ["parkovka", "ostanovka i parkovka zapreshena", "krug", "red", "tupik", "zhilaya zona",
+                                "red"]
+        CS = (max_w * max_h) / (min_h * min_w)
+        proportions = [w[index] / h[index] for index in range(len(h))]
+        left_half, right_half = split_array(proportions)
+        if not left_half:
+            continue
 
-        CS = round ((max(w) * max(h)) / (min(w) * max(h)), 1)
-        #if  name_one == "krug":
-        #    print("\033[33m".format("Htua_0111100000"))
-        #    print(colored(f"Time: {minute}.{seconds}", 'red'))
-        #    print(colored(max(w) * max(h), min(w) * max(h), 'red'))
-        #    print(colored(f"CS: {CS}", 'red'))
-        #    print(colored(item, 'red'))
-        #    print(colored("____________", 'red'))
-        #    print("\033[00m".format("Htua_0111100000"))
-        #print(f"Name: {name_one} max: {prop_max} min: {prop_min} h: {prop_h} w:{prop_w}")
-        if  CS < 10 and (max(w) * max(h)) < 20000 and x[0] > 1000:
-            print(f"Time: {minute}.{seconds}")
-            print(max(w) * max(h), min(w) * max(h))
-            print(f"CS: {CS}")
-            print(item)
-            print("prop: ", min(w)/ min(h))
-            print("____________")
+        different_left = abs(min(left_half) - max(left_half))
+        different_right = abs(min(right_half) - max(right_half))
+        average = sum(proportions) / len(proportions)
+
+
+
+        if  CS < 10 and \
+            (max_w * max_h) < 20500 and \
+            x[0] > 1000 and \
+            len(w) >= 4 and \
+            name_one in names_signs_for_side and \
+            (different_left > different_right or average < 0.9):
+
+                print(f"Time: {minute}.{seconds}")
+                print(item)
+

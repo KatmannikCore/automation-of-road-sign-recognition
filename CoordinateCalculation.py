@@ -116,6 +116,7 @@ class CoordinateCalculation:
                 "car_coordinates_x":f"{sign.car_coordinates_x}",
                 "car_coordinates_y":f"{sign.car_coordinates_y}",
                 "frame_numbers":f"{sign.frame_numbers}",
+                "azimuth": f"{sign.azimuth}"
             })
         else:
             feature = Feature(geometry=line, properties={
@@ -132,6 +133,7 @@ class CoordinateCalculation:
                 "car_coordinates_x": f"{sign.car_coordinates_x}",
                 "car_coordinates_y": f"{sign.car_coordinates_y}",
                 "frame_numbers": f"{sign.frame_numbers}",
+                "azimuth": f"{sign.azimuth}"
             })
         return feature
 
