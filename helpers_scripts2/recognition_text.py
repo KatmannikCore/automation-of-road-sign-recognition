@@ -1,11 +1,24 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import pytesseract
 from PIL import Image
 import os
+
+from textblob.en import Spelling
+from rapidfuzz import fuzz
+from textblob import TextBlob
+
+
+
+
+
+
 path = r'D:\Ur2\test10\118'
 content = os.listdir(path)
 import easyocr
 # Создаем объект EasyOCR
-reader = easyocr.Reader(['ru'])
+reader = easyocr.Reader(['be'])
 for im in content:
 
         path_img = path + '\\' + im
@@ -19,21 +32,3 @@ for im in content:
            # print(im, ': empty')
 
 
-#from google.cloud import vision
-#from google.cloud.vision_v1 import types
-#
-## Инициализация клиента Google Cloud Vision
-#client = vision.ImageAnnotatorClient()
-#
-## Загрузка изображения
-#with open('image.png', 'rb') as image_file:
-#    content = image_file.read()
-#
-#image = types.Image(content=content)
-#
-## Отправка изображения на распознавание текста
-#response = client.text_detection(image=image)
-#texts = response.text_annotations
-#
-#for text in texts:
-#    print('\n"{}"'.format(text.description))

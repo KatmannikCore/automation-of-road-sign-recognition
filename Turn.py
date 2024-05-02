@@ -1,10 +1,9 @@
-import config
+from configs import config
 from Reader import Reader
 
-from pygeoguz.simplegeo import *
-from pygeoguz.objects import *
 from Converter import Converter
-from geopy.distance import geodesic
+
+
 class Turn:
     def __init__(self):
         self.signs = []
@@ -54,12 +53,18 @@ class Turn:
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
         delta = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1) - self.Reader.get_azimuth(config.INDEX_OF_GPS)
-        is_turn = abs(delta) > 10
+        is_turn = 355 > abs(delta) > 10
         if is_turn:
-            if delta < 0:
-                self.turn_directions = 'right'
+            if abs(delta) > 300:
+                if delta < 0:
+                    self.turn_directions = 'right'
+                else:
+                    self.turn_directions = 'left'
             else:
-                self.turn_directions = 'left'
+                if delta < 0:
+                    self.turn_directions = 'left'
+                else:
+                    self.turn_directions = 'right'
             self.was_there_turn = True
             return True
         else:
@@ -95,12 +100,12 @@ class Turn:
             # TODO dangerous construction
 
             if sign.pixel_coordinates_x[1] - sign.pixel_coordinates_x[-2] > 0:
-                if sign.is_turn_left:
+                if sign.turn_directions == "left":
                     return 8
                 elif coefficient_frames > 250:
                     return 7
-            #elif self.turn_directions == "right":
-            #    return 7
+            elif self.turn_directions == "right" and coefficient_frames > 150:
+                return 7
 
             coefficient_size = self.calculation_coefficient_size(min_size, max_size)
             if coefficient_size < 5:
@@ -109,6 +114,8 @@ class Turn:
                 if coefficient_frames > 250:
                     return 2
                 elif coefficient_frames < 150:
+                    return 5
+                elif max(sign.h) < 100:
                     return 5
                 else:
                     return 2  # "out of categories"

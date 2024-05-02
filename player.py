@@ -1,5 +1,4 @@
 import json
-import random
 import time
 from Converter import Converter
 from PyQt5.QtCore import QUrl
@@ -10,20 +9,23 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QVBoxLayout,QMainWindow,QApplication,QLabel, QMessageBox
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMainWindow,QApplication,QLabel, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from qtpy import QtGui
-#from architecture.View import View
 from json import dump
 from threading import Thread
+import re
 
-import config
+from SignHandler import SignHandler
+from configs import config
 from Reader import Reader
 from View import View
 from CoordinateCalculation import CoordinateCalculation
-from geojson import Point, Feature, FeatureCollection, dump, LineString
+from geojson import FeatureCollection, dump
+import os
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -108,6 +110,14 @@ class MainWindow(QMainWindow):
         self.pixmap = QPixmap('../cnt.png')
         self.label.resize(960, 540)
 
+        config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
+        self.Reader = Reader(config.PATH_TO_GPX)
+        self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
+
+        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0064\\"
+        self.label_dir.setText("{}".format( config.PATH_TO_VIDEO))
+        self.Files =  os.listdir(config.PATH_TO_VIDEO)
+
         self.show()
     def set_speed_frame(self):
         speed_value  = int(self.speed_frame_box.text())
@@ -160,7 +170,7 @@ class MainWindow(QMainWindow):
             'index_of_video': config.INDEX_OF_VIDEO,
             'index_of_sing': config.INDEX_OF_SING,
             'path_to_geojson': config.PATH_TO_GEOJSON,
-            'path_to_gpx':config.PATH_TO_GPX,
+            'path_to_gpx': config.PATH_TO_GPX,
             'count_frame': config.COUNT_FRAMES,
             'classifier':  config.ClASSIFIER
         }
@@ -168,7 +178,6 @@ class MainWindow(QMainWindow):
             dump(json, f)
         QMessageBox.about(self, "Сообщение", "Сохранено"  )
 
-    import time
     def treatment(self):
 
         self.view = View()
@@ -178,9 +187,13 @@ class MainWindow(QMainWindow):
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             #print(config.FRAME_STEP, end='\r')
-            try:
+            #try:
+            if True:
                 ret, frame = self.view.cap.read()
-                if ret == True:
+                if ret:
+                    if config.INDEX_OF_All_FRAME > 172200:
+                        self.final_data_processing()
+                        break
                     if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
                         end_time = time.time()
                         elapsed_time = end_time - start_time
@@ -195,7 +208,7 @@ class MainWindow(QMainWindow):
                     config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
                     self.label.setPixmap(self.convert_cv_qt(frame))
-                    count_frame_for_gps =config.INDEX_OF_All_FRAME-  (config.INDEX_OF_GPS *60)
+                    count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
                     if self.counter_progress < config.INDEX_OF_All_FRAME:
                         #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
                         #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
@@ -222,9 +235,9 @@ class MainWindow(QMainWindow):
                 cv2.waitKey(1)
                 while not self.is_play:
                     pass
-            except Exception as e:
-                print("error", e)
-                print('frame', config.INDEX_OF_FRAME)
+            #except Exception as e:
+            #    print("error", e)
+            #    print('frame', config.INDEX_OF_FRAME)
 
     def convert_cv_qt(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -238,7 +251,7 @@ class MainWindow(QMainWindow):
     def open_GPX(self):
         gpx_path = QtWidgets.QFileDialog.getOpenFileName()
         config.PATH_TO_GPX = gpx_path[0].replace('/', '\\')
-        self.Reader = Reader(config.PATH_TO_GPX )
+        self.Reader = Reader(config.PATH_TO_GPX)
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
     def getDirectory(self):
@@ -249,10 +262,17 @@ class MainWindow(QMainWindow):
     def handling_signs(self):
         grouped_objects = {}
         features = []
+        objects = []
         # Обработка результатов знаков
         for obj in self.view.sign_handler.result_signs:
+            objects.append(obj.json())
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             grouped_objects.setdefault(key, []).append(obj)
+        #json = {
+        #    "objects" : objects
+        #}
+        #with open("helpers_scripts3/sample.json", "w") as outfile:
+        #    dump(json, outfile, ensure_ascii=False, default=int)
 
         for key, items in grouped_objects.items():
             coefficient = 2
@@ -263,8 +283,25 @@ class MainWindow(QMainWindow):
                 feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                 features.append(feature)
         return features
-    def handling_turns(self):
+    def  handling_side(self):
         grouped_objects = {}
+        features = []
+        for obj in self.view.sign_handler.side_signs:
+            key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
+            grouped_objects.setdefault(key, []).append(obj)
+        for key, items in grouped_objects.items():
+            coefficient = 2
+            for item in items:
+                x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
+                print(x1, y1, x2, y2, item)
+                coefficient += 1
+                item.azimuth = (item.azimuth + 90) % 360
+                feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
+                features.append(feature)
+        return features
+
+
+    def handling_turns(self):
         features = []
         # Обработка поворотов
         for turn in self.view.sign_handler.turns:
@@ -282,13 +319,14 @@ class MainWindow(QMainWindow):
                 grouped_objects.setdefault(key, []).append(obj)
 
             for key, items in grouped_objects.items():
-                x_current, y_current, x_prev, y_prev = temp_obj[key]
+                x_current, y_current, x_prev, y_prev, azimuth= temp_obj[key]
                 x_current, y_current = self.converter.coordinateConverter(x_current, y_current, "epsg:4326",
                                                                           "epsg:32635")
                 x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
 
                 coefficient = 2
                 for item in items:
+                    item.azimuth = azimuth
                     x1, y1, x2, y2 = self.calculation.calculate_result_line(item, coefficient,
                                                                             x_prev, y_prev,
                                                                             x_current, y_current)
@@ -304,10 +342,54 @@ class MainWindow(QMainWindow):
 
         features_signs = self.handling_signs()
         features_turns = self.handling_turns()
+        features_side = self.handling_side()
+        features = features_signs + features_turns + features_side
+        signs_for_delete = []
+        print("________________________________")
+        if True:
+            for i in range(len(features)):
+                item_for_matching = features[i]
+                for j in range(len(features)):
+                    item_with_which_matching = features[j]
 
-        features = features_signs + features_turns
+                    item_with_x = item_with_which_matching["properties"]['w']
+                    item_with_x = [int(re.findall(r'\b\d+\b', item)[0]) for item in item_with_x.split(',')]
+                    average_item_with_x = sum(item_with_x) / len(item_with_x)
+                    item_for_x = item_for_matching["properties"]['w']
+                    item_for_x = [int(re.findall(r'\b\d+\b', item)[0]) for item in item_for_x.split(',')]
+                    average_item_for_x = sum(item_for_x) / len(item_for_x)
 
+                    item_for_car_x = item_for_matching["properties"]['car_coordinates_x']
+                    item_for_car_x = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_for_car_x.split(',')]
+                    item_for_car_y = item_for_matching["properties"]['car_coordinates_y']
+                    item_for_car_y = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_for_car_y.split(',')]
+                    item_with_car_x =  item_with_which_matching["properties"]['car_coordinates_x']
+                    item_with_car_x = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_with_car_x.split(',')]
+                    item_with_car_y =  item_with_which_matching["properties"]['car_coordinates_y']
+                    item_with_car_y = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_with_car_y.split(',')]
+
+                    if  "del" not in features[i]:
+                        if average_item_for_x != average_item_with_x:
+                            if item_for_matching["properties"]["left"] ==  item_with_which_matching["properties"]["left"]:
+                                if item_for_matching["properties"]["type"] == item_with_which_matching["properties"]["type"]:
+
+                                    distance = self.calculation.calculation_distance(item_for_car_x[-1], item_for_car_y[-1],
+                                                                      item_with_car_x[-1], item_with_car_y[-1])
+                                    if distance < 20:
+                                        item_for_azimuth = float(item_for_matching["properties"]["azimuth"])
+                                        item_with_azimuth = float(item_with_which_matching["properties"]["azimuth"])
+                                        difference_azimuth = abs(self.calculation.calculate_azimuth_change(item_for_azimuth,item_with_azimuth))
+                                        if difference_azimuth  < 30:
+                                            features[j]["del"] = 0
+                                            if int(features[j]["properties"]["length"]) > int(features[i]["properties"]["length"]):
+                                                signs_for_delete.append(item_for_matching)
+                                            else:
+                                                signs_for_delete.append(item_with_which_matching)
+                                            break
+            for item in signs_for_delete:
+                features.remove(item)
         feature_collection = FeatureCollection(features)
+
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
 

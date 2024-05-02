@@ -40,6 +40,9 @@ path_test = r'D:\Urban\yolov4\yolov4-opencv-python\train\treugolnik\a9'
 path_dir_arr = os.listdir(path_txt)
 name = './models_200_10/treugolnik/danger.h5'
 
+
+
+
 with alive_bar(len(os.listdir(path_txt) *10), force_tty=True) as bar_dir:
     for i in range(0, 10):
         for filename in os.listdir(path_txt):

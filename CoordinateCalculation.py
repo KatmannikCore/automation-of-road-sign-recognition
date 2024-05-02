@@ -1,11 +1,11 @@
-import math
 from Reader import Reader
 from Converter import Converter
-import config as config
+from configs import config as config
 from pygeoguz.simplegeo import *
 from pygeoguz.objects import *
-
+from configs.sign_config import name_signs_city
 from geojson import Feature, LineString
+from geopy.distance import geodesic
 class CoordinateCalculation:
     __one_radian = 57.2958
     def __init__(self):
@@ -40,20 +40,21 @@ class CoordinateCalculation:
     def calculate_result_line(sign, coefficient, x_current, y_current, x_prev, y_prev):
         delta_x = x_current - x_prev
         delta_y = y_current - y_prev
+        #sign.is_sign_side = True
         if sign.is_left:
             if coefficient == 2:
-                x2 = x_current
-                y2 = y_current
+                x2 = x_prev if sign.is_sign_side else x_current
+                y2 = y_prev if sign.is_sign_side else y_current
             else:
-                x2 = x_current - delta_y * (coefficient - 2)
-                y2 = y_current + delta_x * (coefficient - 2)
+                x2 = ( x_prev if sign.is_sign_side else x_current) - delta_y * (coefficient - 2)
+                y2 = ( y_prev if sign.is_sign_side else y_current) + delta_x * (coefficient - 2)
             x1 = x_current - delta_y * (coefficient - 1)
             y1 = y_current + delta_x * (coefficient - 1)
         else:
             x1 = x_current + delta_y * coefficient
             y1 = y_current - delta_x * coefficient
-            x2 = x_current + delta_y * (coefficient + 1)
-            y2 = y_current - delta_x * (coefficient + 1)
+            x2 = (x_prev if sign.is_sign_side else x_current)  + delta_y *  (coefficient + (0 if sign.is_sign_side else 1 ))
+            y2 = (y_prev if sign.is_sign_side else y_current)  - delta_x *  (coefficient + (0 if sign.is_sign_side else 1 ))
         return x1, y1, x2, y2
     def calculate_prew_point(self, lat, lon, az):
         # Дистанция между точками в метрах
@@ -88,16 +89,53 @@ class CoordinateCalculation:
 
     def create_feature_object(self, x1, x2, y1, y2, sign):
         line = LineString([(y1, x1), (y2, x2)])
-        text_on_sign = sign.get_the_most_often(sign.text_on_sign)
-        type = sign.get_the_most_often(sign.result_CNN)
+        if sign.get_the_most_often(sign.result_yolo)["name"] in name_signs_city:
+            text_on_sign = sign.get_name_city()
+        else:
+            #TODO если табличка и город
+            #TODO игнарировать если очень разные знаки или мало одинаковых совпадений
+            if len(sign.text_on_sign) <= 4:
+                text_on_sign = ""
+            else:
+                text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
+        type = sign.get_the_most_often(sign.result_CNN)['name']
+
         if text_on_sign != "":
             feature = Feature(geometry=line, properties={
                 "type": f"{type}",
                 "MVALUE": f"{text_on_sign}",
-                "SEM250": f"{text_on_sign}"
+                "SEM250": f"{text_on_sign}",
+                "length": f"{len(sign.w)}",
+                "side" : f"{sign.is_sign_side}",
+                "turn" : f"{sign.turn_directions}",
+                "left": f"{sign.is_left}",
+                "num" : f"{sign.number_sign}",
+                "pixel_coordinates_x":f"{sign.pixel_coordinates_x}",
+                "pixel_coordinates_y":f"{sign.pixel_coordinates_y}",
+                "h":f"{sign.h}",
+                "w":f"{sign.w}",
+                "car_coordinates_x":f"{sign.car_coordinates_x}",
+                "car_coordinates_y":f"{sign.car_coordinates_y}",
+                "frame_numbers":f"{sign.frame_numbers}",
+                "azimuth": f"{sign.azimuth}"
             })
         else:
-            feature = Feature(geometry=line, properties={"type": f"{type}" })
+            feature = Feature(geometry=line, properties={
+                "type": f"{type}",
+                "length":  f"{len(sign.w)}",
+                "side": f"{sign.is_sign_side}",
+                "turn": f"{sign.turn_directions}",
+                "left": f"{sign.is_left}",
+                "num": f"{sign.number_sign}",
+                "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
+                "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
+                "h": f"{sign.h}",
+                "w": f"{sign.w}",
+                "car_coordinates_x": f"{sign.car_coordinates_x}",
+                "car_coordinates_y": f"{sign.car_coordinates_y}",
+                "frame_numbers": f"{sign.frame_numbers}",
+                "azimuth": f"{sign.azimuth}"
+            })
         return feature
 
     def calculation_four_dots(self, Turn):
@@ -108,7 +146,7 @@ class CoordinateCalculation:
             lon1 = round(lon1, 5)
             lat2 = round(lat2, 5)
             lon2 = round(lon2, 5)
-            result_points.append([lat1, lon1, lat2, lon2])
+            result_points.append([lat1, lon1, lat2, lon2, az])
         return result_points
 
     def calculate_current_points(self, Turn):
@@ -133,6 +171,11 @@ class CoordinateCalculation:
         revers_start_point.append(Turn.azimuths[0])
         revers_end_point.append(Turn.azimuths[-1])
         return start_point, end_point, revers_start_point, revers_end_point
+    def calculation_distance(self, lat1, lon1, lat2, lon2):
+        lat1, lon1 = self.converter.coordinateConverter(lat1, lon1, "epsg:32635", "epsg:4326")
+        lat2, lon2 = self.converter.coordinateConverter(lat2, lon2, "epsg:32635", "epsg:4326")
+
+        return geodesic((lat1, lon1), (lat2, lon2)).meters  # math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
 
     def calculate_revers_points(self, azimuth_offset, length, p1, direction):
         azimuth = direction + azimuth_offset
@@ -140,7 +183,7 @@ class CoordinateCalculation:
         p2 = pgz(point=p1, line=line)
         x, y = self.converter.coordinateConverter(p2.y, p2.x, "epsg:32635", "epsg:4326")
         return [x, y]
-
+    #Данный метод вычисления азимута матиматически неверный, но больше подходит под задачу. Верный метод находиться в файле calculation_derection.py
     def calculate_azimuth_change(self, old_azimuth, new_azimuth):
         azimuth_change = new_azimuth - old_azimuth
         if azimuth_change > 180:
@@ -148,3 +191,4 @@ class CoordinateCalculation:
         elif azimuth_change < -180:
             azimuth_change = azimuth_change + 360
         return azimuth_change
+

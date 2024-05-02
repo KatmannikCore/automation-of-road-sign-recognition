@@ -1,17 +1,3 @@
-def calculate_azimuth_change(old_azimuth, new_azimuth):
-    azimuth_change = new_azimuth - old_azimuth
-    if azimuth_change > 180:
-        azimuth_change = azimuth_change - 360
-    elif azimuth_change < -180:
-        azimuth_change = azimuth_change + 360
-    return azimuth_change
-
-# Пример использования:
-old_azimuth = 350
-new_azimuth = 10
-azimuth_change = calculate_azimuth_change(old_azimuth, new_azimuth)
-print(f'Изменение азимута: {azimuth_change} градусов')
-#Матиматически верные вычиления но не подходит под ситуацию
 import math
 def azimuth_difference(azimuth1, azimuth2):
   """Вычисляет разницу между двумя азимутами.
@@ -41,7 +27,7 @@ def azimuth_difference(azimuth1, azimuth2):
 
 
 # Пример использования
-azimuth1 = 352
-azimuth2 = 21
+azimuth1 = 11
+azimuth2 = 352
 difference = azimuth_difference(azimuth1, azimuth2)
 print(f"Разница между азимутами {azimuth1} и {azimuth2}: {difference} градусов")

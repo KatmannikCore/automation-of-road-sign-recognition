@@ -1,7 +1,5 @@
 from collections import Counter
-from geopy.distance import geodesic
-from math import atan2, degrees, radians
-import math
+
 from Converter import Converter
 class Sign:
     def __init__(self):
@@ -26,6 +24,10 @@ class Sign:
 
         self.distance = 0
         self.number = 0
+
+        self.number_sign = 0
+
+        self.is_sign_side = False
     def get_azimuth(self):
         return self.azimuth
     def __str__(self):
@@ -35,10 +37,24 @@ class Sign:
                f"y: {self.pixel_coordinates_y},\n" \
                f"h: {self.h},\n" \
                f"w: {self.w},\n" \
-               f"name1: {self.get_the_most_often(self.result_yolo)},\n" \
+               f"name1: {self.get_the_most_often(self.result_yolo)['name']},\n" \
                f"name2: {self.result_CNN},\n" \
                f"frame: {self.frame_numbers}\n" \
-               f"coordinate: {x}, {y}  \n"
+               f"coordinate: {x}, {y}  \n"\
+               f"azimuth: {self.azimuth}  \n"
+
+    def json(self):
+        json_object = {
+            "name_one": self.get_the_most_often(self.result_yolo)['name'],
+            "name_two": self.get_the_most_often(self.result_CNN)['name'],
+            "w": self.w ,
+            "h": self.h ,
+            "x": self.pixel_coordinates_x,
+            "y": self.pixel_coordinates_y,
+            "length": int(len(self.frame_numbers)),
+            "number" : int(round(self.number_sign, 0))
+        }
+        return json_object
 
     def replace_car_coordinates(self, turn):
         self.car_coordinates_x = []
@@ -84,10 +100,36 @@ class Sign:
 
     def get_the_most_often(self, arr):
         if arr:
-            return Counter(arr).most_common(1)[0][0]
+            text_object = Counter(arr).most_common(1)[0]
+            result_dict = {"name" : text_object[0], "count" : text_object[1] }
+            return result_dict
         else:
-            return ''
-
+            return {"name" : "", "count" :0}
+    def get_name_city(self):
+        grouped_names = {}
+        for item in self.text_on_sign:
+            for accuracy, name in item:
+                grouped_names[name] = self.create_object_city(grouped_names, accuracy, name)
+        result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        return result_name
+    @staticmethod
+    def create_object_city(grouped_names, accuracy, name):
+        if name in grouped_names:
+            new_accuracy = grouped_names[name]["accuracy"]
+            new_accuracy += accuracy
+            new_count = grouped_names[name]["count"]
+            new_count += 1
+            object_city = {
+                "accuracy": new_accuracy,
+                "count": new_count
+            }
+        else:
+            object_city= {
+                "accuracy": accuracy,
+                "count": 0
+            }
+        return object_city
+    #TODO Вроде ненужный метод
     def is_sign_on_edge_of_screen(self):
         half_screen_width = 960
         screen_width = 1920
