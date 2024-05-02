@@ -14,10 +14,11 @@ from PyQt5.QtWidgets import QMainWindow,QApplication,QLabel, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from qtpy import QtGui
-#from architecture.View import View
 from json import dump
 from threading import Thread
+import re
 
+from SignHandler import SignHandler
 from configs import config
 from Reader import Reader
 from View import View
@@ -189,12 +190,15 @@ class MainWindow(QMainWindow):
             #try:
             if True:
                 ret, frame = self.view.cap.read()
-                if ret == True:
+                if ret:
+                    if config.INDEX_OF_All_FRAME > 172200:
+                        self.final_data_processing()
+                        break
                     if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
                         end_time = time.time()
                         elapsed_time = end_time - start_time
                         print('Elapsed time: ', elapsed_time/60)
-                    config.FRAME_STEP = 7#round(self.k * speed + self.b, 0)
+                    config.FRAME_STEP = round(self.k * speed + self.b, 0)
                     #print(config.INDEX_OF_FRAME)
                     if self.count_empty > 5 :
                         config.FRAME_STEP += config.FRAME_STEP
@@ -217,8 +221,8 @@ class MainWindow(QMainWindow):
                     if self.view.switch_video():
                         break
 
-                    #if round(speed,0) == 0:
-                    #    continue
+                    if round(speed,0) == 0:
+                        continue
                     config.COUNT_PROCESSED_FRAMES += 1
                     retangles = self.view.draw_rectangles(frame)
                     self.label.setPixmap(self.convert_cv_qt(frame))
@@ -285,14 +289,15 @@ class MainWindow(QMainWindow):
         for obj in self.view.sign_handler.side_signs:
             key = str(obj.car_coordinates_x[-1]) + str(obj.is_left)
             grouped_objects.setdefault(key, []).append(obj)
-            for key, items in grouped_objects.items():
-                coefficient = 2
-                for item in items:
-                    x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
-                    coefficient += 1
-
-                    feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
-                    features.append(feature)
+        for key, items in grouped_objects.items():
+            coefficient = 2
+            for item in items:
+                x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
+                print(x1, y1, x2, y2, item)
+                coefficient += 1
+                item.azimuth = (item.azimuth + 90) % 360
+                feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
+                features.append(feature)
         return features
 
 
@@ -314,13 +319,14 @@ class MainWindow(QMainWindow):
                 grouped_objects.setdefault(key, []).append(obj)
 
             for key, items in grouped_objects.items():
-                x_current, y_current, x_prev, y_prev = temp_obj[key]
+                x_current, y_current, x_prev, y_prev, azimuth= temp_obj[key]
                 x_current, y_current = self.converter.coordinateConverter(x_current, y_current, "epsg:4326",
                                                                           "epsg:32635")
                 x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
 
                 coefficient = 2
                 for item in items:
+                    item.azimuth = azimuth
                     x1, y1, x2, y2 = self.calculation.calculate_result_line(item, coefficient,
                                                                             x_prev, y_prev,
                                                                             x_current, y_current)
@@ -338,8 +344,52 @@ class MainWindow(QMainWindow):
         features_turns = self.handling_turns()
         features_side = self.handling_side()
         features = features_signs + features_turns + features_side
+        signs_for_delete = []
+        print("________________________________")
+        if True:
+            for i in range(len(features)):
+                item_for_matching = features[i]
+                for j in range(len(features)):
+                    item_with_which_matching = features[j]
 
+                    item_with_x = item_with_which_matching["properties"]['w']
+                    item_with_x = [int(re.findall(r'\b\d+\b', item)[0]) for item in item_with_x.split(',')]
+                    average_item_with_x = sum(item_with_x) / len(item_with_x)
+                    item_for_x = item_for_matching["properties"]['w']
+                    item_for_x = [int(re.findall(r'\b\d+\b', item)[0]) for item in item_for_x.split(',')]
+                    average_item_for_x = sum(item_for_x) / len(item_for_x)
+
+                    item_for_car_x = item_for_matching["properties"]['car_coordinates_x']
+                    item_for_car_x = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_for_car_x.split(',')]
+                    item_for_car_y = item_for_matching["properties"]['car_coordinates_y']
+                    item_for_car_y = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_for_car_y.split(',')]
+                    item_with_car_x =  item_with_which_matching["properties"]['car_coordinates_x']
+                    item_with_car_x = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_with_car_x.split(',')]
+                    item_with_car_y =  item_with_which_matching["properties"]['car_coordinates_y']
+                    item_with_car_y = [float(re.findall(r'\b\d+\b', item)[0]) for item in item_with_car_y.split(',')]
+
+                    if  "del" not in features[i]:
+                        if average_item_for_x != average_item_with_x:
+                            if item_for_matching["properties"]["left"] ==  item_with_which_matching["properties"]["left"]:
+                                if item_for_matching["properties"]["type"] == item_with_which_matching["properties"]["type"]:
+
+                                    distance = self.calculation.calculation_distance(item_for_car_x[-1], item_for_car_y[-1],
+                                                                      item_with_car_x[-1], item_with_car_y[-1])
+                                    if distance < 20:
+                                        item_for_azimuth = float(item_for_matching["properties"]["azimuth"])
+                                        item_with_azimuth = float(item_with_which_matching["properties"]["azimuth"])
+                                        difference_azimuth = abs(self.calculation.calculate_azimuth_change(item_for_azimuth,item_with_azimuth))
+                                        if difference_azimuth  < 30:
+                                            features[j]["del"] = 0
+                                            if int(features[j]["properties"]["length"]) > int(features[i]["properties"]["length"]):
+                                                signs_for_delete.append(item_for_matching)
+                                            else:
+                                                signs_for_delete.append(item_with_which_matching)
+                                            break
+            for item in signs_for_delete:
+                features.remove(item)
         feature_collection = FeatureCollection(features)
+
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
 

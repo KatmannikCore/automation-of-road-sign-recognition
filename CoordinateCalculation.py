@@ -5,6 +5,7 @@ from pygeoguz.simplegeo import *
 from pygeoguz.objects import *
 from configs.sign_config import name_signs_city
 from geojson import Feature, LineString
+from geopy.distance import geodesic
 class CoordinateCalculation:
     __one_radian = 57.2958
     def __init__(self):
@@ -107,7 +108,7 @@ class CoordinateCalculation:
                 "length": f"{len(sign.w)}",
                 "side" : f"{sign.is_sign_side}",
                 "turn" : f"{sign.turn_directions}",
-                "left": f"{sign.is_turn}",
+                "left": f"{sign.is_left}",
                 "num" : f"{sign.number_sign}",
                 "pixel_coordinates_x":f"{sign.pixel_coordinates_x}",
                 "pixel_coordinates_y":f"{sign.pixel_coordinates_y}",
@@ -124,7 +125,7 @@ class CoordinateCalculation:
                 "length":  f"{len(sign.w)}",
                 "side": f"{sign.is_sign_side}",
                 "turn": f"{sign.turn_directions}",
-                "left": f"{sign.is_turn}",
+                "left": f"{sign.is_left}",
                 "num": f"{sign.number_sign}",
                 "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
                 "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
@@ -145,7 +146,7 @@ class CoordinateCalculation:
             lon1 = round(lon1, 5)
             lat2 = round(lat2, 5)
             lon2 = round(lon2, 5)
-            result_points.append([lat1, lon1, lat2, lon2])
+            result_points.append([lat1, lon1, lat2, lon2, az])
         return result_points
 
     def calculate_current_points(self, Turn):
@@ -170,6 +171,11 @@ class CoordinateCalculation:
         revers_start_point.append(Turn.azimuths[0])
         revers_end_point.append(Turn.azimuths[-1])
         return start_point, end_point, revers_start_point, revers_end_point
+    def calculation_distance(self, lat1, lon1, lat2, lon2):
+        lat1, lon1 = self.converter.coordinateConverter(lat1, lon1, "epsg:32635", "epsg:4326")
+        lat2, lon2 = self.converter.coordinateConverter(lat2, lon2, "epsg:32635", "epsg:4326")
+
+        return geodesic((lat1, lon1), (lat2, lon2)).meters  # math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2)
 
     def calculate_revers_points(self, azimuth_offset, length, p1, direction):
         azimuth = direction + azimuth_offset
@@ -177,7 +183,7 @@ class CoordinateCalculation:
         p2 = pgz(point=p1, line=line)
         x, y = self.converter.coordinateConverter(p2.y, p2.x, "epsg:32635", "epsg:4326")
         return [x, y]
-
+    #Данный метод вычисления азимута матиматически неверный, но больше подходит под задачу. Верный метод находиться в файле calculation_derection.py
     def calculate_azimuth_change(self, old_azimuth, new_azimuth):
         azimuth_change = new_azimuth - old_azimuth
         if azimuth_change > 180:
@@ -185,3 +191,4 @@ class CoordinateCalculation:
         elif azimuth_change < -180:
             azimuth_change = azimuth_change + 360
         return azimuth_change
+

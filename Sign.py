@@ -40,7 +40,8 @@ class Sign:
                f"name1: {self.get_the_most_often(self.result_yolo)['name']},\n" \
                f"name2: {self.result_CNN},\n" \
                f"frame: {self.frame_numbers}\n" \
-               f"coordinate: {x}, {y}  \n"
+               f"coordinate: {x}, {y}  \n"\
+               f"azimuth: {self.azimuth}  \n"
 
     def json(self):
         json_object = {
@@ -108,15 +109,11 @@ class Sign:
         grouped_names = {}
         for item in self.text_on_sign:
             for accuracy, name in item:
-                #if accuracy == 1.0:
-                #    return name
-                #else:
                 grouped_names[name] = self.create_object_city(grouped_names, accuracy, name)
         result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
         return result_name
     @staticmethod
     def create_object_city(grouped_names, accuracy, name):
-
         if name in grouped_names:
             new_accuracy = grouped_names[name]["accuracy"]
             new_accuracy += accuracy
@@ -132,9 +129,7 @@ class Sign:
                 "count": 0
             }
         return object_city
-
-
-
+    #TODO Вроде ненужный метод
     def is_sign_on_edge_of_screen(self):
         half_screen_width = 960
         screen_width = 1920
