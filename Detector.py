@@ -23,7 +23,7 @@ class Detector:
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.class_name = []
-        with open('static/classes.txt', 'r') as f:
+        with open(r'D:\Urban\yolov4\yolov4-opencv-python/static/classes.txt', 'r') as f:
             self.class_name = [cname.strip() for cname in f.readlines()]
         self.model = cv2.dnn_DetectionModel(net)
         self.model.setInputParams(size=(416, 416), scale=1 / 255, swapRB=True)
@@ -64,7 +64,7 @@ class Detector:
             if self.city_names:
                 text = difflib.get_close_matches(text, self.city_names)
             else:
-                with open('./static/cities_be.txt', 'r', encoding='utf-8') as file:
+                with open(r'D:\Urban\yolov4\yolov4-opencv-python/static/cities_be.txt', 'r', encoding='utf-8') as file:
                     # Читаем строки из файла и помещаем их в массив
                     lines = file.readlines()
                 for line in lines:

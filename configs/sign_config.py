@@ -1,21 +1,21 @@
 from tensorflow.keras.models import load_model
 model_dict = {
-    "blue": load_model('./models_200_10/blue.h5'),
-    "treugolnik": load_model('./models_200_10/treugolnik.h5'),
-    "krug": load_model('./models_200_10/krug.h5'),
-    "red": load_model('./models_100/red.h5'),
-    "servises": load_model('./models_200_10/servises.h5'),
-    "tablichka __": load_model('./models_200_10/tab.h5'),
-    "tablichka |": load_model('./models_200_10/tabl l.h5'),
-    "tupik": load_model('./models_200_10/tupik.h5')
+    "blue": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/blue.h5'),
+    "treugolnik": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/treugolnik.h5'),
+    "krug": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/krug.h5'),
+    "red": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_100/red.h5'),
+    "servises": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/servises.h5'),
+    "tablichka __": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/tab.h5'),
+    "tablichka |": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/tabl l.h5'),
+    "tupik": load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/tupik.h5')
 }
 sub_models = {
-    'danger': load_model('./models_200_10/treugolnik/danger.h5'),
-    'pimicanie': load_model('./models_200_10/treugolnik/pimicanie.h5'),
-    'suzenie': load_model('./models_200_10/treugolnik/suzenie.h5')
+    'danger': load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/treugolnik/danger.h5'),
+    'pimicanie': load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/treugolnik/pimicanie.h5'),
+    'suzenie': load_model(r'D:\Urban\yolov4\yolov4-opencv-python/models_200_10/treugolnik/suzenie.h5')
 }
 
-model = load_model('./test_c171_r10_e80.h5')
+model = load_model(r'D:\Urban\yolov4\yolov4-opencv-python/test_c171_r10_e80.h5')
 
 name_signs_cnn = {
     "blue": ["4.1.4", "4.3","4.2.2", "4.1.6", "4.1.3", "4.1.1", "4.1.4", "0000010420", "4.2.1","4.1.2"],
@@ -53,7 +53,8 @@ type_signs_yolo = {
     "nachalo nas punkta bel" : "5.22.1",
     "konec nas punkta bel" : "5.23.1",
     "nachalo nas punkta sin" : "5.23.3",
-    "konec nas punkta sin" : "5.25.3"
+    "konec nas punkta sin" : "5.25.3",
+    "platnaua doroga" : "7.17"
 }
 
 type_signs_with_text = ['3.24', '3.11', '3.12', '3.13', '3.14', '3.15', '8.1.4', '8.1.3', '8.2.1', '8.2.2', '8.2.5', '8.2.6', '7.1.2', '7.7.1', '8.1.1', '7.9.1']

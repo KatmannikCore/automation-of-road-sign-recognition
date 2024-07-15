@@ -4,15 +4,21 @@ import shutil
 from Detector import Detector
 import cv2
 
-dir_for_learning = [r"D:\Urban\yolov4\OpenLabeling-master\main\input"]
-#r"D:\Urban\learning\auto\GP100056 (22.09.2022 9-42-23)",
-#r"D:\Urban\learning\auto\GP100057 (16.09.2022 9-11-49)",
-#r"D:\Urban\learning\auto\GP100059 (21.09.2022 12-45-51)",
-#r"D:\Urban\learning\auto\GP100077 (22.09.2022 14-49-04)",
-#r"D:\Urban\learning\auto\GP100079 (23.09.2022 10-48-50)",
-#r"D:\Urban\learning\auto\GP100082 (23.09.2022 15-16-30)",
-#r"D:\Urban\learning\auto\GP100083 (26.09.2022 9-57-47)",GP070079 (23.09.2022 10-31-06)
-#r"D:\Urban\learning\auto\GP110056 (22.09.2022 9-34-31)"]
+dir_for_learning = [r"E:\signs\GOPR0451 (18.06.2024 9-58-35)",
+                    r"E:\signs\GOPR0550 (18.06.2024 10-01-35)",
+                    r"E:\signs\GP010451 (18.06.2024 9-59-21)",
+                    r"E:\signs\GP010461 (18.06.2024 10-00-37)",
+                    r"E:\signs\GP010550 (18.06.2024 10-02-25)",
+                    r"E:\signs\GP020461 (18.06.2024 10-01-23)",
+                    r"E:\signs\GP020550 (18.06.2024 10-03-19)",
+                    r"E:\signs\GP030550 (18.06.2024 10-04-12)",
+                    r"E:\signs\GP040550 (18.06.2024 10-05-09)",
+                    r"E:\signs\GP050550 (18.06.2024 10-06-07)",
+                    r"E:\signs\GP060550 (18.06.2024 10-06-55)",
+                    r"E:\signs\GP070550 (18.06.2024 10-07-43)",
+                    r"E:\signs\GP080550 (18.06.2024 10-08-33)",
+                    r"E:\signs\GP090550 (18.06.2024 10-09-21)",
+                    r"E:\signs\GP100550 (18.06.2024 10-10-09)",]
 detector = Detector()
 
 classes = {
@@ -37,7 +43,15 @@ classes = {
 "tablichka __":17,
 "ostanovka avtobusa tablichka":18,
 "doroga s odnostoronnim dvizheniem":19,
-"napravlenie glavnoj dorogi":20
+"napravlenie glavnoj dorogi":20,
+"nachalo nas punkta bel s dom": 21,
+"konec nas punkta bel s dom": 22,
+"nachalo nas punkta bel": 23,
+"konec nas punkta bel": 24,
+"nachalo nas punkta sin": 25,
+"konec nas punkta sin": 26,
+"Sbros vseh ogranicheniu": 27,
+"platnaua doroga": 28
 }
 
 width = 1920
@@ -45,7 +59,7 @@ height = 1080
 for dir in dir_for_learning:
     imgList = os.listdir(dir)
     for img_path in imgList:
-        if img_path[14:] == '.jpg':
+        if img_path.split('.')[-1] == 'jpg':
 
             image = cv2.imread(rf"{dir}\{img_path}")
             rectangles = detector.find_rectangles(image)
@@ -54,10 +68,10 @@ for dir in dir_for_learning:
                 print(len(rectangles))
                 print(rf"{dir}\{img_path}")
             else:
-                my_file_name = fr"{dir}\{img_path[:14]}.txt"
+                my_file_name = fr"{dir}\{img_path.split('.')[0]}.txt"
                 my_file = open(my_file_name, "w+")
                 result_data = []
-                for box, color, label, name_sing in rectangles:
+                for box, color, label, name_sing, res, text_on_sign in rectangles:
                     point_1 = [box[0], box[1]]
                     point_2 = [box[0] + box[2],  box[1] + box[3]]
                     x_center = float((point_1[0] + point_2[0]) / (2.0 * width))

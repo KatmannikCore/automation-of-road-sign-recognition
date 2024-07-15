@@ -34,8 +34,8 @@ class MainWindow(QMainWindow):
         #config.PATH_TO_GPX = r"D:\\Urban\\vid\\test\\07,07,2021.gpx"
         #self.Reader = Reader(config.PATH_TO_GPX )
         self.calculation  = CoordinateCalculation()
-        self.k = -0.3
-        self.b = 10.83
+        self.k = -0.5
+        self.b = 10.9
         self.count_empty = 0
         self.counter_progress = 5000
         self.Reader = None
@@ -110,11 +110,11 @@ class MainWindow(QMainWindow):
         self.pixmap = QPixmap('../cnt.png')
         self.label.resize(960, 540)
 
-        config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
+        config.PATH_TO_GPX = r"D:\Urban\vid\test\Testing\25,03,24-Быстрица\25,03,24-Быстрица.gpx"
         self.Reader = Reader(config.PATH_TO_GPX)
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
-        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0064\\"
+        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\Testing\25,03,24-Быстрица\100GOPRO" + "\\"
         self.label_dir.setText("{}".format( config.PATH_TO_VIDEO))
         self.Files =  os.listdir(config.PATH_TO_VIDEO)
 
@@ -186,58 +186,62 @@ class MainWindow(QMainWindow):
         start_time = time.time()
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
+
             #print(config.FRAME_STEP, end='\r')
             #try:
             if True:
-                ret, frame = self.view.cap.read()
-                if ret:
-                    if config.INDEX_OF_All_FRAME > 172200:
-                        self.final_data_processing()
-                        break
-                    if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
-                        end_time = time.time()
-                        elapsed_time = end_time - start_time
-                        print('Elapsed time: ', elapsed_time/60)
-                    config.FRAME_STEP = round(self.k * speed + self.b, 0)
-                    #print(config.INDEX_OF_FRAME)
-                    if self.count_empty > 5 :
-                        config.FRAME_STEP += config.FRAME_STEP
-                    self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
+                if True:
+                    ret, frame = self.view.cap.read()
+                    if ret:
+                        #if config.INDEX_OF_All_FRAME > 172200:
+                        #    self.final_data_processing()
+                        #    break
+                        if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
+                            end_time = time.time()
+                            elapsed_time = end_time - start_time
+                            print('Elapsed time: ', elapsed_time/60)
+                            self.final_data_processing()
+                            break
+                        config.FRAME_STEP = round(self.k * speed + self.b, 0) -2
+                        #print(config.INDEX_OF_FRAME)
+                        if self.count_empty > 5 :
+                            config.FRAME_STEP += config.FRAME_STEP
+                        self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
 
-                    config.INDEX_OF_FRAME += config.FRAME_STEP
-                    config.INDEX_OF_All_FRAME += config.FRAME_STEP
+                        config.INDEX_OF_FRAME += config.FRAME_STEP
+                        config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
-                    self.label.setPixmap(self.convert_cv_qt(frame))
-                    count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
-                    if self.counter_progress < config.INDEX_OF_All_FRAME:
-                        #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
-                        #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
-                        #print("percent_frames: ",round(percent_frames,2))
-                        #print("percent_gpx: ",round(percent_gpx,2))
-                        self.counter_progress += 5000
+                        self.label.setPixmap(self.convert_cv_qt(frame))
+                        count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
+                        if self.counter_progress < config.INDEX_OF_All_FRAME:
+                            #percent_frames = (config.INDEX_OF_All_FRAME * 100) / config.COUNT_FRAMES
+                            #percent_gpx = (config.INDEX_OF_GPS * 100) / count_gpx
+                            #print("percent_frames: ",round(percent_frames,2))
+                            #print("percent_gpx: ",round(percent_gpx,2))
+                            self.counter_progress += 5000
 
-                    if count_frame_for_gps > 60 :
-                        config.INDEX_OF_GPS += 1
-                    if self.view.switch_video():
-                        break
+                        if count_frame_for_gps > 60 :
+                            config.INDEX_OF_GPS += 1
+                        if self.view.switch_video():
+                            break
 
-                    if round(speed,0) == 0:
-                        continue
-                    config.COUNT_PROCESSED_FRAMES += 1
-                    retangles = self.view.draw_rectangles(frame)
-                    self.label.setPixmap(self.convert_cv_qt(frame))
-                    if not retangles:
-                        self.count_empty += 1
-                    else:
-                        self.count_empty = 0
+                        if round(speed,0) == 0:
+                            continue
+                        config.COUNT_PROCESSED_FRAMES += 1
+                        retangles = self.view.draw_rectangles(frame)
+                        self.label.setPixmap(self.convert_cv_qt(frame))
+                        if not retangles:
+                            self.count_empty += 1
+                        else:
+                            self.count_empty = 0
 
+                        cv2.waitKey(1)
                     cv2.waitKey(1)
-                cv2.waitKey(1)
-                while not self.is_play:
-                    pass
-            #except Exception as e:
-            #    print("error", e)
-            #    print('frame', config.INDEX_OF_FRAME)
+                    while not self.is_play:
+                        pass
+           #except Exception as e:
+           #    print("error", e)
+           #    print('frame', config.INDEX_OF_FRAME)
 
     def convert_cv_qt(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -293,7 +297,7 @@ class MainWindow(QMainWindow):
             coefficient = 2
             for item in items:
                 x1, y1, x2, y2 = self.calculation.get_line(item, coefficient)
-                print(x1, y1, x2, y2, item)
+                #print(x1, y1, x2, y2, item)
                 coefficient += 1
                 item.azimuth = (item.azimuth + 90) % 360
                 feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
@@ -345,7 +349,7 @@ class MainWindow(QMainWindow):
         features_side = self.handling_side()
         features = features_signs + features_turns + features_side
         signs_for_delete = []
-        print("________________________________")
+        #print("________________________________")
         if True:
             for i in range(len(features)):
                 item_for_matching = features[i]
@@ -392,7 +396,7 @@ class MainWindow(QMainWindow):
 
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
-
+        print("save")
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MainWindow()

@@ -110,7 +110,11 @@ class Sign:
         for item in self.text_on_sign:
             for accuracy, name in item:
                 grouped_names[name] = self.create_object_city(grouped_names, accuracy, name)
-        result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        #print(grouped_names)
+        if grouped_names != {}:
+            result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        else:
+            result_name = ""
         return result_name
     @staticmethod
     def create_object_city(grouped_names, accuracy, name):

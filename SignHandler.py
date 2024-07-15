@@ -7,7 +7,7 @@ import copy
 from Converter import Converter
 from geopy.distance import geodesic
 from configs.sign_config import names_signs_for_side
-
+import matplotlib.pyplot as plt
 class SignHandler:
     __number_for_incorrect_evidences = 9999.99
     __screen_width = 1920
@@ -203,7 +203,19 @@ class SignHandler:
                         else:
                             self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - \
                                                         self.signs[index].pixel_coordinates_x[-1] > 0
+
+                            print({
+                                "name_one": self.signs[index].get_the_most_often(self.signs[index].result_yolo)['name'],
+                                "name_two": self.signs[index].get_the_most_often(self.signs[index].result_CNN)['name'],
+                                "w": self.signs[index].w,
+                                "h": self.signs[index].h,
+                                "x": self.signs[index].pixel_coordinates_x,
+                                "y": self.signs[index].pixel_coordinates_y,
+                                "length": len(self.signs[index].w),
+                                "number": config.INDEX_OF_All_FRAME
+                            })
                             if self.check_on_side(self.signs[index]):
+                                print(config.INDEX_OF_All_FRAME)
                                 self.signs[index].is_sign_side = True
                                 self.azimuth = (self.azimuth + 90) % 360
                                 self.side_signs.append(self.signs[index])
@@ -234,13 +246,29 @@ class SignHandler:
         different_left =  abs(min(left_half ) - max(left_half))
         different_right = abs(min(right_half) - max(right_half))
         average = sum(proportions) / len(proportions)
+
         if not sign.is_left and \
                 CS < 10 and \
                 (max_w * max_h) < 20500 and \
                 sign.pixel_coordinates_x[0] > 1000 and \
                 len(sign.w) >= 4 and \
                 sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side and \
-                (different_left > different_right or  average < 0.9 ):
+                ((round( different_left,1) > round( different_right,1) and abs(different_right-different_left) > 0.07 ) or average < 0.75):
+            print(
+                "not sign.is_left", sign.is_left, "\n",
+                "CS < 10", CS < 10, CS, "\n",
+                "(max_w * max_h) < 20500", (max_w * max_h) < 20500, (max_w * max_h), "\n",
+                "sign.pixel_coordinates_x[0] > 1000", sign.pixel_coordinates_x[0] > 1000, sign.pixel_coordinates_x[0],
+                "\n",
+                "len(sign.w) >= 4", len(sign.w) >= 4, len(sign.w), "\n",
+                "sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side",
+                           sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side,
+                sign.get_the_most_often(sign.result_yolo)['name'], "\n",
+                "(different_left > different_right or average < 0.9)",
+                ((round(different_left, 1) > round(different_right, 1) and abs(
+                    different_right - different_left) > 0.07) or average < 0.75), f"dl: {different_left}, dr: {different_right}", f"\naverage: {average < 0.75}, {average} < 0.75" ,
+                "\n",
+            )
             return True
         return False
 

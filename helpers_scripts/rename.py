@@ -19,4 +19,4 @@ def rename_files(directory):
 
 # Пример использования
 
-rename_files(r'D:\Ur2\test10\39а')
+rename_files(r'G:\65а')
