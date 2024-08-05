@@ -148,6 +148,7 @@ class SignHandler:
             if evidences[index][1] != SignHandler.__number_for_incorrect_evidences:
                 if frame[0].number_frame - self.signs[index].frame_numbers[-1] < 7:
                     self.signs[index].append_data(frame[evidences[index][0]])
+                    self.signs[index].number_sign = config.INDEX_OF_All_FRAME
                     result.append(frame[evidences[index][0]])
         return result
 
@@ -222,7 +223,6 @@ class SignHandler:
                             else:
                                 # TODO удалить номер знака
                                 if self.check_presence_of_nearby_sign(self.signs[index]):
-                                    self.signs[index].number_sign = config.INDEX_OF_All_FRAME
                                     self.result_signs.append(self.signs[index])
 
                         signs_for_delete.append(self.signs[index])
