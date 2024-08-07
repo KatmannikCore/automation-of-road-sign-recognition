@@ -6,6 +6,8 @@ from pygeoguz.objects import *
 from configs.sign_config import name_signs_city
 from geojson import Feature, LineString
 from geopy.distance import geodesic
+import uuid
+
 class CoordinateCalculation:
     __one_radian = 57.2958
     def __init__(self):
@@ -99,7 +101,6 @@ class CoordinateCalculation:
             else:
                 text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
         type = sign.get_the_most_often(sign.result_CNN)['name']
-
         if text_on_sign != "":
             feature = Feature(geometry=line, properties={
                 "type": f"{type}",
@@ -117,7 +118,8 @@ class CoordinateCalculation:
                 "car_coordinates_x":f"{sign.car_coordinates_x}",
                 "car_coordinates_y":f"{sign.car_coordinates_y}",
                 "frame_numbers":f"{sign.frame_numbers}",
-                "azimuth": f"{sign.azimuth}"
+                "azimuth": f"{sign.azimuth}",
+                "id":f"{uuid.uuid4()}"
             })
         else:
             feature = Feature(geometry=line, properties={
@@ -134,7 +136,8 @@ class CoordinateCalculation:
                 "car_coordinates_x": f"{sign.car_coordinates_x}",
                 "car_coordinates_y": f"{sign.car_coordinates_y}",
                 "frame_numbers": f"{sign.frame_numbers}",
-                "azimuth": f"{sign.azimuth}"
+                "azimuth": f"{sign.azimuth}",
+                "id":f"{uuid.uuid4()}"
             })
         return feature
 

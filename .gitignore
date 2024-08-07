@@ -7,6 +7,5 @@ test
 new
 big_test
 segmentation
-configs/config.py
 yolov8
 errorData
