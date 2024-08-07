@@ -77,13 +77,30 @@ class ErrorCorrector(QWidget):
         self.set_data()
         self.setWindowTitle("QLineEdit Example")
 
-    #def finish_correction(self):
-
+    def finish_correction(self):
+        user_futures = []
+        with open(config.PATH_TO_GEOJSON, encoding='utf-8') as f:
+            data = geojson.load(f)
+        ids_elements = []
+        for path in self.files_geojson:
+            with open(path, encoding='utf-8') as f:
+                user_future = geojson.load(f)['features'][0]
+                user_futures.append(user_future)
+                id = user_future["properties"]["id"]
+                ids_elements.append(id)
+        for index in range(len(data['features'])):
+            feature = data['features'][index]
+            if feature["properties"]["id"] in ids_elements:
+                index_changed_element = ids_elements.index(feature["properties"]["id"])
+                data['features'][index] = user_futures[index_changed_element]
+        with open(config.PATH_TO_GEOJSON, 'w') as f:
+            dump(data, f)
     def change_type(self, item):
         self.label_type.setText(item.text().replace("V", ""))
         self.img_type = QPixmap(rf"D:\Urban\map\100\{item.text()}.png")
         self.label_img_type.setPixmap(self.img_type)
         self.ChangerType.hide()
+
     def open_change_type_window(self):
         if self.ChangerType.isVisible():
             self.ChangerType.hide()
@@ -135,6 +152,7 @@ class ErrorCorrector(QWidget):
         if 'MVALUE' in self.feature["properties"]:
             if self.feature["properties"]['MVALUE'] != self.textbox_text.text():
                 self.feature["properties"]['MVALUE'] = self.textbox_text.text()
+                self.feature["properties"]['SEM250'] = self.textbox_text.text()
                 is_was_changes = True
         if self.feature["properties"]['side'] != str(self.checkbox_side.isChecked()):
             self.feature["properties"]['side'] = str(self.checkbox_side.isChecked())
