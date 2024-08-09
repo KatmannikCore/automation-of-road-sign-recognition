@@ -1,5 +1,8 @@
 import json
 import time
+
+import geojson
+
 from Converter import Converter
 from PyQt5.QtCore import QUrl
 import cv2
@@ -25,8 +28,11 @@ from View import View
 from CoordinateCalculation import CoordinateCalculation
 from geojson import FeatureCollection, dump
 import os
+from geojson import Feature, LineString
 
 from ErrorCorrector import ErrorCorrector
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -44,24 +50,21 @@ class MainWindow(QMainWindow):
         self.view = None
         self.thread = Thread(target=self.treatment, daemon=True)
 
-        self.w = ErrorCorrector()
-        self.button_test = QPushButton("тест", self)
-        self.button_test.move(630, 540)
-        self.button_test.clicked.connect(self.test_metod)
-        #self.setCentralWidget(self.button_test)
+        self.ErrorCorrector = ErrorCorrector()
 
         self.create_player()
         self.create_text()
         self.create_buttons()
         self.set_path_to_video()
 
-
         self.show()
-    def test_metod(self,checked):
-        if self.w.isVisible():
-            self.w.hide()
+
+    def openErrorCorrector(self, checked):
+        if self.ErrorCorrector.isVisible():
+            self.ErrorCorrector.hide()
         else:
-            self.w.show()
+            self.ErrorCorrector.show()
+
     def create_player(self):
         video = QVideoWidget(self)
         video.setVisible(True)
@@ -129,12 +132,16 @@ class MainWindow(QMainWindow):
         self.button_speed_frame.move(960, 270)
         self.button_speed_frame.clicked.connect(self.set_speed_frame)
 
+        self.button_corrector = QPushButton("Корректировать ошибки", self)
+        self.button_corrector.move(630, 540)
+        self.button_corrector.clicked.connect(self.openErrorCorrector)
+
     def set_path_to_video(self):
-        config.PATH_TO_GPX = r"D:\Urban\vid\test\Testing\25,03,24-Быстрица\25,03,24-Быстрица.gpx"
+        config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
         self.Reader = Reader(config.PATH_TO_GPX)
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
-        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\Testing\25,03,24-Быстрица\100GOPRO" + "\\"
+        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0064" + "\\"
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
 
@@ -199,7 +206,6 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "Сообщение", "Сохранено")
 
     def treatment(self):
-
         self.view = View()
         self.view.count_frames()
         count_gpx = self.Reader.get_count_dot()
@@ -207,54 +213,48 @@ class MainWindow(QMainWindow):
         while self.view.cap.isOpened():
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
 
-            #print(config.FRAME_STEP, end='\r')
-            #try:
-            if True:
-                if True:
-                    ret, frame = self.view.cap.read()
-                    if ret:
-                        if config.INDEX_OF_All_FRAME > 172200:
-                            self.final_data_processing()
-                            break
-                        if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
-                            end_time = time.time()
-                            elapsed_time = end_time - start_time
-                            print('Elapsed time: ', elapsed_time / 60)
-                            self.final_data_processing()
-                            break
-                        config.FRAME_STEP = round(self.k * speed + self.b, 0)
-                        #print(config.INDEX_OF_FRAME)
-                        if self.count_empty > 5:
-                            config.FRAME_STEP += config.FRAME_STEP
-                        self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
+            if config.INDEX_OF_All_FRAME > 608232:
+                self.final_data_processing()
+                self.get_error_sign()
+                break
+            self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
+            ret, frame = self.view.cap.read()
+            if ret:
+                if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    print('Elapsed time: ', elapsed_time / 60)
+                    self.final_data_processing()
+                    self.get_error_sign()
+                    break
 
-                        config.INDEX_OF_FRAME += config.FRAME_STEP
-                        config.INDEX_OF_All_FRAME += config.FRAME_STEP
+                self.label.setPixmap(self.convert_cv_qt(frame))
+                count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
+                if count_frame_for_gps > 60:
+                    config.INDEX_OF_GPS += 1
+                if self.view.switch_video():
+                    break
 
-                        self.label.setPixmap(self.convert_cv_qt(frame))
-                        count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
-                        if self.counter_progress < config.INDEX_OF_All_FRAME:
-                            self.counter_progress += 5000
+                config.COUNT_PROCESSED_FRAMES += 1
+                if round(speed, 0) != 0:
+                    retangles = self.view.draw_rectangles(frame)
+                    self.label.setPixmap(self.convert_cv_qt(frame))
+                    if not retangles:
+                        self.count_empty += 1
+                    else:
+                        self.count_empty = 0
 
-                        if count_frame_for_gps > 60:
-                            config.INDEX_OF_GPS += 1
-                        if self.view.switch_video():
-                            break
+                config.FRAME_STEP = round(self.k * speed + self.b, 0)
+                if self.count_empty > 5:
+                    config.FRAME_STEP += config.FRAME_STEP
 
-                        if round(speed, 0) == 0:
-                            continue
-                        config.COUNT_PROCESSED_FRAMES += 1
-                        retangles = self.view.draw_rectangles(frame)
-                        self.label.setPixmap(self.convert_cv_qt(frame))
-                        if not retangles:
-                            self.count_empty += 1
-                        else:
-                            self.count_empty = 0
+                config.INDEX_OF_FRAME += config.FRAME_STEP
+                config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
-                        cv2.waitKey(1)
-                    cv2.waitKey(1)
-                    while not self.is_play:
-                        pass
+                cv2.waitKey(1)
+            cv2.waitKey(1)
+            while not self.is_play:
+                pass
         #except Exception as e:
         #    print("error", e)
         #    print('frame', config.INDEX_OF_FRAME)
@@ -384,7 +384,8 @@ class MainWindow(QMainWindow):
                 if "del" not in features[i]:
                     if average_item_for_x != average_item_with_x:
                         if item_for_matching["properties"]["left"] == item_with_which_matching["properties"]["left"]:
-                            if item_for_matching["properties"]["type"] == item_with_which_matching["properties"]["type"]:
+                            if item_for_matching["properties"]["type"] == item_with_which_matching["properties"][
+                                "type"]:
                                 distance = self.calculation.calculation_distance(item_for_car_x[-1],
                                                                                  item_for_car_y[-1],
                                                                                  item_with_car_x[-1],
@@ -392,21 +393,68 @@ class MainWindow(QMainWindow):
                                 if distance < 20:
                                     item_for_azimuth = float(item_for_matching["properties"]["azimuth"])
                                     item_with_azimuth = float(item_with_which_matching["properties"]["azimuth"])
-                                    difference_azimuth = abs(self.calculation.calculate_azimuth_change(item_for_azimuth,item_with_azimuth))
+                                    difference_azimuth = abs(
+                                        self.calculation.calculate_azimuth_change(item_for_azimuth, item_with_azimuth))
                                     if difference_azimuth < 30:
                                         features[j]["del"] = 0
-                                        if int(features[j]["properties"]["length"]) > int(features[i]["properties"]["length"]):
+                                        if int(features[j]["properties"]["length"]) > int(
+                                                features[i]["properties"]["length"]):
                                             signs_for_delete.append(item_for_matching)
                                         else:
                                             signs_for_delete.append(item_with_which_matching)
                                         break
-            for item in signs_for_delete:
-                features.remove(item)
+            #TODO Непонятно зачем но крашит программу
+            #for item in signs_for_delete:
+            #    print(item)
+            #    features.remove(item)
         feature_collection = FeatureCollection(features)
 
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
         print("save")
+
+    def get_error_sign(self):
+        result = []
+        with open(config.PATH_TO_GEOJSON) as f:
+            data = geojson.load(f)
+        counter = 0
+
+        for feature in data['features']:
+            for item in feature["properties"]:
+                features = []
+                frame_number = None
+                if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
+                    frame_number = float(feature["properties"]['num']) - 70
+                    result.append(feature)
+                if feature["properties"]['type'] == "5.8.1":
+                    frame_number = float(feature["properties"]['num']) - 70
+                    result.append(feature)
+                if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
+                    frame_number = float(feature["properties"]['num']) - 70
+                    result.append(feature)
+                if frame_number != None:
+                    print(feature["properties"])
+
+                    features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
+                    feature_collection = FeatureCollection(features)
+
+                    number_video = int(frame_number // 63600)
+                    frame_number_for_save = int(frame_number % 63600) + 50
+                    files = os.listdir(config.PATH_TO_VIDEO)
+                    new_path = os.path.join(config.PATH_TO_VIDEO, str(files[number_video]))
+                    cap = cv2.VideoCapture(new_path)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number_for_save)
+                    ret, frame = cap.read()
+                    while not ret:
+                        ret, frame = cap.read()
+                    frame = cv2.resize(frame, dsize=(960, 540))
+                    cv2.imshow("frame", frame)
+                    cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
+                    with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
+                        dump(feature_collection, f)
+                    cv2.waitKey(1000)
+                    counter += 1
+                    break
 
 
 if __name__ == '__main__':

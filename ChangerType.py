@@ -31,9 +31,6 @@ class ChangerType(QWidget):
         self.list_widget.setSpacing(10)  # Задаем отступ между элементами
         self.list_widget.setGridSize(QSize(120, 120))  # Размер ячейки сетки
 
-
-    #def listwidgetclicked(self, item):
-
     def crate_type_boxes(self):
         with open(self.path_to_signs, 'r', encoding='utf-8') as f:
             data = json.load(f)['MapLegend']
@@ -42,14 +39,11 @@ class ChangerType(QWidget):
                     self.add_image(fr"D:\Urban\map\100\{items['_Image']}", items['_Key'])
     def add_image(self, image_path, text):
         """Добавляет изображение в список."""
-
         # Загрузка изображения
         pixmap = QPixmap(image_path)
         icon = QIcon(pixmap)
-
         # Создание элемента списка
         item = QListWidgetItem(icon, text)
-
         # Добавление элемента в список
         self.list_widget.addItem(item)
 

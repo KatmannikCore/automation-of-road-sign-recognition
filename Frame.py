@@ -7,7 +7,8 @@ class Frame:
         self.name_sign = ""
         self.latitude = 0
         self.longitude = 0
-        self.number_frame = 0
+        self.frame_number = 0
+        self.absolute_frame_number = 0
         self.number_sign = 0
         self.text_on_sign = ''
     @staticmethod
