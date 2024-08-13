@@ -20,7 +20,6 @@ import cv2
 class ErrorCorrector(QWidget):
     def __init__(self):
         super().__init__()
-        #layout = QVBoxLayout()
         self.setGeometry(0, 0, 1200, 600)
         self.ChangerType = ChangerType()
 
@@ -29,8 +28,8 @@ class ErrorCorrector(QWidget):
         self.label = QLabel(self)
 
         self.label.resize(960, 540)
-        self.files_geojson =glob.glob(rf'./errorData/*.geojson')
-        self.files_img =glob.glob(rf'./errorData/*.jpg')
+        self.files_geojson = glob.glob(rf'./errorData/*.geojson')
+        self.files_img = glob.glob(rf'./errorData/*.jpg')
         self.current_index = 0
         self.pixmap = QPixmap(self.files_img[self.current_index])
         self.label.setPixmap(self.pixmap)
@@ -73,8 +72,30 @@ class ErrorCorrector(QWidget):
         self.button_change_type.move(1000, 55)
         self.button_change_type.clicked.connect(self.open_change_type_window)
 
+        self.button_next = QPushButton("Удалить", self)
+        self.button_next.move(1000, 150)
+        self.button_next.clicked.connect(self.delete_sign)
+
         self.set_data()
         self.setWindowTitle("QLineEdit Example")
+
+    def delete_sign(self):
+
+        with open(config.PATH_TO_GEOJSON, encoding='utf-8') as f:
+            data = geojson.load(f)
+        with open(self.files_geojson[self.current_index], encoding='utf-8') as f:
+            id = geojson.load(f)['features'][0]["properties"]["id"]
+        new_data = []
+        for feature in data:
+            if feature["properties"]["id"] != id:
+                new_data.append(feature)
+        self.save_new_geojson(new_data)
+        os.remove(self.files_geojson[self.current_index])
+        os.remove(self.files_img[self.current_index])
+        self.files_geojson.pop(self.current_index)
+        self.files_img.pop(self.current_index)
+        self.next()
+
 
     def finish_correction(self):
         user_futures = []
@@ -92,8 +113,12 @@ class ErrorCorrector(QWidget):
             if feature["properties"]["id"] in ids_elements:
                 index_changed_element = ids_elements.index(feature["properties"]["id"])
                 data['features'][index] = user_futures[index_changed_element]
+        self.save_new_geojson(data)
+
+    def save_new_geojson(self, new_geojson):
         with open(config.PATH_TO_GEOJSON, 'w') as f:
-            dump(data, f)
+            dump(new_geojson, f)
+
     def change_type(self, item):
         self.label_type.setText(item.text().replace("V", ""))
         self.img_type = QPixmap(rf"D:\Urban\map\100\{item.text()}.png")
@@ -105,7 +130,6 @@ class ErrorCorrector(QWidget):
             self.ChangerType.hide()
         else:
             self.ChangerType.show()
-
 
     def next(self):
         self.change_geojson()
@@ -138,16 +162,18 @@ class ErrorCorrector(QWidget):
         else:
             self.textbox_text.setEnabled(False)
         self.checkbox_side.setChecked(self.feature["properties"]['side'] == "True")
+
     def draw_box(self):
         painter = QPainter(self.pixmap)
         painter.setPen(QPen(QColor(0, 0, 0), 2))  # Черный цвет, толщина 2 пикселя
-        x = int(self.feature["properties"]["pixel_coordinates_x"][0])
-        y = int(self.feature["properties"]["pixel_coordinates_y"][0])
-        h = int(self.feature["properties"]["h"][0])
-        w = int(self.feature["properties"]["w"][0])
-        painter.drawRect(int(x/2) ,int(y/2) , int(w/2),int(h/2))  # Рисуем квадрат
+        x = int(self.feature["properties"]["pixel_coordinates_x"].replace(" ", "")[1:-1].split(',')[0])
+        y = int(self.feature["properties"]["pixel_coordinates_y"].replace(" ", "")[1:-1].split(',')[0])
+        h = int(self.feature["properties"]["h"].replace(" ", "")[1:-1].split(',')[0])
+        w = int(self.feature["properties"]["w"].replace(" ", "")[1:-1].split(',')[0])
+        painter.drawRect(int(x / 2), int(y / 2), int(w / 2), int(h / 2))  # Рисуем квадрат
         painter.end()
         self.label.setPixmap(self.pixmap)
+
     def get_feature_object(self):
         with open(self.files_geojson[self.current_index], encoding='utf-8') as f:
             data = geojson.load(f)
@@ -174,49 +200,51 @@ class ErrorCorrector(QWidget):
 
 
 def get_error_sign():
-        result = []
-        with open(config.PATH_TO_GEOJSON) as f:
-            data = geojson.load(f)
-        counter = 0
+    result = []
+    with open(config.PATH_TO_GEOJSON) as f:
+        data = geojson.load(f)
+    counter = 0
 
-        for feature in data['features']:
-            for item in feature["properties"]:
-                features = []
-                frame_number = None
-                if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
-                    frame_number =  int(feature["properties"]["absolute_frame_numbers"][0])
-                    result.append(feature)
-                if feature["properties"]['type'] == "5.8.1":
-                    frame_number =  int(feature["properties"]["absolute_frame_numbers"][0])
-                    result.append(feature)
-                if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
-                    frame_number =  int(feature["properties"]["absolute_frame_numbers"][0])
-                    result.append(feature)
-                if frame_number != None:
-                    print(feature["properties"])
-                    print(feature["properties"]["absolute_frame_numbers"])
-                    print(frame_number)
-                    features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
-                    feature_collection = FeatureCollection(features)
+    for feature in data['features']:
+        for item in feature["properties"]:
+            features = []
+            frame_number = None
+            if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
+                frame_number = float(
+                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[0])
+                result.append(feature)
+            if feature["properties"]['type'] == "5.8.1":
+                frame_number = float(
+                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[0])
+                result.append(feature)
+            if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
+                frame_number = float(
+                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[0])
+                result.append(feature)
+            if frame_number != None:
+                print(feature["properties"])
+                print(feature["properties"]["absolute_frame_numbers"])
+                print(frame_number)
+                features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
+                feature_collection = FeatureCollection(features)
 
-
-                    number_video = int(frame_number // 63600)
-                    print(number_video)
-                    frame_number_for_save = int(frame_number % 63600)
-                    print(frame_number_for_save)
-                    files = os.listdir(config.PATH_TO_VIDEO)
-                    new_path = os.path.join(config.PATH_TO_VIDEO, str(files[number_video]))
-                    cap = cv2.VideoCapture(new_path)
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number_for_save)
+                number_video = int(frame_number // 63600)
+                print(number_video)
+                frame_number_for_save = int(frame_number % 63600)
+                print(frame_number_for_save)
+                files = os.listdir(config.PATH_TO_VIDEO)
+                new_path = os.path.join(config.PATH_TO_VIDEO, str(files[number_video]))
+                cap = cv2.VideoCapture(new_path)
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number_for_save)
+                ret, frame = cap.read()
+                while not ret:
                     ret, frame = cap.read()
-                    while not ret:
-                        ret, frame = cap.read()
-                    frame = cv2.resize(frame, dsize=(960, 540))
-                    #cv2.imshow("frame", frame)
-                    cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
-                    with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
-                        dump(feature_collection, f)
-                    cv2.waitKey(1000)
-                    counter += 1
-                    break
+                frame = cv2.resize(frame, dsize=(960, 540))
+                #cv2.imshow("frame", frame)
+                cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
+                with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
+                    dump(feature_collection, f)
+                cv2.waitKey(1000)
+                counter += 1
+                break
 #get_error_sign()

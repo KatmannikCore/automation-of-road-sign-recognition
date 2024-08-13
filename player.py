@@ -219,6 +219,7 @@ class MainWindow(QMainWindow):
                 break
             self.view.cap.set(cv2.CAP_PROP_POS_FRAMES, config.INDEX_OF_FRAME)
             ret, frame = self.view.cap.read()
+            print(config.INDEX_OF_All_FRAME)
             if ret:
                 if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
                     end_time = time.time()
@@ -229,11 +230,6 @@ class MainWindow(QMainWindow):
                     break
 
                 self.label.setPixmap(self.convert_cv_qt(frame))
-                count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
-                if count_frame_for_gps > 60:
-                    config.INDEX_OF_GPS += 1
-                if self.view.switch_video():
-                    break
 
                 config.COUNT_PROCESSED_FRAMES += 1
                 if round(speed, 0) != 0:
@@ -251,7 +247,19 @@ class MainWindow(QMainWindow):
                 config.INDEX_OF_FRAME += config.FRAME_STEP
                 config.INDEX_OF_All_FRAME += config.FRAME_STEP
 
+                count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
+                if count_frame_for_gps > 60:
+                    config.INDEX_OF_GPS += 1
                 cv2.waitKey(1)
+            else:
+                config.INDEX_OF_FRAME += config.FRAME_STEP
+                config.INDEX_OF_All_FRAME += config.FRAME_STEP
+
+                count_frame_for_gps = config.INDEX_OF_All_FRAME - (config.INDEX_OF_GPS * 60)
+                if count_frame_for_gps > 60:
+                    config.INDEX_OF_GPS += 1
+            if self.view.switch_video():
+                break
             cv2.waitKey(1)
             while not self.is_play:
                 pass
