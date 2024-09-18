@@ -108,7 +108,8 @@ class View:
                 object_frame.name_sign = name_sign
                 object_frame.latitude = x1
                 object_frame.longitude = y1
-                object_frame.number_frame = config.COUNT_PROCESSED_FRAMES
+                object_frame.frame_number = int(config.COUNT_PROCESSED_FRAMES)
+                object_frame.absolute_frame_number = int(config.INDEX_OF_All_FRAME)
                 object_frame.number_sign = number_sign
                 object_frame.text_on_sign = text_on_sign
 

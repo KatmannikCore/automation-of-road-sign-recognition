@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArcGIS JS API - Карта с векторными тайлами</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css"/>
+  <link  href="https://cdn.socket.io/4.6.0/socet.io.min.js"/>
+  <link rel="stylesheet" href="style.css">
+<script src="https://js.arcgis.com/4.23/"></script>
+  <style>
+    /* Reset and base styles  */
+    * {
+      padding: 0px;
+      margin: 0px;
+      border: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    /* Links */
+
+    a, a:link, a:visited  {
+        text-decoration: none;
+    }
+
+    a:hover  {
+        text-decoration: none;
+    }
+
+    /* Common */
+
+    aside, nav, footer, header, section, main {
+      display: block;
+    }
+
+    h1, h2, h3, h4, h5, h6, p {
+        font-size: inherit;
+      font-weight: inherit;
+    }
+
+    ul, ul li {
+      list-style: none;
+    }
+
+    img {
+      vertical-align: top;
+    }
+
+    img, svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    address {
+      font-style: normal;
+    }
+
+    /* Form */
+
+    input, textarea, button, select {
+      font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+        background-color: transparent;
+    }
+
+    input::-ms-clear {
+      display: none;
+    }
+
+    button, input[type="submit"] {
+        display: inline-block;
+        box-shadow: none;
+        background-color: transparent;
+        background: none;
+        cursor: pointer;
+    }
+
+    input:focus, input:active,
+    button:focus, button:active {
+        outline: none;
+    }
+
+    button::-moz-focus-inner {
+      padding: 0;
+      border: 0;
+    }
+
+    label {
+      cursor: pointer;
+    }
+
+    legend {
+      display: block;
+    }
+
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .track_offset{
+      display:flex;
+
+    }
+    input{
+      border: 1px solid black;
+      width:50px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="track_offset">
+    <p>Смещение трека: </p>
+    <input value="0" id= "offset"type="text">
+  </div>
+  <div id="viewDiv"></div>
+
+
+  <script type="module">
+    const requestURL = 'http://127.0.0.1:3000/track'
+    import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+
+
+    const socket = io({autoConnect: false})
+
+    socket.connect()
+    const fetchGPX = async (url) => {
+      return  fetch(url).then(response => response.json());
+    }
+    
+    fetchGPX(requestURL).then(coordinates => {
+      require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/VectorTileLayer",
+      "esri/Graphic",
+      "esri/geometry/Point",
+      "esri/layers/FeatureLayer", // Import FeatureLayer
+      "esri/symbols/SimpleMarkerSymbol", // Import SimpleMarkerSymbol
+      "esri/renderers/SimpleRenderer", // Import SimpleRenderer
+    ], function (
+      Map,
+      MapView,
+      VectorTileLayer,
+      Graphic,
+      Point,
+      FeatureLayer,
+      SimpleMarkerSymbol,
+      SimpleRenderer
+    ) {
+
+      const vectorTileLayer = new VectorTileLayer({
+        url: "https://gis.maps.by/arcgis/rest/services/Hosted/VectorTile_240522/VectorTileServer",
+      });
+
+      const map = new Map({
+        layers: [vectorTileLayer],
+      });
+
+      const view = new MapView({
+        center: [27.5, 53.9],
+        container: "viewDiv",
+        map: map,
+        zoom: 10,
+      });
+      const markerSymbol = {
+        type: "simple-marker",
+        color: [226, 119, 40],
+        outline: {
+          color: [255, 255, 255],
+          width: 2,
+        },
+      };
+     const points = coordinates.map(item => {
+      const point =  new Point({longitude: item[1],latitude: item[0], });
+      return new Graphic({geometry: point, symbol: markerSymbol})
+})
+      let pointLayer = new FeatureLayer({
+        source: points,
+        renderer: new SimpleRenderer({
+          symbol: new SimpleMarkerSymbol({
+            color: [226, 119, 40],
+            outline: {
+              color: [255, 255, 255],
+              width: 1,
+            },
+          }),
+        }),
+        objectIdField: "ObjectID",
+      });
+      map.add(pointLayer)
+      let points2 = points.slice(0,10)//[new Graphic({geometry:  new Point({longitude: points[data]["geometry"]["latitude"],latitude: points[data]["geometry"]["longitude"], }), symbol: markerSymbol})]
+      
+      var currentPointLayer = new FeatureLayer({
+        source: [points[Math.floor(Math.random()*points.length)]],
+        renderer: new SimpleRenderer({
+          symbol: new SimpleMarkerSymbol({
+            color: [0, 0, 0],
+            outline: {
+              color: [255, 255, 255],
+              width: 1,
+            },
+          }),
+        }),
+        objectIdField: "ObjectID",
+      });
+      let prewPoint = 0
+      let standart_color_point = {r:226, g:119, b:40, a:1}
+      let active_color_point = {r:10, g:10, b:10, a:1}
+
+      socket.on("change_dot", function(data){
+
+        let numberOffset =parseInt( document.getElementById('offset').value);
+        console.log(numberOffset)
+        if (!Number.isInteger(numberOffset)){
+          numberOffset = 0
+        }
+        console.log(numberOffset)
+        let resultIndex = data + numberOffset
+        resultIndex = resultIndex < 0 ? 0: resultIndex
+        resultIndex = resultIndex > points.length ? points.length-1: resultIndex
+        console.log(resultIndex)
+
+        map.remove(currentPointLayer);
+        currentPointLayer = new FeatureLayer({
+          source: [points[resultIndex]],
+          renderer: new SimpleRenderer({
+            symbol: new SimpleMarkerSymbol({
+              color: [0, 0, 0],
+              outline: {
+                color: [255, 255, 255],
+                width: 1,
+              },
+            }),
+          }),
+          objectIdField: "ObjectID",
+        });
+
+        map.add(currentPointLayer)
+      })
+    });
+    })
+    
+
+    
+  </script>
+
+
+</body>
+</html>

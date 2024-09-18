@@ -7,9 +7,14 @@ class Frame:
         self.name_sign = ""
         self.latitude = 0
         self.longitude = 0
-        self.number_frame = 0
+        self.frame_number = 0
+        self.absolute_frame_number = 0
         self.number_sign = 0
         self.text_on_sign = ''
+
+
+    def __str__(self):
+        return f"x: {self.x} y: {self.y} w: {self.w} h: {self.h}\n name: {self.name_sign} frame_number: {self.frame_number} absolute_number: {self.absolute_frame_number}"
     @staticmethod
     def overlap_area( square1, square2):
         """

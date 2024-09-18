@@ -19,11 +19,11 @@ class Detector:
         self.city_names = []
         self.COLORS = [(0, 255, 0), (0, 0, 255), (255, 0, 0),
                   (255, 255, 0), (255, 0, 255), (0, 255, 255)]
-        net = cv2.dnn.readNet(r'D:\Urban\yolov4\darknet\build\darknet\\x64\backup\sings_full_best.weights', r'D:\Urban\yolov4\darknet\build\darknet\x64\sings_full.cfg')
+        net = cv2.dnn.readNet(r'./static/Yolov4/sings_full_best.weights', r'./static/Yolov4/sings_full.cfg')
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.class_name = []
-        with open(r'D:\Urban\yolov4\yolov4-opencv-python/static/classes.txt', 'r') as f:
+        with open(r'./static/classes.txt', 'r') as f:
             self.class_name = [cname.strip() for cname in f.readlines()]
         self.model = cv2.dnn_DetectionModel(net)
         self.model.setInputParams(size=(416, 416), scale=1 / 255, swapRB=True)
