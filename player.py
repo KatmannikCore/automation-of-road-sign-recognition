@@ -47,7 +47,8 @@ class MainWindow(QMainWindow):
         self.count_empty = 0
         self.counter_progress = 5000
         self.Reader = None
-        self.is_play = True
+        self.is_wait = False
+        self.is_brake = False
         self.msgBox = None
         self.setGeometry(0, 0, 1200, 600)
         self.view = None
@@ -64,7 +65,6 @@ class MainWindow(QMainWindow):
         self.show()
 
     def openErrorCorrector(self, checked):
-
         if self.ErrorCorrector.isVisible():
             self.ErrorCorrector.hide()
         else:
@@ -113,13 +113,13 @@ class MainWindow(QMainWindow):
         self.button_choose_GPX.move(960, 60)
         self.button_choose_GPX.clicked.connect(self.choose_GPX)
 
-        self.button_choose_geojson= QPushButton("Выбрать geojson", self)
+        self.button_choose_geojson = QPushButton("Выбрать geojson", self)
         self.button_choose_geojson.move(960, 90)
         self.button_choose_geojson.clicked.connect(self.choose_geojson)
 
         self.button_treatment = QPushButton("Начать обработку", self)
         self.button_treatment.move(960, 120)
-        self.button_treatment.clicked.connect(self.thread.start)
+        self.button_treatment.clicked.connect(self.start_processing)
 
        #self.button_open_save = QPushButton("open save", self)
        #self.button_open_save.move(960, 150)
@@ -129,10 +129,10 @@ class MainWindow(QMainWindow):
        #self.button_save_as.move(960, 180)
        #self.button_save_as.clicked.connect(self.save)
 
-        self.button_save_as = QPushButton("Законьчить", self)
-        self.button_save_as.move(960, 210)
-        self.button_save_as.clicked.connect(self.final_data_processing)
-
+        self.button_end = QPushButton("Законьчить", self)
+        self.button_end.move(960, 210)
+        self.button_end.clicked.connect(self.finish_processing)
+        self.button_end.setEnabled(False)
         #self.speed_frame_box = QLineEdit(self)
         #self.speed_frame_box.move(960, 240)
         #self.speed_frame_box.setText(str(config.FRAME_STEP))
@@ -149,6 +149,29 @@ class MainWindow(QMainWindow):
         self.button_viewTrack.move(730, 540)
         self.button_viewTrack.clicked.connect(self.openViewTrack )
 
+    def start_processing(self):
+        self.set_default_values_configs()
+        self.toggle_button_activity()
+        self.is_brake = False
+        self.thread.start()
+
+    def toggle_button_activity(self):
+        self.button_corrector.setEnabled(not self.button_corrector.isEnabled())
+        self.button_viewTrack.setEnabled(not self.button_viewTrack.isEnabled())
+        self.button_choose_dir.setEnabled(not self.button_choose_dir.isEnabled())
+        self.button_choose_GPX.setEnabled(not self.button_choose_GPX.isEnabled())
+        self.button_choose_geojson.setEnabled(not self.button_choose_geojson.isEnabled())
+        self.button_treatment.setEnabled(not self.button_treatment.isEnabled())
+        self.button_end.setEnabled(not self.button_end.isEnabled())
+    def set_default_values_configs(self):
+       config.VIDEOS = []
+       config.FRAME_STEP = 5
+       config.COUNT_PROCESSED_FRAMES = 0
+       config.INDEX_OF_FRAME = 0
+       config.INDEX_OF_VIDEO = 1
+       config.INDEX_OF_All_FRAME = config.INDEX_OF_FRAME + (63600 * config.INDEX_OF_VIDEO)
+       config.INDEX_OF_GPS = int(round(config.INDEX_OF_All_FRAME / 60, 0))
+       config.INDEX_OF_SING = 0
     def openViewTrack(self):
         if self.ViewTrack.isVisible():
             self.ViewTrack.hide()
@@ -178,7 +201,7 @@ class MainWindow(QMainWindow):
         self.speed_frame_box.setText(str(config.FRAME_STEP))
 
     def play(self):
-        self.is_play = not self.is_play
+        self.is_wait = not self.is_wait
 
     def open_save(self):
         open_save_path = QtWidgets.QFileDialog.getOpenFileName()
@@ -233,6 +256,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "Сообщение", "Сохранено")
 
     def treatment(self):
+
         self.calculation = CoordinateCalculation()
         self.view = View()
         self.view.count_frames()
@@ -240,22 +264,19 @@ class MainWindow(QMainWindow):
         start_time = time.time()
 
         while self.view.cap.isOpened():
-
+            if self.is_brake:
+                break
             speed = self.Reader.get_speed(config.INDEX_OF_GPS)
             config.FRAME_STEP = round(self.k * speed + self.b, 0)
             ret, frame = self.view.cap.read()
-
             if ret:
                 if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:
                     end_time = time.time()
                     elapsed_time = end_time - start_time
                     print('Elapsed time: ', elapsed_time / 60)
                     self.final_data_processing()
-
                     break
-
                 self.label.setPixmap(self.convert_cv_qt(frame))
-
                 config.COUNT_PROCESSED_FRAMES += 1
                 if round(speed, 0) != 0:
                     retangles = self.view.draw_rectangles(frame)
@@ -264,19 +285,17 @@ class MainWindow(QMainWindow):
                         self.count_empty += 1
                     else:
                         self.count_empty = 0
-
                 cv2.waitKey(1)
-
             self.switch_frame()
             if self.view.switch_video():
                 break
             cv2.waitKey(1)
-            while not self.is_play:
+            while self.is_wait:
                 pass
         #except Exception as e:
         #    print("error", e)
         #    print('frame', config.INDEX_OF_FRAME)
-
+        print("end")
     def switch_frame(self):
         config.INDEX_OF_FRAME += config.FRAME_STEP
         config.INDEX_OF_All_FRAME += config.FRAME_STEP
@@ -294,10 +313,14 @@ class MainWindow(QMainWindow):
         return QPixmap.fromImage(p)
 
     def choose_GPX(self):
-        gpx_path = QtWidgets.QFileDialog.getOpenFileName()
+        gpx_path = QtWidgets.QFileDialog.getOpenFileName(filter="gpx (*.gpx)")
+
         config.PATH_TO_GPX = gpx_path[0].replace('/', '\\')
-        self.Reader = Reader(config.PATH_TO_GPX)
-        self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
+        if config.PATH_TO_GPX == "":
+            self.label_gpx.setText("<font color=black>" + "Пустой GPX" + "</font>")
+        else:
+            self.Reader = Reader(config.PATH_TO_GPX)
+            self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
         self.check_for_filling_of_data()
 
     def choose_dir(self):
@@ -392,9 +415,20 @@ class MainWindow(QMainWindow):
                     feature = self.calculation.create_feature_object(x1, x2, y1, y2, item)
                     features.append(feature)
         return features
+    def finish_processing(self):
 
-    def final_data_processing(self):
+        self.toggle_button_activity()
+        self.save_result()
+        self.create_image_with_errors()
+        self.view.cap.release()
+        self.is_brake = True
+        self.thread.join()
+        self.thread = Thread(target=self.treatment, daemon=True)
+        cv2.destroyAllWindows()
 
+       #self.stop_progressing()
+
+    def save_result(self):
         path = config.PATH_TO_GEOJSON
 
         features_signs = self.handling_signs()
@@ -454,8 +488,8 @@ class MainWindow(QMainWindow):
         with open(path, 'w', encoding='cp1251') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
         print("save")
-        self.get_error_sign()
-    def get_error_sign(self):
+
+    def create_image_with_errors(self):
         result = []
         with open(config.PATH_TO_GEOJSON) as f:
             data = geojson.load(f)
@@ -477,8 +511,6 @@ class MainWindow(QMainWindow):
                #    result.append(feature)
                 if frame_number != None:
                     print(feature["properties"])
-
-
 
                     features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
                     feature_collection = FeatureCollection(features)
