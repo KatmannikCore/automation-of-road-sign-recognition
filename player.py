@@ -326,7 +326,7 @@ class MainWindow(QMainWindow):
     def choose_dir(self):
         dirlist = QFileDialog.getExistingDirectory(self, "Выбрать папку", ".")
         config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
-        config.VIDEOS = os.listdir(self.config.PATH_TO_VIDEO)
+        config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
 
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = dirlist

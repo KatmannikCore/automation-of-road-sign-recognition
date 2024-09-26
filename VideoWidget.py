@@ -77,6 +77,7 @@ class VideoPlayerWidget(QWidget):
     def change_dot(self):
         seconds_current_video = round(self.mediaPlayer.position()/1000,0)
         seconds_all_video =(self.index_of_video * 1060) + seconds_current_video
+        config.SECONDES_ALL_VIDEO = seconds_all_video
         self.server.change_dot(int(seconds_all_video))
     def change_video(self, clicked_item):
         self.change_color_current_video(clicked_item)

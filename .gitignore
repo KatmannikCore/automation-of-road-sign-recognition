@@ -11,3 +11,8 @@ yolov8
 errorData
 *.h5
 static
+build
+dep
+dist
+output
+player.spec
