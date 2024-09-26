@@ -54,12 +54,12 @@ class MainWindow(QMainWindow):
         self.view = None
         self.thread = Thread(target=self.treatment, daemon=True)
         self.ErrorCorrector = ErrorCorrector()
-        self.ViewTrack = ViewTrack()
+        self.ViewTrack = None
 
         self.create_player()
         self.create_text()
         self.create_buttons()
-        self.set_path_to_video()
+        #self.set_path_to_video()
         self.check_for_filling_of_data()
 
         self.show()
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
        config.FRAME_STEP = 5
        config.COUNT_PROCESSED_FRAMES = 0
        config.INDEX_OF_FRAME = 0
-       config.INDEX_OF_VIDEO = 1
+       config.INDEX_OF_VIDEO = 0
        config.INDEX_OF_All_FRAME = config.INDEX_OF_FRAME + (63600 * config.INDEX_OF_VIDEO)
        config.INDEX_OF_GPS = int(round(config.INDEX_OF_All_FRAME / 60, 0))
        config.INDEX_OF_SING = 0
@@ -182,6 +182,9 @@ class MainWindow(QMainWindow):
         is_filled_all = len(config.PATH_TO_GEOJSON) > 3 and len(config.PATH_TO_GPX) > 3 and len(config.PATH_TO_VIDEO) > 3
         self.button_treatment.setEnabled(is_filled_all)
         self.button_corrector.setEnabled(is_filled_all)
+        self.button_viewTrack.setEnabled(is_filled_all)
+        if is_filled_all:
+            self.ViewTrack = ViewTrack()
 
     def set_path_to_video(self):
         config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
@@ -285,11 +288,11 @@ class MainWindow(QMainWindow):
                         self.count_empty += 1
                     else:
                         self.count_empty = 0
-                cv2.waitKey(1)
+               # cv2.waitKey(1)
             self.switch_frame()
             if self.view.switch_video():
                 break
-            cv2.waitKey(1)
+            #cv2.waitKey(1)
             while self.is_wait:
                 pass
         #except Exception as e:
@@ -424,7 +427,7 @@ class MainWindow(QMainWindow):
         self.is_brake = True
         self.thread.join()
         self.thread = Thread(target=self.treatment, daemon=True)
-        cv2.destroyAllWindows()
+        #cv2.destroyAllWindows()
 
        #self.stop_progressing()
 
@@ -529,7 +532,6 @@ class MainWindow(QMainWindow):
                     cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
                     with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
                         dump(feature_collection, f)
-                    cv2.waitKey(1000)
                     counter += 1
                     break
 

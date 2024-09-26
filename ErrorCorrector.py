@@ -251,7 +251,7 @@ def get_error_sign():
                 cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
                 with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
                     dump(feature_collection, f)
-                cv2.waitKey(1000)
+                #cv2.waitKey(1000)
                 counter += 1
                 break
 #get_error_sign()

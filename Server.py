@@ -10,18 +10,14 @@ from configs import config
 import jinja2
 
 template_dir = os.path.join(os.getcwd(),"templates")
-with open("data.txt", "w") as file:
-    file.write(f"{template_dir}")
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
 
-config.VIDEOS = os.listdir(r'D:\Urban\vid\test\GOPR0064')
 
 
 class Server:
     def __init__(self):
         self.app = Flask(__name__, template_folder='../templates')
         CORS(self.app)
-        self.dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), rf"D:\Urban\vid\test\GOPR0064")
         self.socketio = SocketIO()
         self.socketio.init_app(self.app, cors_allowed_origins="*", async_mode="threading")
 
