@@ -61,15 +61,9 @@ class MainWindow(QMainWindow):
         self.create_text()
         self.create_buttons()
         #self.set_path_to_video()
-        self.check_for_filling_of_data()
-
         self.show()
 
-    def openErrorCorrector(self, checked):
-        if self.ErrorCorrector.isVisible():
-            self.ErrorCorrector.hide()
-        else:
-            self.ErrorCorrector.show()
+
 
     def create_player(self):
         video = QVideoWidget(self)
@@ -85,9 +79,7 @@ class MainWindow(QMainWindow):
         self.player.play()
 
         self.label = QLabel(self)
-        self.pixmap = QPixmap('../cnt.png')
         self.label.resize(960, 540)
-
     def create_text(self):
         self.plainTextEdit = QPlainTextEdit()
         self.plainTextEdit.setFont(QFont('Arial', 11))
@@ -100,7 +92,6 @@ class MainWindow(QMainWindow):
 
         self.label_geojson = QLabel('', self)
         self.label_geojson.setGeometry(1060, 90, 1000, 20)
-
     def create_buttons(self):
         self.button_play = QPushButton("||", self)
         self.button_play.move(430, 540)
@@ -108,15 +99,12 @@ class MainWindow(QMainWindow):
 
         self.button_choose_dir = QPushButton("Open Directory", self)
         self.button_choose_dir.move(960, 30)
-        self.button_choose_dir.clicked.connect(self.choose_dir)
 
         self.button_choose_GPX = QPushButton("open GPX", self)
         self.button_choose_GPX.move(960, 60)
-        self.button_choose_GPX.clicked.connect(self.choose_GPX)
 
         self.button_choose_geojson = QPushButton("Выбрать geojson", self)
         self.button_choose_geojson.move(960, 90)
-        self.button_choose_geojson.clicked.connect(self.choose_geojson)
 
         self.button_treatment = QPushButton("Начать обработку", self)
         self.button_treatment.move(960, 120)
@@ -144,11 +132,10 @@ class MainWindow(QMainWindow):
 
         self.button_corrector = QPushButton("Корректировать ошибки", self)
         self.button_corrector.move(630, 540)
-        self.button_corrector.clicked.connect(self.openErrorCorrector)
 
         self.button_viewTrack = QPushButton("viewTrack ", self)
         self.button_viewTrack.move(730, 540)
-        self.button_viewTrack.clicked.connect(self.openViewTrack )
+
 
     def start_processing(self):
         self.set_default_values_configs()
@@ -173,20 +160,8 @@ class MainWindow(QMainWindow):
        config.INDEX_OF_All_FRAME = config.INDEX_OF_FRAME + (63600 * config.INDEX_OF_VIDEO)
        config.INDEX_OF_GPS = int(round(config.INDEX_OF_All_FRAME / 60, 0))
        config.INDEX_OF_SING = 0
-    def openViewTrack(self):
-        if self.ViewTrack.isVisible():
-            self.ViewTrack.hide()
-        else:
-            self.ViewTrack.show()
 
-    def check_for_filling_of_data(self):
-        is_filled_all = len(config.PATH_TO_GEOJSON) > 3 and len(config.PATH_TO_GPX) > 3 and len(config.PATH_TO_VIDEO) > 3
-        self.button_treatment.setEnabled(is_filled_all)
-        self.button_corrector.setEnabled(is_filled_all)
-        self.button_viewTrack.setEnabled(is_filled_all)
-        if is_filled_all:
-            self.ViewTrack = ViewTrack()
-            self.finalHandler = FinalHandler()
+
 
     def set_path_to_video(self):
         config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
@@ -261,7 +236,6 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "Сообщение", "Сохранено")
 
     def treatment(self):
-
         self.calculation = CoordinateCalculation()
         self.view = View()
         self.view.count_frames()
@@ -317,38 +291,6 @@ class MainWindow(QMainWindow):
         p = convert_to_Qt_format.scaled(960, 540, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
-    def choose_GPX(self):
-        gpx_path = QtWidgets.QFileDialog.getOpenFileName(filter="gpx (*.gpx)")
-
-        config.PATH_TO_GPX = gpx_path[0].replace('/', '\\')
-        if config.PATH_TO_GPX == "":
-            self.label_gpx.setText("<font color=black>" + "Пустой GPX" + "</font>")
-        else:
-            self.Reader = Reader(config.PATH_TO_GPX)
-            self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
-        self.check_for_filling_of_data()
-
-    def choose_dir(self):
-        dirlist = QFileDialog.getExistingDirectory(self, "Выбрать папку", ".")
-        config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
-        config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
-
-        self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
-        self.Files = dirlist
-        self.check_for_filling_of_data()
-
-    def choose_geojson(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        save_path, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
-                                                   "geojson (*.geojson)", options=options)
-        if save_path not in ".geojson":
-            save_path += ".geojson"
-        config.PATH_TO_GEOJSON = save_path
-        self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
-        self.check_for_filling_of_data()
-
-
     def finish_processing(self):
         self.toggle_button_activity()
         self.finalHandler.save_result(self.view.sign_handler.result_signs, self.view.sign_handler.side_signs, self.view.sign_handler.turns)
@@ -360,8 +302,6 @@ class MainWindow(QMainWindow):
         self.thread = Thread(target=self.treatment, daemon=True)
         #cv2.destroyAllWindows()
        #self.stop_progressing()
-
-
 
     def create_image_with_errors(self):
         result = []
@@ -407,7 +347,3 @@ class MainWindow(QMainWindow):
                     break
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    sys.exit(app.exec_())
