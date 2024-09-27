@@ -1,33 +1,34 @@
 import os
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QFileDialog
-from future.moves import sys
-
+from PyQt5.QtWidgets import QFileDialog
 from FinalHandler import FinalHandler
+from PlayerHandler import PlayerHandler
 from Reader import Reader
 from ViewTrack import ViewTrack
 from configs import config
-from player import MainWindow
 
 
-class ButtonsHandler(MainWindow):
+
+class ButtonsHandler(PlayerHandler):
     def __init__(self):
         super().__init__()
+       # self.playerHandle = PlayerHandler()
         self.connect_buttons()
         self.check_for_filling_of_data()
 
+
     def open_error_corrector(self, checked):
-        if self.ErrorCorrector.isVisible():
-            self.ErrorCorrector.hide()
+        if self.errorCorrector.isVisible():
+            self.errorCorrector.hide()
         else:
-            self.ErrorCorrector.show()
+            self.errorCorrector.show()
 
     def open_view_track(self):
-        if self.ViewTrack.isVisible():
-            self.ViewTrack.hide()
+        if self.viewTrack.isVisible():
+            self.viewTrack.hide()
         else:
-            self.ViewTrack.show()
+            self.viewTrack.show()
 
     def choose_geojson(self):
         options = QFileDialog.Options()
@@ -57,7 +58,7 @@ class ButtonsHandler(MainWindow):
         self.button_corrector.setEnabled(is_filled_all)
         self.button_viewTrack.setEnabled(is_filled_all)
         if is_filled_all:
-            self.ViewTrack = ViewTrack()
+            self.viewTrack = ViewTrack()
             self.finalHandler = FinalHandler()
     def choose_dir(self):
         dirlist = QFileDialog.getExistingDirectory(self, "Выбрать папку", ".")
@@ -74,5 +75,6 @@ class ButtonsHandler(MainWindow):
         self.button_choose_geojson.clicked.connect(self.choose_geojson)
         self.button_choose_GPX.clicked.connect(self.choose_GPX)
         self.button_choose_dir.clicked.connect(self.choose_dir)
-
+        self.button_treatment.clicked.connect(self.start_processing)
+        self.button_end.clicked.connect(self.finish_processing)
 

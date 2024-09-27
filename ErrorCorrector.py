@@ -210,48 +210,47 @@ class ErrorCorrector(QWidget):
                 dump(feature_collection, f)
 
 
-def get_error_sign():
-    result = []
-    with open(config.PATH_TO_GEOJSON) as f:
-        data = geojson.load(f)
-    counter = 0
-    for feature in data['features']:
-        for item in feature["properties"]:
-            features = []
-            frame_number = None
-            if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
-                frame_number = float(
-                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[-2])
-                result.append(feature)
-            if feature["properties"]['type'] == "5.8.1":
-                frame_number = float(
-                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[-2])
-                result.append(feature)
-            if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
-                frame_number = float(
-                    feature["properties"]["absolute_frame_numbers"].replace(" ", "")[1:-1].split(',')[-2])
-                result.append(feature)
-            if frame_number != None:
+    def create_image_with_errors(self):
+        result = []
+        with open(config.PATH_TO_GEOJSON) as f:
+            data = geojson.load(f)
+        counter = 0
 
-                features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
-                feature_collection = FeatureCollection(features)
+        for feature in data['features']:
+            for item in feature["properties"]:
+                features = []
+                frame_number = self.get_item_from_arr(feature["properties"]['absolute_frame_numbers'])
+                result.append(feature)
+               #if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
+               #    frame_number = float(feature["properties"]['num']) - 70
+               #    result.append(feature)
+               #if feature["properties"]['type'] == "5.8.1":
+               #    frame_number = float(feature["properties"]['num']) - 70
+               #    result.append(feature)
+               #if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
+               #    frame_number = float(feature["properties"]['num']) - 70
+               #    result.append(feature)
+                if frame_number != None:
+                    print(feature["properties"])
 
-                number_video = int(frame_number // 63600)
-                frame_number_for_save = int(frame_number % 63600)
+                    features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
+                    feature_collection = FeatureCollection(features)
 
-                files = os.listdir(config.PATH_TO_VIDEO)
-                new_path = os.path.join(config.PATH_TO_VIDEO, str(files[number_video]))
-                cap = cv2.VideoCapture(new_path)
-                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number_for_save)
-                ret, frame = cap.read()
-                while not ret:
+                    number_video = int(frame_number // 63600)
+                    frame_number_for_save = int(frame_number % 63600)
+                    files = os.listdir(config.PATH_TO_VIDEO)
+                    new_path = os.path.join(config.PATH_TO_VIDEO, str(files[number_video]))
+                    cap = cv2.VideoCapture(new_path)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number_for_save)
                     ret, frame = cap.read()
-                frame = cv2.resize(frame, dsize=(960, 540))
-                #cv2.imshow("frame", frame)
-                cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
-                with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
-                    dump(feature_collection, f)
-                #cv2.waitKey(1000)
-                counter += 1
-                break
-#get_error_sign()
+                    while not ret:
+                        ret, frame = cap.read()
+                    frame = cv2.resize(frame, dsize=(960, 540))
+                    #cv2.imshow("frame", frame)
+                    cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
+                    with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
+                        dump(feature_collection, f)
+                    counter += 1
+                    break
+
+
