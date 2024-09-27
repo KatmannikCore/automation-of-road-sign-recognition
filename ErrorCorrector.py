@@ -41,7 +41,7 @@ class ErrorCorrector(QWidget):
         self.label_t.setGeometry(1000, 35, 1000, 20)
 
         self.label_img_type = QLabel(self)
-        self.img_type = QPixmap(rf"D:\Urban\map\100\V1.1.png")
+        self.img_type = QPixmap(rf"./100/V1.1.png")
         self.label_img_type.setPixmap(self.img_type)
         self.label_img_type.resize(100, 100)
         self.label_img_type.move(1090, 0)
@@ -125,7 +125,7 @@ class ErrorCorrector(QWidget):
 
     def change_type(self, item):
         self.label_type.setText(item.text().replace("V", ""))
-        self.img_type = QPixmap(rf"D:\Urban\map\100\{item.text()}.png")
+        self.img_type = QPixmap(rf"./100/{item.text()}.png")
         self.label_img_type.setPixmap(self.img_type)
         self.ChangerType.hide()
 
@@ -158,7 +158,7 @@ class ErrorCorrector(QWidget):
         self.pixmap = QPixmap(self.files_img[self.current_index])
         self.draw_box()
         self.label_type.setText(self.feature["properties"]['type'])
-        self.img_type = QPixmap(rf"D:\Urban\map\100\V{self.feature['properties']['type']}.png")
+        self.img_type = QPixmap(rf"./100/V{self.feature['properties']['type']}.png")
 
         self.label_img_type.setPixmap(self.img_type)
         if 'MVALUE' in self.feature["properties"]:

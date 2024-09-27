@@ -5,7 +5,7 @@ from Converter import Converter
 
 
 class Reader:
-    def __init__(self, path = r"D:\Urban\vid\gpx.gpx"):
+    def __init__(self, path ):
         gpx_file = open(config.PATH_TO_GPX, 'r')
         self.gpx = gpxpy.parse(gpx_file)
         self.conventer = Converter()

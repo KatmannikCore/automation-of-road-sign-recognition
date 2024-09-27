@@ -64,7 +64,7 @@ class Detector:
             if self.city_names:
                 text = difflib.get_close_matches(text, self.city_names)
             else:
-                with open(r'D:\Urban\yolov4\yolov4-opencv-python/static/cities_be.txt', 'r', encoding='utf-8') as file:
+                with open(r'./static/cities_be.txt', 'r', encoding='utf-8') as file:
                     # Читаем строки из файла и помещаем их в массив
                     lines = file.readlines()
                 for line in lines:

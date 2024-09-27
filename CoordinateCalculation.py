@@ -94,70 +94,7 @@ class CoordinateCalculation:
         distance = R * c
         return round(distance * 1000, 3)
 
-    def create_feature_object(self, x1, x2, y1, y2, sign):
-        average_number_frame = sum(sign.absolute_frame_numbers) / len(sign.absolute_frame_numbers)
-        number_video = int(average_number_frame // 63600)
-        frame_number = int(average_number_frame % 63600)
-        name_video = os.listdir(config.PATH_TO_VIDEO)[number_video]
-        minute = frame_number // 3600
-        seconds = (frame_number // 60) % 60
-        time = f"{minute}:{seconds}"
-        line = LineString([(y1, x1), (y2, x2)])
-        if sign.get_the_most_often(sign.result_yolo)["name"] in name_signs_city:
-            text_on_sign = sign.get_name_city()
-        else:
-            #TODO если табличка и город
-            #TODO игнарировать если очень разные знаки или мало одинаковых совпадений
-            if len(sign.text_on_sign) <= 4:
-                text_on_sign = ""
-            else:
-                text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
-        type = sign.get_the_most_often(sign.result_CNN)['name']
-        if text_on_sign != "":
-            feature = Feature(geometry=line, properties={
-                "type": f"{type}",
-                "MVALUE": f"{text_on_sign}",
-                "SEM250": f"{text_on_sign}",
-                "length": f"{len(sign.w)}",
-                "side": f"{sign.is_sign_side}",
-                "turn": f"{sign.turn_directions}",
-                "left": f"{sign.is_left}",
-                "num": f"{sign.number_sign}",
-                "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
-                "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
-                "h": f"{sign.h}",
-                "w": f"{sign.w}",
-                "car_coordinates_x": f"{sign.car_coordinates_x}",
-                "car_coordinates_y": f"{sign.car_coordinates_y}",
-                "frame_numbers": f"{sign.frame_numbers}",
-                "absolute_frame_numbers": f"{sign.absolute_frame_numbers}",
-                "azimuth": f"{sign.azimuth}",
-                "id": f"{uuid.uuid4()}",
-                "time": time,
-                "name_video": name_video
-            })
-        else:
-            feature = Feature(geometry=line, properties={
-                "type": f"{type}",
-                "length": f"{len(sign.w)}",
-                "side": f"{sign.is_sign_side}",
-                "turn": f"{sign.turn_directions}",
-                "left": f"{sign.is_left}",
-                "num": f"{sign.number_sign}",
-                "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
-                "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
-                "h": f"{sign.h}",
-                "w": f"{sign.w}",
-                "car_coordinates_x": f"{sign.car_coordinates_x}",
-                "car_coordinates_y": f"{sign.car_coordinates_y}",
-                "frame_numbers": f"{sign.frame_numbers}",
-                "absolute_frame_numbers": f"{sign.absolute_frame_numbers}",
-                "azimuth": f"{sign.azimuth}",
-                "id": f"{uuid.uuid4()}",
-                "time": time,
-                "name_video": name_video
-            })
-        return feature
+
 
     def calculation_four_dots(self, Turn):
         result_points = []
