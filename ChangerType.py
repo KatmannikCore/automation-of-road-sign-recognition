@@ -36,7 +36,7 @@ class ChangerType(QWidget):
             data = json.load(f)['MapLegend']
             for class_name in data:
                 for items in data[class_name]['Item']:
-                    self.add_image(fr"./100/{items['_Image']}", items['_Key'])
+                    self.add_image(fr"./sings/{items['_Image']}", items['_Key'])
     def add_image(self, image_path, text):
         """Добавляет изображение в список."""
         # Загрузка изображения

@@ -15,4 +15,5 @@ build
 dep
 dist
 output
-player.spec
+*.spec
+sings

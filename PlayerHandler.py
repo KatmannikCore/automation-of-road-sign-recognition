@@ -39,7 +39,7 @@ class PlayerHandler(MainWindow):
         config.VIDEOS = []
         config.FRAME_STEP = 5
         config.COUNT_PROCESSED_FRAMES = 0
-        config.INDEX_OF_FRAME = 5000
+        config.INDEX_OF_FRAME = 0
         config.INDEX_OF_VIDEO = 0
         config.INDEX_OF_All_FRAME = config.INDEX_OF_FRAME + (63600 * config.INDEX_OF_VIDEO)
         config.INDEX_OF_GPS = int(round(config.INDEX_OF_All_FRAME / 60, 0))

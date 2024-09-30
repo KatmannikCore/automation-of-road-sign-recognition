@@ -57,7 +57,7 @@ type_signs_yolo = {
     "platnaua doroga" : "7.17"
 }
 
-type_signs_with_text = ['3.24', '3.11', '3.12', '3.13', '3.14', '3.15', '8.1.4', '8.1.3', '8.2.1', '8.2.2', '8.2.5', '8.2.6', '7.1.2', '7.7.1', '8.1.1', '7.9.1']
+type_signs_with_text = ['3.24', '3.11', '3.12', '3.13', '3.14', '3.15', '8.1.4', '8.1.3', '8.2.1', '8.2.2', '8.2.5', '8.2.6', '7.1.2', '7.7.1', '8.1.1', '7.9.1',"3.31","5.22.2", "5.23.2", "5.22.1", "5.23.1", "5.23.3", "5.25.3",]
 name_signs_city = [ "nachalo nas punkta bel s dom", "konec nas punkta bel s dom", "nachalo nas punkta bel", "konec nas punkta bel", "nachalo nas punkta sin", "konec nas punkta sin"]
 names_signs_for_side = ["parkovka", "ostanovka i parkovka zapreshena", "krug", "red", "tupik", "zhilaya zona", "red"]
 names_signs_for_YOLO = ["parkovka","treugolnik","krug","glavnaya doroga","peshehodnyj perehod","ostanovka i parkovka zapreshena","viezd na dorogu s odnostorinnim dvizeniem >","napravlenie dvizheniya po polosam","ustupi dorogu","red","zhilaya zona","tupik","polosa dlya obshestvennogo transporta","blue","servises","konec odnostoronnego dvizheniya","tablichka |","tablichka __","ostanovka avtobusa tablichka","doroga s odnostoronnim dvizheniem","napravlenie glavnoj dorogi","nachalo nas punkta bel s dom","konec nas punkta bel s dom","nachalo nas punkta bel","konec nas punkta bel","nachalo nas punkta sin","konec nas punkta sin","Sbros vseh ogranicheniu","platnaua doroga"]

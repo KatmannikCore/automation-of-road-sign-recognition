@@ -35,7 +35,7 @@ class ButtonsHandler(PlayerHandler):
         options |= QFileDialog.DontUseNativeDialog
         save_path, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
                                                    "geojson (*.geojson)", options=options)
-        if save_path not in ".geojson":
+        if save_path.find(".geojson") == -1 and len(save_path) != 0:
             save_path += ".geojson"
         config.PATH_TO_GEOJSON = save_path
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
@@ -61,6 +61,7 @@ class ButtonsHandler(PlayerHandler):
             self.viewTrack = ViewTrack()
             self.finalHandler = FinalHandler()
     def choose_dir(self):
+        #TODO фильтр mp4 файлов
         dirlist = QFileDialog.getExistingDirectory(self, "Выбрать папку", ".")
         config.PATH_TO_VIDEO = dirlist.replace('/', '\\') + "\\"
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)

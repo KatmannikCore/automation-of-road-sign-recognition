@@ -1,20 +1,18 @@
 import glob
+import os
+import time
 
-from PyQt5.QtCore import QUrl, Qt, QPoint
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QIntValidator, QFont, QPainter, QPen, QColor
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit, \
-    QFormLayout, QCheckBox
-from geojson import Point, Feature, FeatureCollection, dump
-
-from random import randint
+import cv2
+import geojson
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor
+from PyQt5.QtWidgets import QPushButton, QLabel, QWidget, QLineEdit, \
+    QCheckBox
+from geojson import Feature, FeatureCollection, dump
 
 from ChangerType import ChangerType
 from configs import config as config
-import geojson
-import os
-import cv2
+
+from configs.sign_config import type_signs_with_text
 
 
 class ErrorCorrector(QWidget):
@@ -70,17 +68,17 @@ class ErrorCorrector(QWidget):
         self.button_next.move(560, 540)
         self.button_next.clicked.connect(self.next)
 
-        self.button_next = QPushButton("Законьчить", self)
-        self.button_next.move(1000, 540)
-        self.button_next.clicked.connect(self.finish_correction)
+        self.button_end = QPushButton("Законьчить", self)
+        self.button_end.move(1000, 540)
+        self.button_end.clicked.connect(self.finish_correction)
 
         self.button_change_type = QPushButton("Изменить тип", self)
         self.button_change_type.move(1000, 55)
         self.button_change_type.clicked.connect(self.open_change_type_window)
 
-        self.button_next = QPushButton("Удалить", self)
-        self.button_next.move(1000, 150)
-        self.button_next.clicked.connect(self.delete_sign)
+        self.button_delete = QPushButton("Удалить", self)
+        self.button_delete.move(1000, 150)
+        self.button_delete.clicked.connect(self.delete_sign)
 
         self.set_data()
         self.setWindowTitle("QLineEdit Example")
@@ -90,11 +88,14 @@ class ErrorCorrector(QWidget):
             data = geojson.load(f)
         with open(self.files_geojson[self.current_index], encoding='utf-8') as f:
             id = geojson.load(f)['features'][0]["properties"]["id"]
-        new_data = []
-        for feature in data:
-            if feature["properties"]["id"] != id:
-                new_data.append(feature)
-        self.save_new_geojson(new_data)
+        #TODO почему-то крашит прогу, а без этого работет
+        #new_data = []
+        #for feature in data:
+        #    print(feature)
+        #if feature["properties"]["id"] != id:
+        #    pass
+        #new_data.append(feature)
+        #self.save_new_geojson(new_data)
         os.remove(self.files_geojson[self.current_index])
         os.remove(self.files_img[self.current_index])
         self.files_geojson.pop(self.current_index)
@@ -124,9 +125,11 @@ class ErrorCorrector(QWidget):
             dump(new_geojson, f)
 
     def change_type(self, item):
-        self.label_type.setText(item.text().replace("V", ""))
-        self.img_type = QPixmap(rf"./100/{item.text()}.png")
+        type_of_sing = item.text().replace("V", "")
+        self.label_type.setText(type_of_sing)
+        self.img_type = QPixmap(rf"./sings/{item.text()}.png")
         self.label_img_type.setPixmap(self.img_type)
+        self.textbox_text.setEnabled(type_of_sing in type_signs_with_text)
         self.ChangerType.hide()
 
     def open_change_type_window(self):
@@ -158,15 +161,17 @@ class ErrorCorrector(QWidget):
         self.pixmap = QPixmap(self.files_img[self.current_index])
         self.draw_box()
         self.label_type.setText(self.feature["properties"]['type'])
-        self.img_type = QPixmap(rf"./100/V{self.feature['properties']['type']}.png")
+        self.img_type = QPixmap(rf"./sings/V{self.feature['properties']['type']}.png")
 
         self.label_img_type.setPixmap(self.img_type)
-        if 'MVALUE' in self.feature["properties"]:
-            self.textbox_text.setEnabled(True)
-            self.textbox_text.setText(self.feature["properties"]["MVALUE"])
-        else:
-            self.textbox_text.setEnabled(False)
+        self.toggle_textbox()
+
         self.checkbox_side.setChecked(self.feature["properties"]['side'] == "True")
+
+    def toggle_textbox(self):
+        is_contain_text = self.feature["properties"]['type'] in type_signs_with_text
+        self.textbox_text.setEnabled(is_contain_text)
+        self.textbox_text.setText(self.feature["properties"]["MVALUE"] if is_contain_text else "")
 
     def draw_box(self):
         painter = QPainter(self.pixmap)
@@ -191,24 +196,22 @@ class ErrorCorrector(QWidget):
         return data['features'][0]
 
     def change_geojson(self):
-        is_was_changes = False
-        if self.feature["properties"]['type'] != self.label_type.text():
-            self.feature["properties"]['type'] = self.label_type.text()
-            is_was_changes = True
-        if 'MVALUE' in self.feature["properties"]:
-            if self.feature["properties"]['MVALUE'] != self.textbox_text.text():
-                self.feature["properties"]['MVALUE'] = self.textbox_text.text()
-                self.feature["properties"]['SEM250'] = self.textbox_text.text()
-                is_was_changes = True
-        if self.feature["properties"]['side'] != str(self.checkbox_side.isChecked()):
-            self.feature["properties"]['side'] = str(self.checkbox_side.isChecked())
-            is_was_changes = True
-        if is_was_changes:
+        old_properties = self.feature["properties"].copy()
+        self.feature["properties"]['type'] = self.label_type.text()
+        self.feature["properties"]['side'] = str(self.checkbox_side.isChecked())
+
+        if self.feature["properties"]['type'] in type_signs_with_text:
+            self.feature["properties"]['MVALUE'] = self.textbox_text.text()
+            self.feature["properties"]['SEM250'] = self.textbox_text.text()
+        else:
+            if 'MVALUE' in self.feature["properties"]:
+                self.feature["properties"].pop("MVALUE")
+                self.feature["properties"].pop("SEM250")
+        if old_properties != self.feature["properties"]:
             features = [Feature(geometry=self.feature["geometry"], properties=self.feature["properties"])]
             feature_collection = FeatureCollection(features)
             with open(self.files_geojson[self.current_index], 'w', encoding='utf-8') as f:
                 dump(feature_collection, f)
-
 
     def create_image_with_errors(self):
         result = []
@@ -221,18 +224,16 @@ class ErrorCorrector(QWidget):
                 features = []
                 frame_number = self.get_item_from_arr(feature["properties"]['absolute_frame_numbers'])
                 result.append(feature)
-               #if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
-               #    frame_number = float(feature["properties"]['num']) - 70
-               #    result.append(feature)
-               #if feature["properties"]['type'] == "5.8.1":
-               #    frame_number = float(feature["properties"]['num']) - 70
-               #    result.append(feature)
-               #if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
-               #    frame_number = float(feature["properties"]['num']) - 70
-               #    result.append(feature)
+                #if item == 'MVALUE' and feature["properties"]['MVALUE'] == "":
+                #    frame_number = float(feature["properties"]['num']) - 70
+                #    result.append(feature)
+                #if feature["properties"]['type'] == "5.8.1":
+                #    frame_number = float(feature["properties"]['num']) - 70
+                #    result.append(feature)
+                #if feature["properties"]['type'] == "3.1" or feature["properties"]['type'] == "3.2":
+                #    frame_number = float(feature["properties"]['num']) - 70
+                #    result.append(feature)
                 if frame_number != None:
-                    print(feature["properties"])
-
                     features.append(Feature(geometry=feature["geometry"], properties=feature["properties"]))
                     feature_collection = FeatureCollection(features)
 
@@ -252,5 +253,3 @@ class ErrorCorrector(QWidget):
                         dump(feature_collection, f)
                     counter += 1
                     break
-
-

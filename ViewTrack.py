@@ -1,15 +1,11 @@
-import os
-
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from threading import Thread
 
-from flask import Flask
+from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets
 
 from Server import Server
 from VideoWidget import VideoPlayerWidget
-from configs import config as config
-from lxml import html
+
+
 class WebForm(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
@@ -50,7 +46,7 @@ class ViewTrack(QtWidgets.QWidget, WebForm):
         self.setupUi(self)
 
         self.webView.load(QtCore.QUrl('http://127.0.0.1:3000'))
-        #self.webView.load(QtCore.QUrl().fromLocalFile(os.path.split(os.path.abspath(__file__))[0]+r'\web\index.html'))  # !!! +++
+        #self.webView.load(QtCore.QUrl().fromLocalFile(os.path.split(os.path.abspath(__file__))[0]+r'\web\index.html'))
 
     def closeEvent(self, e):
         #self.tlaWindow.hide()

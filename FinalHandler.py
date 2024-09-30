@@ -1,16 +1,12 @@
 import os
 import re
 import uuid
-
-from geojson import FeatureCollection, LineString, Feature
 from json import dump
-
+from geojson import FeatureCollection, LineString, Feature
 from Converter import Converter
-from View import View
-from configs import config
 from CoordinateCalculation import CoordinateCalculation
-from configs.sign_config import name_signs_city
-
+from configs import config
+from configs.sign_config import name_signs_city, type_signs_with_text
 
 
 class FinalHandler:
@@ -49,12 +45,8 @@ class FinalHandler:
                 if "del" not in features[i]:
                     if average_item_for_x != average_item_with_x:
                         if item_for_matching["properties"]["left"] == item_with_which_matching["properties"]["left"]:
-                            if item_for_matching["properties"]["type"] == item_with_which_matching["properties"][
-                                "type"]:
-                                distance = self.calculation.calculation_distance(item_for_car_x[-1],
-                                                                                 item_for_car_y[-1],
-                                                                                 item_with_car_x[-1],
-                                                                                 item_with_car_y[-1])
+                            if item_for_matching["properties"]["type"] == item_with_which_matching["properties"]["type"]:
+                                distance = self.calculation.calculation_distance(item_for_car_x[-1], item_for_car_y[-1], item_with_car_x[-1], item_with_car_y[-1])
                                 if distance < 20:
                                     item_for_azimuth = float(item_for_matching["properties"]["azimuth"])
                                     item_with_azimuth = float(item_with_which_matching["properties"]["azimuth"])
@@ -94,7 +86,7 @@ class FinalHandler:
                 features.append(feature)
         return features
 
-    def handling_side(self,arr_signs):
+    def handling_side(self, arr_signs):
         grouped_objects = {}
         features = []
         for obj in arr_signs:
@@ -166,31 +158,8 @@ class FinalHandler:
             else:
                 text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
         type = sign.get_the_most_often(sign.result_CNN)['name']
-        if text_on_sign != "":
-            feature = Feature(geometry=line, properties={
-                "type": f"{type}",
-                "MVALUE": f"{text_on_sign}",
-                "SEM250": f"{text_on_sign}",
-                "length": f"{len(sign.w)}",
-                "side": f"{sign.is_sign_side}",
-                "turn": f"{sign.turn_directions}",
-                "left": f"{sign.is_left}",
-                "num": f"{sign.number_sign}",
-                "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
-                "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
-                "h": f"{sign.h}",
-                "w": f"{sign.w}",
-                "car_coordinates_x": f"{sign.car_coordinates_x}",
-                "car_coordinates_y": f"{sign.car_coordinates_y}",
-                "frame_numbers": f"{sign.frame_numbers}",
-                "absolute_frame_numbers": f"{sign.absolute_frame_numbers}",
-                "azimuth": f"{sign.azimuth}",
-                "id": f"{uuid.uuid4()}",
-                "time": time,
-                "name_video": name_video
-            })
-        else:
-            feature = Feature(geometry=line, properties={
+
+        properties_general = {
                 "type": f"{type}",
                 "length": f"{len(sign.w)}",
                 "side": f"{sign.is_sign_side}",
@@ -209,5 +178,33 @@ class FinalHandler:
                 "id": f"{uuid.uuid4()}",
                 "time": time,
                 "name_video": name_video
-            })
+            }
+        properties_for_signs_with_text = {"MVALUE": f"{text_on_sign}", "SEM250": f"{text_on_sign}"}
+
+        properties_general.update(properties_for_signs_with_text) if type in type_signs_with_text  else properties_general
+
+        feature = Feature(geometry=line, properties=properties_general)
+        #if text_on_sign != "":
+        #    feature = Feature(geometry=line, properties=properties_general)
+        #else:
+        #    feature = Feature(geometry=line, properties={
+        #        "type": f"{type}",
+        #        "length": f"{len(sign.w)}",
+        #        "side": f"{sign.is_sign_side}",
+        #        "turn": f"{sign.turn_directions}",
+        #        "left": f"{sign.is_left}",
+        #        "num": f"{sign.number_sign}",
+        #        "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
+        #        "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
+        #        "h": f"{sign.h}",
+        #        "w": f"{sign.w}",
+        #        "car_coordinates_x": f"{sign.car_coordinates_x}",
+        #        "car_coordinates_y": f"{sign.car_coordinates_y}",
+        #        "frame_numbers": f"{sign.frame_numbers}",
+        #        "absolute_frame_numbers": f"{sign.absolute_frame_numbers}",
+        #        "azimuth": f"{sign.azimuth}",
+        #        "id": f"{uuid.uuid4()}",
+        #        "time": time,
+        #        "name_video": name_video
+        #    })
         return feature

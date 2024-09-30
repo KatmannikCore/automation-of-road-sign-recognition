@@ -1,17 +1,15 @@
 import os
 
 import gpxpy
-from flask import Flask, render_template, request
+import jinja2
+from flask import Flask, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
-from engineio.async_drivers import threading
+
 from configs import config
 
-import jinja2
-
-template_dir = os.path.join(os.getcwd(),"templates")
+template_dir = os.path.join(os.getcwd(), "templates")
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
-
 
 
 class Server:

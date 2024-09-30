@@ -48,16 +48,15 @@ class Detector:
             result.append(item)
         return result
 
-    def remove_all_chars(self,input_string):
+    def remove_all_chars(self, input_string):
         return ''.join(char for char in input_string if char.isalnum())
     def find_similar_word(self, word, word_list):
         matches = difflib.get_close_matches(word, word_list)
         return matches
     def text_handler(self,minImg, res, class_id):
-
         text = ''
         if res in type_signs_with_text:
-            text =  re.sub(r'\D', '', self.read_text(minImg))
+            text = re.sub(r'\D', '', self.read_text(minImg))
         if self.class_name[class_id] in name_signs_city:
             text = self.read_text(minImg)
             text = self.remove_all_chars(text).lower()
@@ -114,5 +113,4 @@ class Detector:
         # Если результат пустой, присваиваем "empty"
         if result_type == "":
             result_type = "empty"
-
         return result_type

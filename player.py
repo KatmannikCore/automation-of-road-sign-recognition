@@ -1,7 +1,6 @@
 import json
 import os
 from json import dump
-
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QFont
@@ -11,7 +10,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMainWindow, QLabel, QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from geojson import dump
-
 from Converter import Converter
 from Reader import Reader
 from configs import config

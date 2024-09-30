@@ -1,14 +1,9 @@
-import os
-
-from Reader import Reader
-from Converter import Converter
-from configs import config as config
-from pygeoguz.simplegeo import *
-from pygeoguz.objects import *
-from configs.sign_config import name_signs_city
-from geojson import Feature, LineString
 from geopy.distance import geodesic
-import uuid
+from pygeoguz.simplegeo import *
+
+from Converter import Converter
+from Reader import Reader
+from configs import config as config
 
 
 class CoordinateCalculation:
@@ -93,8 +88,6 @@ class CoordinateCalculation:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance = R * c
         return round(distance * 1000, 3)
-
-
 
     def calculation_four_dots(self, Turn):
         result_points = []
