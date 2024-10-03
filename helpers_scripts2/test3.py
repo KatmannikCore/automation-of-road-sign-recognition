@@ -1,33 +1,11 @@
-import math
-def azimuth_difference(azimuth1, azimuth2):
-  """Вычисляет разницу между двумя азимутами.
+import geojson
+from geojson import Feature, FeatureCollection
 
-  Args:
-    azimuth1: Первый азимут в градусах.
-    azimuth2: Второй азимут в градусах.
+geometry_plate = {"type": "LineString", "coordinates": [[27.2, 54.2], [27.2, 54.2]]}
+features = [Feature(geometry=geometry_plate, properties={"name": 'пінкавічы'})]
+feature_collection = FeatureCollection(features)
+with open(rf'1.geojson', 'w', encoding="utf-8") as f:
+  geojson.dump(feature_collection, f,skipkeys=False, ensure_ascii=False)
 
-  Returns:
-    Разница между двумя азимутами в градусах.
-  """
-
-  # Преобразуем азимуты в радианы.
-  azimuth1_rad = azimuth1 * math.pi / 180
-  azimuth2_rad = azimuth2 * math.pi / 180
-
-  # Вычисляем разницу между азимутами.
-  difference = azimuth2_rad - azimuth1_rad
-
-  # Обернём значение разницы в диапазон от 0 до 2π.
-  difference = (difference + 2 * math.pi) % (2 * math.pi)
-
-  # Преобразуем разницу в градусы.
-  difference_deg = difference * 180 / math.pi
-
-  return difference_deg
-
-
-# Пример использования
-azimuth1 = 11
-azimuth2 = 352
-difference = azimuth_difference(azimuth1, azimuth2)
-print(f"Разница между азимутами {azimuth1} и {azimuth2}: {difference} градусов")
+#'аснежыцы'
+#'пінкавічы'

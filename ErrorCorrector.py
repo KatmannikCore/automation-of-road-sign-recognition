@@ -1,11 +1,8 @@
 import glob
 import os
-import time
-
 import cv2
 import geojson
-import numpy as np
-from PyQt5.QtCore import Qt
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QPushButton, QLabel, QWidget, QLineEdit, \
     QCheckBox
@@ -15,10 +12,9 @@ from ChangerType import ChangerType
 from CoordinateCalculation import CoordinateCalculation
 from PlateCreator import PlateCreator
 from configs import config as config
-
 from configs.sign_config import type_signs_with_text, plate_for_signatures_with_text, codes_signs
 
-
+from PlateCreatorWidget import PlateCreatorWidget
 class ErrorCorrector(QWidget):
     def __init__(self):
         super().__init__()
@@ -111,6 +107,11 @@ class ErrorCorrector(QWidget):
         self.textbox_text_plate.setEnabled(False)
 
         self.set_data()
+
+        self.plateCreatorWidget = PlateCreatorWidget()
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.mainLayout.addWidget(self.plateCreatorWidget )
+        self.setLayout(self.mainLayout)
         self.setWindowTitle("Исправлять ошибки")
 
     def delete_plate(self):
@@ -177,8 +178,8 @@ class ErrorCorrector(QWidget):
         return features_plates
 
     def save_new_geojson(self, new_geojson):
-        with open(config.PATH_TO_GEOJSON, 'w') as f:
-            dump(new_geojson, f)
+        with open(config.PATH_TO_GEOJSON, 'w', encoding="utf-8") as f:
+            dump(new_geojson, f, ensure_ascii=False)
 
     def change_type(self, item):
         type_of_sing = item.text().replace("V", "")
@@ -278,8 +279,8 @@ class ErrorCorrector(QWidget):
             feature = Feature(geometry=geometry_plate, properties=properties_plate)
 
             feature_collection = FeatureCollection(feature)
-            with open(rf'./errorData/plates/{str(self.current_index)}.geojson', 'w') as f:
-                geojson.dump(feature_collection, f)
+            with open(rf'./errorData/plates/{str(self.current_index)}.geojson', 'w', encoding="utf-8") as f:
+                geojson.dump(feature_collection, f, ensure_ascii=False)
 
 
     def toggle_textbox(self):
@@ -325,7 +326,7 @@ class ErrorCorrector(QWidget):
             features = [Feature(geometry=self.feature["geometry"], properties=self.feature["properties"])]
             feature_collection = FeatureCollection(features)
             with open(self.files_geojson[self.current_index], 'w', encoding='utf-8') as f:
-                dump(feature_collection, f)
+                dump(feature_collection, f, ensure_ascii=False)
     def clean_corrector(self):
         self.delete_files("./errorData")
         self.delete_files("./errorData/plates")
@@ -336,8 +337,7 @@ class ErrorCorrector(QWidget):
                 if file.endswith(('.geojson', '.png')):
                     path_to_file = os.path.join(root, file)
                     try:
-                        #os.remove(path_to_file)
-                        print(f"Удален файл: {path_to_file}")
+                        os.remove(path_to_file)
                     except OSError as e:
                         print(f"Ошибка при удалении {path_to_file}: {e}")
     def create_image_with_errors(self):
@@ -376,7 +376,7 @@ class ErrorCorrector(QWidget):
                     frame = cv2.resize(frame, dsize=(960, 540))
                     #cv2.imshow("frame", frame)
                     cv2.imwrite(rf'./errorData/{str(counter)}.jpg', frame)
-                    with open(rf'./errorData/{str(counter)}.geojson', 'w') as f:
-                        dump(feature_collection, f)
+                    with open(rf'./errorData/{str(counter)}.geojson', 'w', encoding="utf-8") as f:
+                        dump(feature_collection, f, ensure_ascii=False)
                     counter += 1
                     break

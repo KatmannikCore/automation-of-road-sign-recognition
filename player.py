@@ -111,15 +111,15 @@ class MainWindow(QMainWindow):
         self.button_viewTrack.move(730, 540)
 
     def set_path_to_video(self):
-        config.PATH_TO_GPX = r"D:\Urban\vid\test\07,07,20211.gpx"
+        config.PATH_TO_GPX = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.gpx"
         self.Reader = Reader(config.PATH_TO_GPX)
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
-        config.PATH_TO_VIDEO = r"D:\Urban\vid\test\GOPR0064" + "\\"
+        config.PATH_TO_VIDEO = r"D:\Urban\vid\20,06,24-Вишевичи+\100GOPRO" + "\\"
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
-        config.PATH_TO_GEOJSON = r"D:\11111.geojson"
+        config.PATH_TO_GEOJSON = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
 
     #TODO Не используется
@@ -183,5 +183,5 @@ class MainWindow(QMainWindow):
             'classifier': config.ClASSIFIER
         }
         with open(save_path, 'w') as f:
-            dump(json, f)
+            dump(json, f, ensure_ascii=False)
         QMessageBox.about(self, "Сообщение", "Сохранено")

@@ -76,7 +76,7 @@ class View:
     def write_geoJson(self):
         #Создание объекта хронящего все ДЗ
         feature_collection = FeatureCollection(config.FEATURES)
-        with open(config.PATH_TO_GEOJSON, 'w', encoding='cp1251') as f:
+        with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
             dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
 
     def switch_video(self):

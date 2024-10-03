@@ -1,8 +1,11 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import re
 import uuid
-from json import dump
-from geojson import FeatureCollection, LineString, Feature
+
+import geojson
+from geojson import dump, FeatureCollection, LineString, Feature
 from Converter import Converter
 from CoordinateCalculation import CoordinateCalculation
 from configs import config
@@ -66,8 +69,8 @@ class FinalHandler:
             #    features.remove(item)
         feature_collection = FeatureCollection(features)
 
-        with open(config.PATH_TO_GEOJSON, 'w', encoding='cp1251') as f:
-            dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
+        with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
+            geojson.dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
         print("save")
 
     # TODO handling_signs и handling_side объеденить в один метод
