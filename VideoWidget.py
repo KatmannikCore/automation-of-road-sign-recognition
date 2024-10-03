@@ -1,13 +1,10 @@
 import os
-import sys
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QDir, Qt, QUrl
+from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (
-    QApplication,
-    QFileDialog,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -19,7 +16,6 @@ from PyQt5.QtWidgets import (
 )
 
 from configs import config
-
 
 class VideoPlayerWidget(QWidget):
     def __init__(self, server,  parent=None):

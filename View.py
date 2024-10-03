@@ -77,7 +77,7 @@ class View:
         #Создание объекта хронящего все ДЗ
         feature_collection = FeatureCollection(config.FEATURES)
         with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
-            dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
+            dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
 
     def switch_video(self):
         if self.cap.get(cv2.CAP_PROP_FRAME_COUNT) <= config.INDEX_OF_FRAME:

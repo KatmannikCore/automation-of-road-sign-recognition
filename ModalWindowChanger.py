@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QVBoxLayout
 
 
-class ChangerType(QWidget):
+class ModalWindowChanger(QWidget):
     def __init__(self):
         super().__init__()
 

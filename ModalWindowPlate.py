@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QVBoxLayout
 from configs.sign_config import plate_for_signatures
 
 
-class PlateCreator(QWidget):
+class ModalWindowPlate(QWidget):
     def __init__(self):
         super().__init__()
         self.setGeometry(200, 200, 240, 240)
