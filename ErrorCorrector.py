@@ -327,7 +327,19 @@ class ErrorCorrector(QWidget):
             with open(self.files_geojson[self.current_index], 'w', encoding='utf-8') as f:
                 dump(feature_collection, f)
     def clean_corrector(self):
-
+        self.delete_files("./errorData")
+        self.delete_files("./errorData/plates")
+    def delete_files(self, directory):
+        """Удаляет все файлы .txt и .png в заданном каталоге, оставляя каталоги."""
+        for root, folders, files in os.walk(directory):
+            for file in files:
+                if file.endswith(('.geojson', '.png')):
+                    path_to_file = os.path.join(root, file)
+                    try:
+                        #os.remove(path_to_file)
+                        print(f"Удален файл: {path_to_file}")
+                    except OSError as e:
+                        print(f"Ошибка при удалении {path_to_file}: {e}")
     def create_image_with_errors(self):
         result = []
         with open(config.PATH_TO_GEOJSON) as f:
