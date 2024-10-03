@@ -47,6 +47,7 @@ class PlayerHandler(MainWindow):
 
     def finish_processing(self):
         self.toggle_button_activity()
+
         self.finalHandler.save_result(self.view.sign_handler.result_signs, self.view.sign_handler.side_signs,
                                       self.view.sign_handler.turns)
         self.errorCorrector.create_image_with_errors()

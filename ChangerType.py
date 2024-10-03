@@ -1,10 +1,8 @@
 import json
-import sys
 from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtWidgets import QWidget, QLineEdit, QListWidget, QListWidgetItem, QGridLayout, QLabel, QVBoxLayout, \
-    QApplication
-from PyQt5 import QtGui,QtCore
+from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QVBoxLayout
+
 
 class ChangerType(QWidget):
     def __init__(self):

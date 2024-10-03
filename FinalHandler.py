@@ -6,7 +6,7 @@ from geojson import FeatureCollection, LineString, Feature
 from Converter import Converter
 from CoordinateCalculation import CoordinateCalculation
 from configs import config
-from configs.sign_config import name_signs_city, type_signs_with_text
+from configs.sign_config import name_signs_city, type_signs_with_text, codes_signs
 
 
 class FinalHandler:
@@ -157,10 +157,10 @@ class FinalHandler:
                 text_on_sign = ""
             else:
                 text_on_sign = sign.get_the_most_often(sign.text_on_sign)['name']
-        type = sign.get_the_most_often(sign.result_CNN)['name']
+        type_sing = sign.get_the_most_often(sign.result_CNN)['name']
 
         properties_general = {
-                "type": f"{type}",
+                "type": f"{type_sing}",
                 "length": f"{len(sign.w)}",
                 "side": f"{sign.is_sign_side}",
                 "turn": f"{sign.turn_directions}",
@@ -177,34 +177,12 @@ class FinalHandler:
                 "azimuth": f"{sign.azimuth}",
                 "id": f"{uuid.uuid4()}",
                 "time": time,
-                "name_video": name_video
+                "name_video": name_video,
+                "code": int(codes_signs[type_sing])
             }
         properties_for_signs_with_text = {"MVALUE": f"{text_on_sign}", "SEM250": f"{text_on_sign}"}
 
-        properties_general.update(properties_for_signs_with_text) if type in type_signs_with_text  else properties_general
+        properties_general.update(properties_for_signs_with_text) if type_sing in type_signs_with_text  else properties_general
 
         feature = Feature(geometry=line, properties=properties_general)
-        #if text_on_sign != "":
-        #    feature = Feature(geometry=line, properties=properties_general)
-        #else:
-        #    feature = Feature(geometry=line, properties={
-        #        "type": f"{type}",
-        #        "length": f"{len(sign.w)}",
-        #        "side": f"{sign.is_sign_side}",
-        #        "turn": f"{sign.turn_directions}",
-        #        "left": f"{sign.is_left}",
-        #        "num": f"{sign.number_sign}",
-        #        "pixel_coordinates_x": f"{sign.pixel_coordinates_x}",
-        #        "pixel_coordinates_y": f"{sign.pixel_coordinates_y}",
-        #        "h": f"{sign.h}",
-        #        "w": f"{sign.w}",
-        #        "car_coordinates_x": f"{sign.car_coordinates_x}",
-        #        "car_coordinates_y": f"{sign.car_coordinates_y}",
-        #        "frame_numbers": f"{sign.frame_numbers}",
-        #        "absolute_frame_numbers": f"{sign.absolute_frame_numbers}",
-        #        "azimuth": f"{sign.azimuth}",
-        #        "id": f"{uuid.uuid4()}",
-        #        "time": time,
-        #        "name_video": name_video
-        #    })
         return feature

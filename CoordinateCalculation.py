@@ -30,7 +30,7 @@ class CoordinateCalculation:
         x_current, y_current = self.__get_current_coordinates_for_moving_straight(sign)
         x_prev, y_prev = self.converter.coordinateConverter(x_current, y_current, "epsg:32635", "epsg:4326")
         az = (sign.azimuth + 180) % 360
-        x_prev, y_prev = self.calculate_prew_point(x_prev, y_prev, az)
+        x_prev, y_prev = CoordinateCalculation.calculate_prew_point(x_prev, y_prev, az)
         x_prev, y_prev = self.converter.coordinateConverter(x_prev, y_prev, "epsg:4326", "epsg:32635")
         x1, y1, x2, y2 = self.calculate_result_line(sign, coefficient, x_current, y_current, x_prev, y_prev)
         return x1, y1, x2, y2
@@ -58,7 +58,8 @@ class CoordinateCalculation:
                     coefficient + (0 if sign.is_sign_side else 1))
         return x1, y1, x2, y2
 
-    def calculate_prew_point(self, lat, lon, az):
+    @staticmethod
+    def calculate_prew_point(lat, lon, az, index_round=20):
         # Дистанция между точками в метрах
         distance = 5
         # Радиус Земли в метрах
@@ -74,8 +75,8 @@ class CoordinateCalculation:
         lon_result = lon1 + math.atan2(math.sin(azimuth) * math.sin(distance / earth_radius) * math.cos(lat1),
                                        math.cos(distance / earth_radius) - math.sin(lat1) * math.sin(lat_result))
         # Переводим координаты обратно в градусы
-        lat_result = math.degrees(lat_result)
-        lon_result = math.degrees(lon_result)
+        lat_result = round(math.degrees(lat_result), index_round)
+        lon_result = round(math.degrees(lon_result), index_round)
 
         return lat_result, lon_result
 
@@ -92,7 +93,7 @@ class CoordinateCalculation:
     def calculation_four_dots(self, Turn):
         result_points = []
         for lat1, lon1, az in self.calculate_current_points(Turn):
-            lat2, lon2 = self.calculate_prew_point(lat1, lon1, az)
+            lat2, lon2 = CoordinateCalculation.calculate_prew_point(lat1, lon1, az)
             lat1 = round(lat1, 5)
             lon1 = round(lon1, 5)
             lat2 = round(lat2, 5)

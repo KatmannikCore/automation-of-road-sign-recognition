@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.create_player()
         self.create_text()
         self.create_buttons()
-        #self.set_path_to_video()
+        self.set_path_to_video()
         self.show()
 
     def create_player(self):
@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
-
+        config.PATH_TO_GEOJSON = r"D:\11111.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
 
     #TODO Не используется

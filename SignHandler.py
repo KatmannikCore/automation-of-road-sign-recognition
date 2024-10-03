@@ -208,16 +208,6 @@ class SignHandler:
                             self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - \
                                                         self.signs[index].pixel_coordinates_x[-1] > 0
 
-                            print({
-                                "name_one": self.signs[index].get_the_most_often(self.signs[index].result_yolo)['name'],
-                                "name_two": self.signs[index].get_the_most_often(self.signs[index].result_CNN)['name'],
-                                "w": self.signs[index].w,
-                                "h": self.signs[index].h,
-                                "x": self.signs[index].pixel_coordinates_x,
-                                "y": self.signs[index].pixel_coordinates_y,
-                                "length": len(self.signs[index].w),
-                                "number": config.INDEX_OF_All_FRAME
-                            })
                             if False:#self.check_on_side(self.signs[index]):
                                 print(config.INDEX_OF_All_FRAME)
                                 self.signs[index].is_sign_side = True

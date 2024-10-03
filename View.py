@@ -11,6 +11,9 @@ from Converter import Converter
 from SignHandler import SignHandler
 from Frame import Frame
 from Turn import Turn
+from configs.sign_config import codes_signs
+
+
 class View:
     def __init__(self):
         self.detector = Detector()
@@ -66,7 +69,7 @@ class View:
         #Cоздание линии (2х точек) 
         line = LineString([(y1, x1), (y2, x2)])
         #создание объукта описывающего ДЗ
-        feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING})
+        feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING, "code": int(codes_signs[name_sing])})
         config.FEATURES.append(feature)
         config.INDEX_OF_SING += 1
 
