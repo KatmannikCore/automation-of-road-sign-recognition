@@ -113,12 +113,8 @@ class ErrorCorrector(QWidget):
             self.current_index = 0
         else:
             self.current_index += 1
-
-        self.plateCreator.current_index = self.current_index
-        self.signCreator.current_index = self.current_index
-
         self.set_data()
-        self.label_progress.setText(f'№{self.current_index}/{len(self.files_img)}')
+
 
     def prev(self):
         self.plateCreator.create_feature_plate(self.feature, self.current_index)
@@ -127,20 +123,19 @@ class ErrorCorrector(QWidget):
             self.current_index = len(self.files_geojson) - 1
         else:
             self.current_index -= 1
-
-        self.plateCreator.current_index = self.current_index
-        self.signCreator.current_index = self.current_index
-
         self.set_data()
-        self.label_progress.setText(f'№{self.current_index}/{len(self.files_img)}')
+
 
     def set_data(self):
+        self.plateCreator.current_index = self.current_index
+        self.signCreator.current_index = self.current_index
         self.feature = self.get_feature_object()
         self.pixmap = QPixmap(self.files_img[self.current_index])
         self.draw_box()
         self.signCreator.toggle_textbox(self.feature)
         self.signCreator.set_sing(self.feature)
         self.plateCreator.set_plate()
+        self.label_progress.setText(f'№{self.current_index}/{len(self.files_img)}')
 
     def draw_box(self):
         painter = QPainter(self.pixmap)

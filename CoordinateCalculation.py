@@ -4,7 +4,8 @@ from pygeoguz.simplegeo import *
 from Converter import Converter
 from Reader import Reader
 from configs import config as config
-
+from pygeoguz.simplegeo import *
+from pygeoguz.objects import *
 
 class CoordinateCalculation:
     __one_radian = 57.2958
@@ -59,9 +60,9 @@ class CoordinateCalculation:
         return x1, y1, x2, y2
 
     @staticmethod
-    def calculate_prew_point(lat, lon, az, index_round=20):
+    def calculate_prew_point(lat, lon, az, index_round=20, distance = 5):
         # Дистанция между точками в метрах
-        distance = 5
+
         # Радиус Земли в метрах
         earth_radius = 6371000
         # Координаты первой точки
@@ -80,7 +81,8 @@ class CoordinateCalculation:
 
         return lat_result, lon_result
 
-    def distance_on_earth(self, lat1, lon1, lat2, lon2):
+    @staticmethod
+    def distance_on_earth(lat1, lon1, lat2, lon2):
         R = 6371  # Радиус Земли в километрах
         d_lat = math.radians(lat2 - lat1)
         d_lon = math.radians(lon2 - lon1)
@@ -145,3 +147,21 @@ class CoordinateCalculation:
         elif azimuth_change < -180:
             azimuth_change = azimuth_change + 360
         return azimuth_change
+    @staticmethod
+    def calculate_direction(lon1, lat1, lon2, lat2):
+        lat1, lon1 = Converter.coordinateConverter('',lat1, lon1,"epsg:4326", "epsg:32635")
+
+        lat2, lon2 = Converter.coordinateConverter('',lat2, lon2,"epsg:4326", "epsg:32635")
+        p1 = Point2D(y=lat1, x=lon1)
+        p2 = Point2D(y=lat2, x=lon2)
+        line = ogz(point_a=p1, point_b=p2)
+        return line.direction, line.length
+
+
+    @staticmethod
+    def calculate_new_line(old_line, new_point):
+        lon1, lat1, lon2, lat2 = old_line
+        new_lon, new_lat = new_point
+        azimuth_line , long_line= CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)
+        new_line = CoordinateCalculation.calculate_prew_point(new_lat, new_lon, azimuth_line)
+        return new_line

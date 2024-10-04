@@ -23,11 +23,13 @@ class SignChangerWidget(QWidget):
         self.label_t = QLabel('Тип:', self)
         self.label_t.setGeometry(1000, 35, 1000, 20)
 
+
+
         self.label_img_type = QLabel(self)
         self.img_type = QPixmap()
 
         self.label_img_type.setPixmap(self.img_type)
-        self.label_img_type.resize(100, 100)
+        self.label_img_type.resize(130, 130)
         self.label_img_type.move(1090, 0)
 
         self.label_type = QLabel('name', self)
@@ -42,7 +44,6 @@ class SignChangerWidget(QWidget):
         self.textbox_text = QLineEdit(self)
         self.textbox_text.move(1040, 105)
         self.textbox_text.resize(80, 20)
-
         self.current_index = 0
 
     def set_sing(self, feature):
@@ -61,7 +62,6 @@ class SignChangerWidget(QWidget):
             self.ModalWindowChanger.hide()
         else:
             self.ModalWindowChanger.show()
-
     def change_type(self, item):
         type_of_sing = item.text().replace("V", "")
         self.label_type.setText(type_of_sing)

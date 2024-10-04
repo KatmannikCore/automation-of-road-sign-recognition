@@ -121,11 +121,13 @@
   <div class="track_offset">
     <p>Смещение трека: </p>
     <input value="0" id= "offset"type="text">
+    <img ="" alt="">
   </div>
   <div id="viewDiv"></div>
 
 
   <script type="module">
+
     const requestURL = 'http://127.0.0.1:3000/track'
     import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
 
@@ -134,8 +136,6 @@
 
    socket.connect()
 
-   socket.on("change_dot", ()=>{console.log(111)})
-   socket.on("change", ()=>{console.log(222)})
     const fetchGPX = async (url) => {
       return  fetch(url).then(response => response.json());
     }
@@ -145,22 +145,29 @@
       "esri/Map",
       "esri/views/MapView",
       "esri/layers/VectorTileLayer",
+      "esri/layers/GraphicsLayer",
       "esri/Graphic",
+      "esri/geometry/Polyline",
       "esri/geometry/Point",
       "esri/layers/FeatureLayer", // Import FeatureLayer
       "esri/symbols/SimpleMarkerSymbol", // Import SimpleMarkerSymbol
+      "esri/symbols/PictureMarkerSymbol",
       "esri/renderers/SimpleRenderer", // Import SimpleRenderer
+
     ], function (
       Map,
       MapView,
       VectorTileLayer,
+      GraphicsLayer,
       Graphic,
+      Polyline,
       Point,
       FeatureLayer,
       SimpleMarkerSymbol,
-      SimpleRenderer
+      PictureMarkerSymbol,
+      SimpleRenderer,
     ) {
-
+      
       const vectorTileLayer = new VectorTileLayer({
         url: "https://gis.maps.by/arcgis/rest/services/Hosted/VectorTile_240522/VectorTileServer",
       });
@@ -168,6 +175,13 @@
       const map = new Map({
         layers: [vectorTileLayer],
       });
+        
+
+
+      var graphicsLayer = new GraphicsLayer();
+      var newSignsLayer = new GraphicsLayer();
+      map.add(graphicsLayer);
+      map.add(newSignsLayer);
 
       const view = new MapView({
         center: [27.5, 53.9],
@@ -175,6 +189,80 @@
         map: map,
         zoom: 10,
       });
+      let number_rount = 7
+      let isMoveSign = false
+      let type_for_moving = null
+      let azimuth_for_moving = null
+      let coordinates_for_moving
+      view.on("click", async (event) => {
+        view.hitTest(event).then((response) =>{
+          console.log(response)
+          if (response.results.length == 2) {
+            if (response.results[0].graphic._imageUrl === undefined){
+              var points = response.results[0].graphic.geometry.paths[0]
+              const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
+              const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
+              graphicsLayer.graphics.forEach((item) =>{
+                if (item._imageUrl !== undefined){
+                  let x_img = item.geometry.x.toFixed(number_rount)
+                  let y_img = item.geometry.y.toFixed(number_rount)
+                  if (x_line == x_img && y_line == y_img){
+                    let type = item._imageUrl.split('/')
+                    type = type[type.length-1]
+                    type_for_moving = type
+                    azimuth_for_moving = item.azimuth
+                    coordinates_for_moving = points
+                    graphicsLayer.remove(item)
+                    isMoveSign = true
+                  }
+                }
+              })
+              graphicsLayer.remove(response.results[0].graphic)
+            }else{
+              let type = response.results[0].graphic._imageUrl.split('/')
+              type = type[type.length-1]
+              type_for_moving = type
+              azimuth_for_moving = response.results[0].graphic.azimuth
+              let x_img = response.results[0].graphic.geometry.x.toFixed(number_rount)
+              let y_img = response.results[0].graphic.geometry.y.toFixed(number_rount)
+              graphicsLayer.graphics.forEach((item) =>{
+                if (item._imageUrl === undefined){
+                  var points = item.geometry.paths[0]
+                  const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
+                  const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
+                  if (x_line == x_img && y_line == y_img){
+                    coordinates_for_moving = points 
+                    graphicsLayer.remove(item)
+                    graphicsLayer.remove(response.results[0].graphic)
+                    isMoveSign = true
+                  }
+                }
+              })
+            }
+            } else if (response.results.length == 1){
+              if (isMoveSign){
+                let new_x = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+                let new_y = parseFloat(event.mapPoint.latitude.toFixed(number_rount))                
+                const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${new_x},${new_y}`;
+                fetch(url)
+                .then((response) => response.text())
+                .then((data) => {
+                  let new_point = data.split(',').map(item=>{return parseFloat(item)})
+                  let new_line = [[new_x, new_y], new_point ]
+                  createLine(new_line)
+                  createImage(type_for_moving, new_line, azimuth_for_moving)
+                  isMoveSign = false
+                })
+                .catch((error) =>
+                  console.error("Ошибка при получении новой линии:", error)
+                );
+              }
+              
+            }
+
+
+        })});
+      
       const markerSymbol = {
         type: "simple-marker",
         color: [226, 119, 40],
@@ -184,9 +272,8 @@
         },
       };
      const points = coordinates.map(item => {
-      const point =  new Point({longitude: item[1],latitude: item[0], });
-      return new Graphic({geometry: point, symbol: markerSymbol})
-})
+      const point =  new Point({longitude: item[1],latitude: item[0] });
+      return new Graphic({geometry: point, symbol: markerSymbol})})
 
       let pointLayer = new FeatureLayer({
         source: points,
@@ -225,23 +312,20 @@
       let ycoord = coordinates[0][0]
       view.goTo({
         center: [xcoord, ycoord],
-        zoom: 12,
+        zoom: 17,
         duration: 1000,
         easing: "ease-out",
       });
 
       socket.on("change_dot", function(data){
-        console.log(123)
         let numberOffset =parseInt( document.getElementById('offset').value);
-        console.log(numberOffset)
         if (!Number.isInteger(numberOffset)){
           numberOffset = 0
         }
-        console.log(numberOffset)
+
         let resultIndex = data + numberOffset
         resultIndex = resultIndex < 0 ? 0: resultIndex
         resultIndex = resultIndex > points.length ? points.length-1: resultIndex
-        console.log(resultIndex)
 
         map.remove(currentPointLayer);
         currentPointLayer = new FeatureLayer({
@@ -260,10 +344,129 @@
 
         map.add(currentPointLayer)
       })
+
+      const displayZoomLevel = 15; 
+      function loadGeoJSON() {
+        fetch("http://127.0.0.1:3000/geojson")
+          .then((response) => response.json())
+          .then((data) => {
+            processGeoJSON(data);
+          })
+          .catch((error) =>
+            console.error("Ошибка при загрузке GeoJSON:", error)
+          );
+      }
+      function getImageUrl(type) {
+        const match = type.match(/[0-9.]+/);
+        const fileName = match ? match[0] : "";
+        return `http://127.0.0.1:3000/img_type/${fileName}`;
+      }
+      
+      function createLine(coordinates){
+        const pointStart = {
+          x: coordinates[0][0],
+          y: coordinates[0][1],
+        };
+        const pointEnd = {
+          x: coordinates[1][0],
+          y: coordinates[1][1],
+        };
+        const polyline = new Polyline({
+          type: "polyline",
+          paths: [
+            [
+              [pointStart.x, pointStart.y],
+              [pointEnd.x, pointEnd.y],
+            ],
+          ],
+        });
+
+        let lineGraphic = new Graphic({
+          geometry:  polyline,
+          symbol: {
+            type: "simple-line",
+            color: [4, 90, 141],
+            width: 2,
+          },
+        });
+        graphicsLayer.add(lineGraphic);
+      }
+
+      function createImage(imageType, coordinates, azimuth){
+        const imageUrl = getImageUrl(imageType);
+        const image = new Image();
+        image.src = imageUrl;
+        image.onload = function () {
+          const scaleFactor = 0.50;
+          const pictureMarkerSymbol = new PictureMarkerSymbol({
+            url: imageUrl,
+            width: image.width * scaleFactor,
+            height: image.height * scaleFactor,
+            angle: azimuth,
+          });
+
+          const imageCenterPoint = new Point({
+            x: (coordinates[0][0] + coordinates[1][0]) / 2,
+            y: (coordinates[0][1] + coordinates[1][1]) / 2,
+          });
+
+          const imageGraphic = new Graphic({
+            geometry: imageCenterPoint,
+            symbol: pictureMarkerSymbol,
+            azimuth:azimuth
+          });
+          imageGraphic._imageUrl = imageUrl;
+          
+          console.log(imageGraphic)
+          graphicsLayer.add(imageGraphic);
+        };
+      }
+
+      function processGeoJSON(geojson) {
+        geojson.forEach((feature) => {
+          const coordinates = feature.coordinates;
+          const azimuth = feature.azimuth;
+          const imageType = feature.type;
+
+          createLine(coordinates)
+
+          createImage(imageType, coordinates, azimuth)
+
+        });
+      }
+
+      
+      function updateVisibleGraphics() {
+        const currentZoom = view.zoom; 
+        const visibleExtent = view.extent;
+
+
+        graphicsLayer.graphics.forEach((graphic) => {
+          const point = graphic.geometry;
+          //if (visibleExtent.contains(point)) {
+            if (currentZoom >= displayZoomLevel) {
+              graphic.visible = true;
+            } else {
+              graphic.visible = false;
+            }
+          //} else {
+          //  graphic.visible = false;
+          //}
+        });
+      }
+
+      view.watch("stationary", function () {
+        updateVisibleGraphics();
+      });
+
+      view.watch("zoom", function () {
+        updateVisibleGraphics();
+      });
+
+      loadGeoJSON()
     });
     })
     
-
     
   </script>
 

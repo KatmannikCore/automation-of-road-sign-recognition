@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
-        config.PATH_TO_GEOJSON = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"
+        config.PATH_TO_GEOJSON = r"D:\Urban\vid\test\city(2.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
 
     #TODO Не используется

@@ -26,7 +26,7 @@ class PlateCreatorWidget(QWidget):
         self.label_img_type_plate.hide()
 
         self.label_type_plate = QLabel('', self)
-        self.label_type_plate.setGeometry(1105, 200, 1105, 20)
+        self.label_type_plate.setGeometry(1105, 0, 1105, 20)
 
         self.button_delete_plate = QPushButton("Удалить табличку", self)
         self.button_delete_plate.move(1000, 100)
