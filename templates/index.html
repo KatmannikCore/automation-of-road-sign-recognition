@@ -123,9 +123,9 @@
     <input value="0" id= "offset"type="text">
     <img ="" alt="">
   </div>
-  <div id="viewDiv"></div>
+  <div class="footer"id="viewDiv"> <button type="button" class="save_sign">Сохранить знаки</button></div>
 
-
+  <div></div>
   <script type="module">
 
     const requestURL = 'http://127.0.0.1:3000/track'
@@ -194,12 +194,13 @@
       let type_for_moving = null
       let azimuth_for_moving = null
       let coordinates_for_moving
+      let geojson_id 
       view.on("click", async (event) => {
         view.hitTest(event).then((response) =>{
-          console.log(response)
-          if (response.results.length == 2) {
+          if (response.results.length == 2 && !isMoveSign) {
             if (response.results[0].graphic._imageUrl === undefined){
               var points = response.results[0].graphic.geometry.paths[0]
+              geojson_id = response.results[0].geojson_id
               const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
               const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
               graphicsLayer.graphics.forEach((item) =>{
@@ -212,13 +213,15 @@
                     type_for_moving = type
                     azimuth_for_moving = item.azimuth
                     coordinates_for_moving = points
+
                     graphicsLayer.remove(item)
+                    graphicsLayer.remove(response.results[0].graphic)
                     isMoveSign = true
                   }
                 }
               })
-              graphicsLayer.remove(response.results[0].graphic)
-            }else{
+
+            }else if (!isMoveSign){
               let type = response.results[0].graphic._imageUrl.split('/')
               type = type[type.length-1]
               type_for_moving = type
@@ -232,6 +235,7 @@
                   const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
                   if (x_line == x_img && y_line == y_img){
                     coordinates_for_moving = points 
+                    geojson_id = item.geojson_id
                     graphicsLayer.remove(item)
                     graphicsLayer.remove(response.results[0].graphic)
                     isMoveSign = true
@@ -249,7 +253,7 @@
                 .then((data) => {
                   let new_point = data.split(',').map(item=>{return parseFloat(item)})
                   let new_line = [[new_x, new_y], new_point ]
-                  createLine(new_line)
+                  createLine(new_line, geojson_id)
                   createImage(type_for_moving, new_line, azimuth_for_moving)
                   isMoveSign = false
                 })
@@ -362,7 +366,7 @@
         return `http://127.0.0.1:3000/img_type/${fileName}`;
       }
       
-      function createLine(coordinates){
+      function createLine(coordinates, geojson_id){
         const pointStart = {
           x: coordinates[0][0],
           y: coordinates[0][1],
@@ -388,6 +392,7 @@
             color: [4, 90, 141],
             width: 2,
           },
+          geojson_id: geojson_id
         });
         graphicsLayer.add(lineGraphic);
       }
@@ -416,8 +421,7 @@
             azimuth:azimuth
           });
           imageGraphic._imageUrl = imageUrl;
-          
-          console.log(imageGraphic)
+        
           graphicsLayer.add(imageGraphic);
         };
       }
@@ -427,8 +431,8 @@
           const coordinates = feature.coordinates;
           const azimuth = feature.azimuth;
           const imageType = feature.type;
-
-          createLine(coordinates)
+          const geojson_id = feature.id
+          createLine(coordinates, geojson_id)
 
           createImage(imageType, coordinates, azimuth)
 
@@ -443,15 +447,11 @@
 
         graphicsLayer.graphics.forEach((graphic) => {
           const point = graphic.geometry;
-          //if (visibleExtent.contains(point)) {
             if (currentZoom >= displayZoomLevel) {
               graphic.visible = true;
             } else {
               graphic.visible = false;
             }
-          //} else {
-          //  graphic.visible = false;
-          //}
         });
       }
 
@@ -464,6 +464,31 @@
       });
 
       loadGeoJSON()
+      document.querySelector(".save_sign").addEventListener("click",()=>{
+        var new_points = []
+        graphicsLayer.graphics.forEach(item =>{
+          if(item.geojson_id !== undefined){
+            let id = item.geojson_id
+            let line = item.geometry.paths[0]
+            new_points.push({id:id, line: line})
+          }
+        })
+        console.log(new_points)
+        fetch('http://127.0.0.1:3000/save_geojson', {
+          method: 'POST', // or 'PUT'
+          headers: {
+           'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(new_points)
+         })
+         .then(response => response.json())
+         .then(data => {
+          console.log('Success:', data);
+         })
+         .catch(error => {
+          console.error('Error:', error);
+         });
+      })
     });
     })
     

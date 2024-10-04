@@ -22,17 +22,7 @@ def rename_files(directory):
 
 
 with open(rf"D:\Urban\vid\test\city1.geojson", encoding='utf-8') as f:
-  data = geojson.load(f)["features"]
-  new_object = {}
-  coordinates = []
-  azimuth = []
-  types = []
-  for item in data:
-   coordinates.append(item["geometry"]["coordinates"])
-   azimuth.append(float(item["properties"]["azimuth"]))
-   types.append(item["properties"]["type"])
-  new_object["coordinates"] = coordinates
-  new_object["azimuth"] = azimuth
-  new_object["types"] = types
+    data = geojson.load(f)
+    for index in range(len(data["features"])):
+        print(data["features"][index])
 
-print(new_object)

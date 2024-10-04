@@ -4,7 +4,7 @@ import os
 import geojson
 import gpxpy
 import jinja2
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -47,6 +47,7 @@ class Server:
                     arr["coordinates"] = item["geometry"]["coordinates"]
                     arr["azimuth"] = float(item["properties"]["azimuth"])
                     arr["type"] = item["properties"]["type"]
+                    arr["id"] = item["properties"]["id"]
                     new_object.append(arr)
                 return new_object
         @self.app.route("/img_type/<image_id>")
@@ -60,6 +61,27 @@ class Server:
             new_line = CoordinateCalculation.calculate_new_line(old_line, new_coordinates)
             new_line = f'{round(new_line[1],7)},{round(new_line[0],7)}'
             return new_line
+
+        @self.app.route('/save_geojson', methods=['POST'])
+        def receive_data():
+            """
+            Receives JSON data with coordinates from the client.
+            """
+            new_data = request.get_json()
+            with open(config.PATH_TO_GEOJSON, encoding='utf-8') as f:
+                old_data = geojson.load(f)
+                for item in new_data:
+                    for index in range(len(old_data["features"])):
+                        if item["id"] == old_data["features"][index]["properties"]["id"]:
+                            if  old_data["features"][index]["coordinates"] != item["line"]:
+                                old_data["features"][index]["geometry"]["coordinates"] = item["line"]
+                with open(config.PATH_TO_GEOJSON,"w", encoding='utf-8') as f:
+                    geojson.dump(old_data, f, ensure_ascii=False)
+            if new_data is None:
+                return jsonify({'error': 'No data provided'}), 400
+            # Return a success response
+            return jsonify({'message': 'Data received successfully'}), 200
+
     def run(self):
         self.app.run(port=int(os.environ.get("PORT", 3000)))
 
