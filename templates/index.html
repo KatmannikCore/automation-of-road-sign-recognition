@@ -263,7 +263,6 @@
       PictureMarkerSymbol,
       SimpleRenderer,
     ) {
-
       const vectorTileLayer = new VectorTileLayer({
         url: "https://gis.maps.by/arcgis/rest/services/Hosted/VectorTile_240522/VectorTileServer",
       });
@@ -386,7 +385,7 @@
 
       map.add(pointLayer)
       let points2 = points.slice(0,10)//[new Graphic({geometry:  new Point({longitude: points[data]["geometry"]["latitude"],latitude: points[data]["geometry"]["longitude"], }), symbol: markerSymbol})]
-      
+
       var currentPointLayer = new FeatureLayer({
         source: [points[Math.floor(Math.random()*points.length)]],
         renderer: new SimpleRenderer({
@@ -406,6 +405,7 @@
 
       let xcoord = coordinates[0][1]
       let ycoord = coordinates[0][0]
+
       view.goTo({
         center: [xcoord, ycoord],
         zoom: 17,

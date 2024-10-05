@@ -9,6 +9,8 @@ class GPXHandler:
         self.gpx_file = open(config.PATH_TO_GPX, 'r')
         self.gpx = gpxpy.parse(self.gpx_file)
         self.conventer = Converter()
+        ET.register_namespace("", "https://www.gpsbabel.org")
+        ET.register_namespace("", "http://www.topografix.com/GPX/1/0")
 
     def get_azimuth(self, indexOfGPS):
         return self.gpx.tracks[0].segments[0].points[indexOfGPS].course
@@ -35,21 +37,19 @@ class GPXHandler:
         if number_offset > 0:
             self.add_point(number_offset, root)
         else:
-            self.remove_first_point(abs(number_offset), root)
+            for index in range(abs(number_offset)):
+                self.remove_first_point(abs(number_offset), root)
         tree.write(config.PATH_TO_GPX, encoding='utf-8', xml_declaration=True)
 
     def remove_first_point(self, cound_delete_points, root):
-        # Ищем первый элемент <trkpt> и удаляем его
-        for index in range(cound_delete_points):
-            trkpt = root[2][0][index]
-            if trkpt is not None:  # Получаем родительский элемент
-                root[2][0].remove(trkpt)  # Удаляем первую точку
-        return root
+            trkpt = root[2][0][0]
+            if trkpt is not None:
+                root[2][0].remove(trkpt)
+            return root
 
     def add_point(self, count_points, root):
         coordinates = root[2][0][0].attrib
         properties = root[2][0][0]
-        # Создаем новую точку
         trkpt = self.create_new_trkpt(coordinates, properties)
         for index in range(count_points):
             root[2][0].insert(0, trkpt)
