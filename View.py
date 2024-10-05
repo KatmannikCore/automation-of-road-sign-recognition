@@ -6,7 +6,7 @@ from geojson import Feature, FeatureCollection, dump, LineString
 from configs import config as config
 from CoordinateCalculation import CoordinateCalculation
 from Detector import Detector
-from Reader import Reader
+from GPXHandler import GPXHandler
 from Converter import Converter
 from SignHandler import SignHandler
 from Frame import Frame
@@ -50,7 +50,7 @@ class View:
         ]
         self.calculation = CoordinateCalculation()
         self.Converter = Converter()
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         for root, dirs, files in os.walk(config.PATH_TO_VIDEO):
             self.files = files
         self.cap = cv2.VideoCapture(config.PATH_TO_VIDEO + files[config.INDEX_OF_VIDEO])
@@ -100,7 +100,7 @@ class View:
                 x, y, w, h = box
                 detections.append([x, y, w, h])
 
-                x1, y1 = self.Reader.get_current_coordinate(config.INDEX_OF_GPS)
+                x1, y1 = self.GPXHandler.get_current_coordinate(config.INDEX_OF_GPS)
                 x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
 
                 object_frame = Frame()
@@ -123,8 +123,8 @@ class View:
                            cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
         #if rectangles:
         if self.turn.is_turn():
-            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS + 1))
-            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS + 1))
+            self.turn.append_azimuths(self.GPXHandler.get_azimuth(config.INDEX_OF_GPS + 1))
+            self.turn.append_coordinates(self.GPXHandler.get_current_coordinate(config.INDEX_OF_GPS + 1))
             self.turn.last_index_of_gps = config.INDEX_OF_GPS
             self.turn.frames.append(config.COUNT_PROCESSED_FRAMES)
         if frame_for_checking:

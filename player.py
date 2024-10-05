@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from geojson import dump
 from Converter import Converter
-from Reader import Reader
+from GPXHandler import GPXHandler
 from configs import config
 
 
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.b = 10.9
         self.count_empty = 0
         self.counter_progress = 5000
-        self.Reader = None
+        self.GPXHandler = None
         self.is_wait = False
         self.is_brake = False
         self.msgBox = None
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
 
     def set_path_to_video(self):
         config.PATH_TO_GPX = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.gpx"
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
         config.PATH_TO_VIDEO = r"D:\Urban\vid\20,06,24-Вишевичи+\100GOPRO" + "\\"

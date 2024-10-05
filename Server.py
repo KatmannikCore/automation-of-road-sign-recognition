@@ -9,6 +9,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from CoordinateCalculation import CoordinateCalculation
+from GPXHandler import GPXHandler
 from configs import config
 
 template_dir = os.path.join(os.getcwd(), "templates")
@@ -19,6 +20,7 @@ class Server:
     def __init__(self):
         self.app = Flask(__name__, template_folder='../templates')
         CORS(self.app)
+        self.GPXHandler = GPXHandler()
         self.socketio = SocketIO()
         self.socketio.init_app(self.app, cors_allowed_origins="*", async_mode="threading")
 
@@ -54,6 +56,7 @@ class Server:
         def get_img_type(image_id):
             image_path =rf"./sings/V{image_id}.png"
             return send_from_directory(os.path.dirname(image_path), os.path.basename(image_path), as_attachment=True)
+
         @self.app.route("/create_new_line")
         def create_new_line():
             old_line = [float(item) for item in request.args.get('old_line').split(',')]
@@ -61,6 +64,13 @@ class Server:
             new_line = CoordinateCalculation.calculate_new_line(old_line, new_coordinates)
             new_line = f'{round(new_line[1],7)},{round(new_line[0],7)}'
             return new_line
+
+        @self.app.route("/save_track")
+        def save_track():
+            index_offset_track = int(request.args.get('index_offset_track'))
+            print(index_offset_track)
+            self.GPXHandler.transform_file(index_offset_track)
+            return str(index_offset_track)
 
         @self.app.route('/save_geojson', methods=['POST'])
         def receive_data():

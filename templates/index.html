@@ -108,26 +108,122 @@
     }
     .track_offset{
       display:flex;
+      justify-content: space-between;
 
+    }
+    .track_offset div{
+      display:flex;
+      align-items: center;
     }
     input{
       border: 1px solid black;
       width:50px;
+      height: 20px;
       font-size: 12px;
+    }
+    body{
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .btn {
+      display: inline-block;	
+      box-sizing: border-box;
+      padding: 0 15px;
+      outline: none;
+      border: none;  
+      border-radius: 4px;
+      height: 36px;
+      line-height: 36px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      color: #fff;
+      background-color: #1a73e8;
+      position: relative;
+      overflow:hidden;
+      vertical-align: top;
+      cursor: pointer;
+      user-select: none;
+      appearance: none;
+      touch-action: manipulation; 
+      z-index: 1;
+    }
+    .btn span{
+      position: absolute;
+      background: #fff;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: btn_ripples 0.6s linear infinite;
+    }
+    @keyframes btn_ripples {
+      0% {
+        width: 0px;
+        height: 0px;
+        opacity: 0.5;
+      }
+      100% {
+        width: 1000px;
+        height: 1000px;
+        opacity: 0;
+      }
+    }
+    .btn:hover {
+      box-shadow: 0 1px 2px 0 rgb(26 115 232 / 45%), 0 1px 3px 1px rgb(26 115 232 / 30%);
+      background-color: #297be6;
+    }
+    .btn:active {
+      box-shadow: 0 1px 2px 0 rgb(26 115 232 / 45%), 0 2px 6px 2px rgb(26 115 232 / 30%);
+      background-color: #1a73e8 !important;
+    }
+    .btn:focus-visible {
+      box-shadow: 0 0 0 3px lightskyblue;
+    }
+    .btn:disabled {
+      pointer-events: none;
+      opacity: 0.65;
     }
   </style>
 </head>
 <body>
   <div class="track_offset">
-    <p>Смещение трека: </p>
-    <input value="0" id= "offset"type="text">
-    <img ="" alt="">
+    <div>
+      <p>Смещение трека: </p>
+      <input value="0" id= "offset"type="text">
+    </div>
+    <button type="button" disabled class="save_track btn">Зафиксировать трек</button>
   </div>
-  <div class="footer"id="viewDiv"> <button type="button" class="save_sign">Сохранить знаки</button></div>
-
-  <div></div>
+  <div id="viewDiv"></div>
+  <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
   <script type="module">
+    document.getElementById('offset').addEventListener("input",()=>{
+      let numberOffset =parseInt( document.getElementById('offset').value);
+      let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
+      document.querySelector(".save_track").disabled = !Number.isInteger(numberOffset) ;
+      if (Number.isInteger(numberOffset)){
+        document.querySelector(".save_track").disabled = numberOffset == 0
+      }
+    })
 
+    document.querySelector(".save_track").addEventListener("click",()=>{
+      let numberOffset =parseInt( document.getElementById('offset').value);
+      if (!Number.isInteger(numberOffset)){
+        numberOffset = 0
+      }
+      if (numberOffset != 0){
+        fetch(`http://127.0.0.1:3000/save_track?index_offset_track=${numberOffset}`)
+        .then((response) => {
+          if (response.status == 200) {
+            location.reload();
+          }
+        })
+        .catch((error) =>
+          console.error("Ошибка при получении новой линии:", error)
+        );
+      }
+
+    })
     const requestURL = 'http://127.0.0.1:3000/track'
     import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
 
@@ -167,7 +263,7 @@
       PictureMarkerSymbol,
       SimpleRenderer,
     ) {
-      
+
       const vectorTileLayer = new VectorTileLayer({
         url: "https://gis.maps.by/arcgis/rest/services/Hosted/VectorTile_240522/VectorTileServer",
       });
@@ -176,13 +272,8 @@
         layers: [vectorTileLayer],
       });
         
-
-
       var graphicsLayer = new GraphicsLayer();
-      var newSignsLayer = new GraphicsLayer();
       map.add(graphicsLayer);
-      map.add(newSignsLayer);
-
       const view = new MapView({
         center: [27.5, 53.9],
         container: "viewDiv",
@@ -255,6 +346,7 @@
                   let new_line = [[new_x, new_y], new_point ]
                   createLine(new_line, geojson_id)
                   createImage(type_for_moving, new_line, azimuth_for_moving)
+                  document.querySelector(".save_sign").disabled = false
                   isMoveSign = false
                 })
                 .catch((error) =>
@@ -278,7 +370,6 @@
      const points = coordinates.map(item => {
       const point =  new Point({longitude: item[1],latitude: item[0] });
       return new Graphic({geometry: point, symbol: markerSymbol})})
-
       let pointLayer = new FeatureLayer({
         source: points,
         renderer: new SimpleRenderer({
@@ -292,6 +383,7 @@
         }),
         objectIdField: "ObjectID",
       });
+
       map.add(pointLayer)
       let points2 = points.slice(0,10)//[new Graphic({geometry:  new Point({longitude: points[data]["geometry"]["latitude"],latitude: points[data]["geometry"]["longitude"], }), symbol: markerSymbol})]
       
@@ -473,7 +565,6 @@
             new_points.push({id:id, line: line})
           }
         })
-        console.log(new_points)
         fetch('http://127.0.0.1:3000/save_geojson', {
           method: 'POST', // or 'PUT'
           headers: {

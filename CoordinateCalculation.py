@@ -2,7 +2,7 @@ from geopy.distance import geodesic
 from pygeoguz.simplegeo import *
 
 from Converter import Converter
-from Reader import Reader
+from GPXHandler import GPXHandler
 from configs import config as config
 from pygeoguz.simplegeo import *
 from pygeoguz.objects import *
@@ -12,7 +12,7 @@ class CoordinateCalculation:
 
     def __init__(self):
         self.converter = Converter()
-        self.reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
 
     def get_line(self, sign, coefficient):
         x1, y1, x2, y2 = self.__calculate_coordinates_sign_moving_straight(sign, coefficient)

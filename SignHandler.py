@@ -1,6 +1,6 @@
 from Frame import Frame
 from configs import config
-from Reader import Reader
+from GPXHandler import GPXHandler
 from Sign import Sign
 from itertools import groupby
 import copy
@@ -18,7 +18,7 @@ class SignHandler:
     __min_length_sign = 4
 
     def __init__(self):
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         self.signs = []
         self.result_signs = []
         self.side_signs = []
@@ -59,7 +59,7 @@ class SignHandler:
     def set_azimuth_for_signs(self,current_frame_number):
         for index in range(len(self.signs)):
             if self.signs[index].frame_numbers[-1] == current_frame_number:
-                self.signs[index].azimuth = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
+                self.signs[index].azimuth = self.GPXHandler.get_azimuth(config.INDEX_OF_GPS + 1)
     def clean_frame_from_double_signs(self,frame):
         dict_frame = {}
         for item in frame:

@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 from FinalHandler import FinalHandler
 from PlayerHandler import PlayerHandler
-from Reader import Reader
+from GPXHandler import GPXHandler
 from ViewTrack import ViewTrack
 from configs import config
 
@@ -48,7 +48,7 @@ class ButtonsHandler(PlayerHandler):
         if config.PATH_TO_GPX == "":
             self.label_gpx.setText("<font color=black>" + "Пустой GPX" + "</font>")
         else:
-            self.Reader = Reader(config.PATH_TO_GPX)
+            self.GPXHandler = GPXHandler()
             self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
         self.check_for_filling_of_data()
 
