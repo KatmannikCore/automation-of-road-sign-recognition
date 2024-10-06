@@ -4,7 +4,7 @@ import os
 import geojson
 import gpxpy
 import jinja2
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, request, send_from_directory, jsonify, url_for
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -12,13 +12,14 @@ from CoordinateCalculation import CoordinateCalculation
 from GPXHandler import GPXHandler
 from configs import config
 
+from configs.sign_config import codes_signs
 template_dir = os.path.join(os.getcwd(), "templates")
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
 
 
 class Server:
     def __init__(self):
-        self.app = Flask(__name__, template_folder='../templates')
+        self.app = Flask(__name__, template_folder='../templates', static_folder="./static")
         CORS(self.app)
         self.GPXHandler = GPXHandler()
         self.socketio = SocketIO()
@@ -27,7 +28,7 @@ class Server:
         @self.app.route('/')
         def index():
             template = jinja_env.get_template('index.html')
-            return template.render()
+            return template.render(static_path=lambda filename: f"./static/{filename}")
 
         @self.app.route("/track")
         def get_track():
@@ -50,6 +51,7 @@ class Server:
                     arr["azimuth"] = float(item["properties"]["azimuth"])
                     arr["type"] = item["properties"]["type"]
                     arr["id"] = item["properties"]["id"]
+                    arr["description"] = item["properties"]["SEM250"] if "SEM250" in item["properties"] else ''
                     new_object.append(arr)
                 return new_object
         @self.app.route("/img_type/<image_id>")
@@ -95,6 +97,11 @@ class Server:
                             if  old_data["features"][index]["coordinates"] != item["line"]:
                                 old_data["features"][index]["geometry"]["coordinates"] = item["line"]
                                 old_data["features"][index]["properties"]["azimuth"] = item["azimuth"]
+                                old_data["features"][index]["properties"]["type"] = item["type"]
+                                old_data["features"][index]["properties"]["code"]= int(codes_signs[item["type"]])
+                                if "SEM250" in old_data["features"][index]["properties"]:
+                                    old_data["features"][index]["properties"]["SEM250"] = item["description"]
+                                    old_data["features"][index]["properties"]["MVALUE"] = item["description"]
                 with open(config.PATH_TO_GEOJSON,"w", encoding='utf-8') as f:
                     geojson.dump(old_data, f, ensure_ascii=False)
             if new_data is None:
