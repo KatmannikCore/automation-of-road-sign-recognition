@@ -72,6 +72,15 @@ class Server:
             self.GPXHandler.transform_file(index_offset_track)
             return str(index_offset_track)
 
+        @self.app.route("/change_azimuth")
+        def change_azimuth():
+            second_line = [float(item) for item in request.args.get('line').split(",")]
+
+            lon1, lat1, lon2, lat2 = second_line
+            old_direction = CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)[0]
+
+            return str(old_direction)
+
         @self.app.route('/save_geojson', methods=['POST'])
         def receive_data():
             """
@@ -85,6 +94,7 @@ class Server:
                         if item["id"] == old_data["features"][index]["properties"]["id"]:
                             if  old_data["features"][index]["coordinates"] != item["line"]:
                                 old_data["features"][index]["geometry"]["coordinates"] = item["line"]
+                                old_data["features"][index]["properties"]["azimuth"] = item["azimuth"]
                 with open(config.PATH_TO_GEOJSON,"w", encoding='utf-8') as f:
                     geojson.dump(old_data, f, ensure_ascii=False)
             if new_data is None:
@@ -107,6 +117,6 @@ class Server:
         self.socketio.emit("change_dot", number)
 
 # Создание экземпляра класса Server
-#Server = Server()
-#Server.run()
+Server = Server()
+Server.run()
 # Запуск сервера

@@ -157,11 +157,19 @@ class CoordinateCalculation:
         line = ogz(point_a=p1, point_b=p2)
         return line.direction, line.length
 
-
     @staticmethod
     def calculate_new_line(old_line, new_point):
         lon1, lat1, lon2, lat2 = old_line
         new_lon, new_lat = new_point
-        azimuth_line , long_line= CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)
+        azimuth_line , long_line = CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)
         new_line = CoordinateCalculation.calculate_prew_point(new_lat, new_lon, azimuth_line)
         return new_line
+
+    @staticmethod
+    def calculate_change_azimuth_of_two_lines(old_line, new_line):
+        lon1, lat1, lon2, lat2 =  old_line
+        old_direction = CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)[0]
+        lon1, lat1, lon2, lat2 =  new_line
+        new_direction = CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)[0]
+        result_azimuth = CoordinateCalculation.calculate_azimuth_change("",old_direction, new_direction)
+        return result_azimuth

@@ -205,7 +205,6 @@
         document.querySelector(".save_track").disabled = numberOffset == 0
       }
     })
-
     document.querySelector(".save_track").addEventListener("click",()=>{
       let numberOffset =parseInt( document.getElementById('offset').value);
       if (!Number.isInteger(numberOffset)){
@@ -281,18 +280,34 @@
       });
       let number_rount = 7
       let isMoveSign = false
+      let isTurnSign = false
       let type_for_moving = null
       let azimuth_for_moving = null
+      let azimuth_direction = 90
       let coordinates_for_moving
       let geojson_id 
+      let old_line
+      let old_image
+      let move_event
+      
       view.on("click", async (event) => {
         view.hitTest(event).then((response) =>{
-          if (response.results.length == 2 && !isMoveSign) {
+          if( event.button == 0 && isTurnSign){
+              isTurnSign = false
+              move_event.remove()
+              document.querySelector(".save_sign").disabled = false
+              isMoveSign = true
+            }
+          else if( event.button == 1 && isTurnSign){
+            azimuth_direction = azimuth_direction * -1
+          }
+          else if (response.results.length == 2 && !isMoveSign) {
             if (response.results[0].graphic._imageUrl === undefined){
               var points = response.results[0].graphic.geometry.paths[0]
               geojson_id = response.results[0].geojson_id
               const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
               const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
+
               graphicsLayer.graphics.forEach((item) =>{
                 if (item._imageUrl !== undefined){
                   let x_img = item.geometry.x.toFixed(number_rount)
@@ -310,7 +325,6 @@
                   }
                 }
               })
-
             }else if (!isMoveSign){
               let type = response.results[0].graphic._imageUrl.split('/')
               type = type[type.length-1]
@@ -324,11 +338,41 @@
                   const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
                   const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
                   if (x_line == x_img && y_line == y_img){
+                    if( event.button == 2){
+                        isTurnSign = true
+                        graphicsLayer.remove(item)
+                        graphicsLayer.remove(response.results[0].graphic)
+                        function move_sign(response_move){
+                            let new_x = response_move.results[0].mapPoint.longitude
+                            let new_y = response_move.results[0].mapPoint.latitude
+                            coordinates_for_moving = points
+                            geojson_id = item.geojson_id
+                            let new_line = [points[0],[new_x, new_y]]
+                            const url = `http://127.0.0.1:3000/change_azimuth?line=${new_line.toString()}`;
+                            fetch(url)
+                            .then((response) => response.text())
+                            .then((data) => {
+                              let az =Number(data) + azimuth_direction
+                              graphicsLayer.remove(old_image)
+                              graphicsLayer.remove(old_line)
+                              old_line = createLine(new_line, geojson_id,az)
+                              createImage(type_for_moving, new_line, az)
+                            })
+                            .catch((error) =>
+                              console.error("Ошибка при получении новой линии:", error)
+                            );
+                        }
+                        move_event = view.on("pointer-move",(event_move)=>{
+                          view.hitTest(event_move).then((response_move)=>{move_sign(response_move)})
+                        });
+                    }else if( event.button == 0){
                     coordinates_for_moving = points 
                     geojson_id = item.geojson_id
                     graphicsLayer.remove(item)
                     graphicsLayer.remove(response.results[0].graphic)
                     isMoveSign = true
+                    }
+ 
                   }
                 }
               })
@@ -343,7 +387,7 @@
                 .then((data) => {
                   let new_point = data.split(',').map(item=>{return parseFloat(item)})
                   let new_line = [[new_x, new_y], new_point ]
-                  createLine(new_line, geojson_id)
+                  createLine(new_line, geojson_id, azimuth_for_moving)
                   createImage(type_for_moving, new_line, azimuth_for_moving)
                   document.querySelector(".save_sign").disabled = false
                   isMoveSign = false
@@ -354,8 +398,6 @@
               }
               
             }
-
-
         })});
       
       const markerSymbol = {
@@ -458,7 +500,7 @@
         return `http://127.0.0.1:3000/img_type/${fileName}`;
       }
       
-      function createLine(coordinates, geojson_id){
+      function createLine(coordinates, geojson_id, azimuth){
         const pointStart = {
           x: coordinates[0][0],
           y: coordinates[0][1],
@@ -484,9 +526,11 @@
             color: [4, 90, 141],
             width: 2,
           },
-          geojson_id: geojson_id
+          geojson_id: geojson_id,
+          azimuth: azimuth
         });
         graphicsLayer.add(lineGraphic);
+        return lineGraphic
       }
 
       function createImage(imageType, coordinates, azimuth){
@@ -513,7 +557,7 @@
             azimuth:azimuth
           });
           imageGraphic._imageUrl = imageUrl;
-        
+          old_image = imageGraphic
           graphicsLayer.add(imageGraphic);
         };
       }
@@ -524,7 +568,7 @@
           const azimuth = feature.azimuth;
           const imageType = feature.type;
           const geojson_id = feature.id
-          createLine(coordinates, geojson_id)
+          createLine(coordinates, geojson_id, azimuth)
 
           createImage(imageType, coordinates, azimuth)
 
@@ -562,9 +606,12 @@
           if(item.geojson_id !== undefined){
             let id = item.geojson_id
             let line = item.geometry.paths[0]
-            new_points.push({id:id, line: line})
+            let azimuth = item.azimuth.toString()
+            new_points.push({id:id, line: line, azimuth: azimuth})
+            document.querySelector(".save_sign").disabled = true
           }
         })
+
         fetch('http://127.0.0.1:3000/save_geojson', {
           method: 'POST', // or 'PUT'
           headers: {
