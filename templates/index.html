@@ -266,7 +266,6 @@
   <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
  
   <script  type="module" >
-  
 document.getElementById('offset').addEventListener("input",()=>{
   let numberOffset =parseInt( document.getElementById('offset').value);
   let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
@@ -360,27 +359,33 @@ fetchGPX(requestURL).then(coordinates => {
   let old_image = ''
   let move_event
   let description_sign
-  
+  function uuidv4() {
+      return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+      );
+    }
   function get_clicked_element(response) {
-    let type = response.results[0].graphic._imageUrl.split('/')
-          type = type[type.length-1]
-          let line
-          type_for_moving = type
-          azimuth_for_moving = response.results[0].graphic.azimuth
-          let x_img = response.results[0].graphic.geometry.x.toFixed(number_rount)
-          let y_img = response.results[0].graphic.geometry.y.toFixed(number_rount)
-          graphicsLayer.graphics.forEach((item) =>{
-            if (item._imageUrl === undefined){
-              var points = item.geometry.paths[0]
-              const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
-              const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
-              if (x_line == x_img && y_line == y_img){
-                line = item
-              }
-            }})
-          return {line: line, img: response.results[0].graphic}
-  }
+    try {
+      let type = response.results[0].graphic._imageUrl.split('/')
 
+      type = type[type.length-1]
+      let line
+      type_for_moving = type
+      azimuth_for_moving = response.results[0].graphic.azimuth
+      let x_img = response.results[0].graphic.geometry.x.toFixed(number_rount)
+      let y_img = response.results[0].graphic.geometry.y.toFixed(number_rount)
+      graphicsLayer.graphics.forEach((item) =>{
+        if (item._imageUrl === undefined){
+          var points = item.geometry.paths[0]
+          const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
+          const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
+          if (x_line == x_img && y_line == y_img){
+            line = item
+          }
+        }})
+      return {line: line, img: response.results[0].graphic}
+    } catch(e) { return -1  }
+  }
   view.on("click", async (event) => {
     view.hitTest(event).then((response) =>{
       if (response.results.length == 1 && isMoveSign){
@@ -458,11 +463,18 @@ fetchGPX(requestURL).then(coordinates => {
     event.stopPropagation()
     view.hitTest(event).then((response) => {
       let sign_object = get_clicked_element(response)
-      createModal(sign_object.line, sign_object.img);
+      if (sign_object == -1) {
+        let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+        let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
+        let coordinates = {lon: lon, lat: lat}
+        createModal(coordinates)
+      }else{
+        createModal(sign_object.line, sign_object.img);
+      }
     })
     // Функция для создания модального окна
     function createModal(sign, img_sign) {
-
+    let is_create_new_sign = false
     // Создаем затемняющий фон
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
@@ -478,7 +490,8 @@ fetchGPX(requestURL).then(coordinates => {
     typeInput.setAttribute('id', 'type');
     typeInput.type = 'text';
     typeInput.placeholder = 'Введите тип';
-    typeInput.value = sign.type;
+
+
     typeInput.addEventListener('change',()=>{
       const imageUrl = getImageUrl(typeInput.value);
       img.src =imageUrl;
@@ -490,9 +503,15 @@ fetchGPX(requestURL).then(coordinates => {
     descriptionInput.placeholder = 'Введите описание';
     descriptionInput.type = 'text';
     descriptionInput.setAttribute('id', 'description');
-    descriptionInput.value = sign.description;
 
-
+    if (img_sign != undefined){
+      typeInput.value = sign.type;
+      descriptionInput.value = sign.description;
+    }else{
+      descriptionInput.value = '';
+      typeInput.value = '';
+      is_create_new_sign = true;
+    }
     // Поле для изображения
     const imageLabel = document.createElement('label');
     imageLabel.textContent = 'Изображение: ';
@@ -506,14 +525,24 @@ fetchGPX(requestURL).then(coordinates => {
     saveButton.classList.add("save")
     // Обработчик события для кнопки сохранить
     saveButton.onclick = function() {
-        graphicsLayer.remove(sign)
-        graphicsLayer.remove(img_sign)
-        createLine(sign.geometry.paths[0], sign.geojson_id, sign.azimuth, descriptionInput.value, typeInput.value)
-        createImage(typeInput.value, sign.geometry.paths[0], sign.azimuth)
-        // Закрыть модальное окно после сохранения
-        document.body.removeChild(overlay);
+        if (is_create_new_sign){
+          let lat2 = parseFloat(parseFloat(sign.lat + 0.0001).toFixed(number_rount))
+          let lon2 = parseFloat(parseFloat(sign.lon + 0.0001).toFixed(number_rount))
+          let new_line = [[lon2, lat2],[sign.lon, sign.lat]]
+          let new_geojson_id = uuidv4()
+          createLine(new_line, new_geojson_id, 0, descriptionInput.value, typeInput.value)
+          createImage(typeInput.value, new_line, 0)
+        }else{
+          graphicsLayer.remove(sign)
+          graphicsLayer.remove(img_sign)
+          createLine(sign.geometry.paths[0], sign.geojson_id, sign.azimuth, descriptionInput.value, typeInput.value)
+          createImage(typeInput.value, sign.geometry.paths[0], sign.azimuth)
+          // Закрыть модальное окно после сохранения
+
+        }
         document.querySelector(".save_sign").disabled = false
         isMoveSign = false
+        document.body.removeChild(overlay);
     };
 
     // Кнопка закрыть
@@ -701,7 +730,6 @@ fetchGPX(requestURL).then(coordinates => {
         x: (coordinates[0][0] + coordinates[1][0]) / 2,
         y: (coordinates[0][1] + coordinates[1][1]) / 2,
       });
-
       const imageGraphic = new Graphic({
         geometry: imageCenterPoint,
         symbol: pictureMarkerSymbol,
