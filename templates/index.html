@@ -235,8 +235,31 @@
     border-radius: 5px;
     cursor: pointer;
 }
-
-.modal .save:hover {
+.modal .delete{
+  background-color: #e70c22;
+  padding: 10px 15px;
+  margin-top: 5px;
+  color: #ffffff;
+  float: right;
+}
+.modal .change{
+  background-color: #007bff;
+  padding: 3px 5px;
+  margin: 2px;
+  font-size: 12px;
+}
+.modal .delete:hover {
+  background-color: #bd232b;
+}
+.modal  .delete:disabled{
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.modal  .delete:disabled:hover {
+  background-color: #e70c22;
+  opacity: 0.75;
+}
+.modal .save:hover , .modal .change:hover{
   background-color: #0056b3;
 }
 .modal .close:hover {
@@ -486,10 +509,95 @@ fetchGPX(requestURL).then(coordinates => {
     // Поле для типа
     const typeLabel = document.createElement('label');
     typeLabel.textContent = 'Тип: ';
+
+    const changeButton = document.createElement('button');
+    changeButton.textContent = 'Выбрать тип';
+    changeButton.classList.add("change")
+    changeButton.addEventListener('click',()=>{
+
+      const createChoose = () => {
+    // Создание элементов модального окна
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '1000';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = '#fefefe';
+    modalContent.style.margin = '15% auto';
+    modalContent.style.padding = '20px';
+    modalContent.style.border = '1px solid #888';
+    modalContent.style.width = '80%';
+    modalContent.style.maxHeight = '80%';
+    modalContent.style.overflowY = 'auto'; // Прокрутка для контента
+
+    const closeBtn = document.createElement('span');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.color = '#aaa';
+    closeBtn.style.float = 'right';
+    closeBtn.style.fontSize = '28px';
+    closeBtn.style.fontWeight = 'bold';
+    closeBtn.style.cursor = 'pointer';
+
+    closeBtn.onclick = () => {
+      document.body.removeChild(modal);
+    };
+
+    modalContent.appendChild(closeBtn);
+    
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    grid.style.gap = '10px';
+
+    // Добавление изображений в сетку
+    const images = [
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        'http://127.0.0.1:3000/img_type/5.8.10',
+        // Добавьте больше изображений по необходимости
+    ];
+
+    images.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = src;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        grid.appendChild(img);
+    });
+
+    modalContent.appendChild(grid);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Функция для открытия модального окна
+    const openModal = () => {
+        modal.style.display = 'block';
+    };
+
+    return openModal;
+};
+      createChoose()    
+    })
     const typeInput = document.createElement('input');
     typeInput.setAttribute('id', 'type');
     typeInput.type = 'text';
     typeInput.placeholder = 'Введите тип';
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Удалить';
+    deleteButton.classList.add("delete")
 
 
     typeInput.addEventListener('change',()=>{
@@ -503,15 +611,16 @@ fetchGPX(requestURL).then(coordinates => {
     descriptionInput.placeholder = 'Введите описание';
     descriptionInput.type = 'text';
     descriptionInput.setAttribute('id', 'description');
-
     if (img_sign != undefined){
       typeInput.value = sign.type;
       descriptionInput.value = sign.description;
     }else{
+      deleteButton.disabled = true;
       descriptionInput.value = '';
       typeInput.value = '';
       is_create_new_sign = true;
     }
+
     // Поле для изображения
     const imageLabel = document.createElement('label');
     imageLabel.textContent = 'Изображение: ';
@@ -537,8 +646,6 @@ fetchGPX(requestURL).then(coordinates => {
           graphicsLayer.remove(img_sign)
           createLine(sign.geometry.paths[0], sign.geojson_id, sign.azimuth, descriptionInput.value, typeInput.value)
           createImage(typeInput.value, sign.geometry.paths[0], sign.azimuth)
-          // Закрыть модальное окно после сохранения
-
         }
         document.querySelector(".save_sign").disabled = false
         isMoveSign = false
@@ -555,8 +662,17 @@ fetchGPX(requestURL).then(coordinates => {
         document.body.removeChild(overlay);
     };
 
+
+    deleteButton.onclick = function(){
+      graphicsLayer.remove(sign)
+      graphicsLayer.remove(img_sign)
+      document.querySelector(".save_sign").disabled = false
+      isMoveSign = false
+      document.body.removeChild(overlay);
+    }
     // Добавляем элементы в модальное окно
     modal.appendChild(typeLabel);
+    modal.appendChild(changeButton);
     modal.appendChild(typeInput);
     modal.appendChild(document.createElement('br'));
     
@@ -570,6 +686,7 @@ fetchGPX(requestURL).then(coordinates => {
     
     modal.appendChild(saveButton);
     modal.appendChild(closeButton);
+    modal.appendChild(deleteButton);
 
     // Добавляем модальное окно в затемняющий фон
     overlay.appendChild(modal);

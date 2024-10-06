@@ -91,42 +91,18 @@ class Server:
             """
             new_data = request.get_json()
 
-            with open(config.PATH_TO_GEOJSON, encoding='utf-8') as f:
-                old_data = geojson.load(f)
-                old_ids = [old_data["features"][index]["properties"]["id"] for index in
-                           range(len(old_data["features"]))]
-                new_ids = []
-                for item in new_data:
-                    new_ids.append(item["id"])
-                    for index in range(len(old_data["features"])):
-                        if item["id"] == old_data["features"][index]["properties"]["id"]:
-                            old_data["features"][index]["geometry"]["coordinates"] = item["line"]
-                            old_data["features"][index]["properties"]["azimuth"] = item["azimuth"]
-                            old_data["features"][index]["properties"]["type"] = item["type"]
-                            old_data["features"][index]["properties"]["code"]= int(codes_signs[item["type"]])
-                            if "SEM250" in old_data["features"][index]["properties"]:
-                                old_data["features"][index]["properties"]["SEM250"] = item["description"]
-                                old_data["features"][index]["properties"]["MVALUE"] = item["description"]
-                print(old_ids, new_ids, new_ids)
-                if len(old_data["features"]) < len(new_data):
-                    features = []
-                    for item in new_data:
-                        line = LineString(item["line"])
-                        # создание объукта описывающего ДЗ
-                        properties = {"type": item["type"], "azimuth": item["azimuth"], "id": item["id"], "code": int(codes_signs[item["type"]])}
-                        if item["type"] in type_signs_with_text:
-                            properties['MVALUE'] = item["description"]
-                            properties['SEM250'] = item["description"]
-                        print(properties)
-                        features.append(Feature(geometry=line, properties=properties))
-                    feature_collection = FeatureCollection(features)
-                    with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
-                        dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
-                elif  len(old_data["features"]) > len(new_data):
-                    print("меньше")
-                else:
-                    with open(config.PATH_TO_GEOJSON,"w", encoding='utf-8') as f:
-                        geojson.dump(old_data, f, ensure_ascii=False)
+            features = []
+            for item in new_data:
+                line = LineString(item["line"])
+                # создание объукта описывающего ДЗ
+                properties = {"type": item["type"], "azimuth": item["azimuth"], "id": item["id"], "code": int(codes_signs[item["type"]])}
+                if item["type"] in type_signs_with_text:
+                    properties['MVALUE'] = item["description"]
+                    properties['SEM250'] = item["description"]
+                features.append(Feature(geometry=line, properties=properties))
+            feature_collection = FeatureCollection(features)
+            with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
+                dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
             if new_data is None:
                 return jsonify({'error': 'No data provided'}), 400
             # Return a success response
