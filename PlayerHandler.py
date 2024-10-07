@@ -60,13 +60,13 @@ class PlayerHandler(MainWindow):
         self.calculation = CoordinateCalculation()
         self.view = View()
         self.view.count_frames()
-        count_gpx = self.Reader.get_count_dot()
+        count_gpx = self.GPXHandler.get_count_dot()
         start_time = time.time()
 
         while self.view.cap.isOpened():
             if self.is_brake:
                 break
-            speed = self.Reader.get_speed(config.INDEX_OF_GPS)
+            speed = self.GPXHandler.get_speed(config.INDEX_OF_GPS)
             config.FRAME_STEP = round(self.k * speed + self.b, 0)
             ret, frame = self.view.cap.read()
             if ret:

@@ -40,6 +40,7 @@ class Frame:
             min(square1[1] + square1[3], square2[1] + square2[3]) - max(square1[1], square2[1])
         ]
 
+        
         # Calculate the overlap area.
         if intersection[2] > 0 and intersection[3] > 0:
             overlap_area = intersection[2] * intersection[3]

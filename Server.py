@@ -1,26 +1,26 @@
-
 import os
 
+import flask
 import geojson
 import gpxpy
 import jinja2
-from geojson import dump, FeatureCollection, LineString, Feature
-from flask import Flask, request, send_from_directory, jsonify, url_for
+from flask import Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
-from configs.sign_config import name_signs_city, type_signs_with_text
+from geojson import LineString, Feature, FeatureCollection
+from engineio.async_drivers import threading
 from CoordinateCalculation import CoordinateCalculation
 from GPXHandler import GPXHandler
 from configs import config
+from configs.sign_config import type_signs_with_text, codes_signs
 
-from configs.sign_config import codes_signs
 template_dir = os.path.join(os.getcwd(), "templates")
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
 
 
 class Server:
     def __init__(self):
-        self.app = Flask(__name__, template_folder='../templates', static_folder="./static")
+        self.app = Flask(__name__, template_folder='../templates')
         CORS(self.app)
         self.GPXHandler = GPXHandler()
         self.socketio = SocketIO()
@@ -29,7 +29,7 @@ class Server:
         @self.app.route('/')
         def index():
             template = jinja_env.get_template('index.html')
-            return template.render(static_path=lambda filename: f"./static/{filename}")
+            return template.render()
 
         @self.app.route("/track")
         def get_track():
@@ -61,7 +61,11 @@ class Server:
                 image_path = rf"./sings/{image_id}"
             else:
                 image_path =rf"./sings/V{image_id}.png"
-            return send_from_directory(os.path.dirname(image_path), os.path.basename(image_path), as_attachment=True)
+
+            path_img = os.path.join(os.getcwd(), "sings")
+            path_img = os.path.join(path_img, os.path.basename(image_path))
+
+            return flask.send_file(path_img, as_attachment=True)
 
         @self.app.route("/create_new_line")
         def create_new_line():
@@ -107,7 +111,7 @@ class Server:
                 features.append(Feature(geometry=line, properties=properties))
             feature_collection = FeatureCollection(features)
             with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
-                dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
+                geojson.dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
             if new_data is None:
                 return jsonify({'error': 'No data provided'}), 400
             # Return a success response
