@@ -1,13 +1,13 @@
 from Frame import Frame
 from configs import config
-from Reader import Reader
+from GPXHandler import GPXHandler
 from Sign import Sign
 from itertools import groupby
 import copy
 from Converter import Converter
 from geopy.distance import geodesic
 from configs.sign_config import names_signs_for_side
-
+import matplotlib.pyplot as plt
 class SignHandler:
     __number_for_incorrect_evidences = 9999.99
     __screen_width = 1920
@@ -18,7 +18,7 @@ class SignHandler:
     __min_length_sign = 4
 
     def __init__(self):
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         self.signs = []
         self.result_signs = []
         self.side_signs = []
@@ -31,7 +31,7 @@ class SignHandler:
     def check_the_data_to_add(self, frame, Turn):
         # time.sleep(0.5)
         if frame:
-            current_number_frame = frame[0].number_frame
+            current_frame_number = frame[0].frame_number
             # Если знаков вообще нету
             if not self.signs:
                 for sign in frame:
@@ -39,7 +39,7 @@ class SignHandler:
             else:
 
                 if Turn.was_there_turn and not Turn.is_turn():
-                    Turn = self.handling_turn_after_end(Turn, current_number_frame)
+                    Turn = self.handling_turn_after_end(Turn, current_frame_number)
                 frame = self.clean_frame_from_double_signs(frame)
                 evidences = self.__check_pixel_coordinates(frame)
                 evidences = self.__remove_collisions(evidences)
@@ -47,19 +47,19 @@ class SignHandler:
                 frame = self.__clean_frame(frame, frame_sign_to_add, evidences)
                 self.__add_new_unknown_element(frame, frame_sign_to_add)
 
-            self.set_azimuth_for_signs(current_number_frame)
-            self.__remove_incorrect_signs(current_number_frame)
+            self.set_azimuth_for_signs(current_frame_number)
+            self.__remove_incorrect_signs(current_frame_number)
             if not Turn.is_turn():
-                self.__move_final_signs(current_number_frame)
+                self.__move_final_signs(current_frame_number)
             else:
                 if len(Turn.signs) == 0:
-                    self.__move_final_signs(current_number_frame)
+                    self.__move_final_signs(current_frame_number)
                 Turn.signs = self.signs
             return Turn
-    def set_azimuth_for_signs(self,current_number_frame):
+    def set_azimuth_for_signs(self,current_frame_number):
         for index in range(len(self.signs)):
-            if self.signs[index].frame_numbers[-1] == current_number_frame:
-                self.signs[index].azimuth = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1)
+            if self.signs[index].frame_numbers[-1] == current_frame_number:
+                self.signs[index].azimuth = self.GPXHandler.get_azimuth(config.INDEX_OF_GPS + 1)
     def clean_frame_from_double_signs(self,frame):
         dict_frame = {}
         for item in frame:
@@ -77,11 +77,11 @@ class SignHandler:
             if Frame.overlap_area(square2, square1) > 10:
                 frame.remove(item[0])
         return frame
-    def handling_turn_after_end(self, Turn, current_number_frame):
+    def handling_turn_after_end(self, Turn, current_frame_number):
         if Turn.signs:  # Is there a turn sign?
             if len(Turn.coordinates) >= 2:
                 Turn.add_points()
-                self.__remove_incorrect_signs(current_number_frame)
+                self.__remove_incorrect_signs(current_frame_number)
                 self.signs, Turn.signs = self.separation_signs(Turn)
                 Turn.set_direction_signs()
                 Turn.handle_turn()
@@ -113,8 +113,11 @@ class SignHandler:
                     if abs(vec - (evidences[index][1])) <= 30 and vec != 0:
                         self.signs[index].append_data(item)
                         items_for_remove.append(item)
-        for item in items_for_remove:
-            frame.remove(item)
+        new_frame = []
+        for item in frame:
+            if item not in items_for_remove:
+                new_frame.append(item)
+        frame = new_frame
         return frame
     def calculation_length_vector(self, item, index):
         delta_x = item.x - self.signs[index].pixel_coordinates_x[-1]
@@ -146,8 +149,9 @@ class SignHandler:
         result = []
         for index in range(len(evidences)):
             if evidences[index][1] != SignHandler.__number_for_incorrect_evidences:
-                if frame[0].number_frame - self.signs[index].frame_numbers[-1] < 7:
+                if frame[0].frame_number - self.signs[index].frame_numbers[-1] < 7:
                     self.signs[index].append_data(frame[evidences[index][0]])
+                    self.signs[index].number_sign = config.INDEX_OF_All_FRAME
                     result.append(frame[evidences[index][0]])
         return result
 
@@ -174,7 +178,7 @@ class SignHandler:
         return True
 
 
-    def __move_final_signs(self, current_number_frame):
+    def __move_final_signs(self, current_frame_number):
         signs_for_delete = []
         for index in range(len(self.signs)):
             if self.turns and self.signs[index].frame_numbers[-1] == self.turns[-1].frames[-1]:
@@ -182,7 +186,7 @@ class SignHandler:
                 self.signs[index].number = 8
                 self.turns[-1].signs.append(self.signs[index])
             else:
-                different_frame = current_number_frame
+                different_frame = current_frame_number
                 frame_for_sign = self.signs[index].frame_numbers[
                                      -1] + SignHandler.__difference_frames_for_move_sign  # + 20 #+ 10
                 # Проверка на коректность добовления добовляемого знака через:
@@ -203,14 +207,15 @@ class SignHandler:
                         else:
                             self.signs[index].is_left = self.signs[index].pixel_coordinates_x[0] - \
                                                         self.signs[index].pixel_coordinates_x[-1] > 0
-                            if self.check_on_side(self.signs[index]):
+
+                            if False:#self.check_on_side(self.signs[index]):
+                                print(config.INDEX_OF_All_FRAME)
                                 self.signs[index].is_sign_side = True
                                 self.azimuth = (self.azimuth + 90) % 360
                                 self.side_signs.append(self.signs[index])
                             else:
                                 # TODO удалить номер знака
                                 if self.check_presence_of_nearby_sign(self.signs[index]):
-                                    self.signs[index].number_sign = config.INDEX_OF_All_FRAME
                                     self.result_signs.append(self.signs[index])
 
                         signs_for_delete.append(self.signs[index])
@@ -222,32 +227,10 @@ class SignHandler:
         right = arr[mid:]
         return left, right
 
-    #TODO Это пиздец
-    def check_on_side(self, sign):
-        max_w = max(sign.w)
-        max_h = max(sign.h)
-        min_w = min(sign.w)
-        min_h = min(sign.h)
-        CS = (max_w * max_h) / (min_h * min_w)
-        proportions = [sign.w[index]/sign.h[index] for index in range(len(sign.h))]
-        left_half, right_half = self.split_array(proportions)
-        different_left =  abs(min(left_half ) - max(left_half))
-        different_right = abs(min(right_half) - max(right_half))
-        average = sum(proportions) / len(proportions)
-        if not sign.is_left and \
-                CS < 10 and \
-                (max_w * max_h) < 20500 and \
-                sign.pixel_coordinates_x[0] > 1000 and \
-                len(sign.w) >= 4 and \
-                sign.get_the_most_often(sign.result_yolo)['name'] in names_signs_for_side and \
-                (different_left > different_right or  average < 0.9 ):
-            return True
-        return False
-
-    def __remove_incorrect_signs(self, current_number_frame):
+    def __remove_incorrect_signs(self, current_frame_number):
         signs_for_delete = []
         for sign in self.signs:
-            if sign.frame_numbers[-1] < (current_number_frame - SignHandler.__difference_frames_for_remove_sign):
+            if sign.frame_numbers[-1] < (current_frame_number - SignHandler.__difference_frames_for_remove_sign):
                 if sign.get_the_most_often(sign.result_CNN)['count'] < SignHandler.__min_length_sign:
                     signs_for_delete.append(sign)
         self.__signs_delete(signs_for_delete)

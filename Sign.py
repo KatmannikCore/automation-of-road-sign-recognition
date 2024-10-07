@@ -12,12 +12,12 @@ class Sign:
         self.result_yolo = []
         self.car_coordinates_x = []
         self.car_coordinates_y = []
+        self.absolute_frame_numbers = []
         self.frame_numbers = []
         self.result_CNN = []
         self.deletion_counter = 0
         self.is_left = False
         self.azimuth = None
-
         self.is_turn = False
         self.turn_directions = 'straight'
         self.text_on_sign = []
@@ -40,6 +40,7 @@ class Sign:
                f"name1: {self.get_the_most_often(self.result_yolo)['name']},\n" \
                f"name2: {self.result_CNN},\n" \
                f"frame: {self.frame_numbers}\n" \
+               f"all frame: {self.absolute_frame_numbers}\n" \
                f"coordinate: {x}, {y}  \n"\
                f"azimuth: {self.azimuth}  \n"
 
@@ -52,7 +53,7 @@ class Sign:
             "x": self.pixel_coordinates_x,
             "y": self.pixel_coordinates_y,
             "length": int(len(self.frame_numbers)),
-            "number" : int(round(self.number_sign, 0))
+            "number" : int(round(self.number_sign, 0)),
         }
         return json_object
 
@@ -70,7 +71,8 @@ class Sign:
         self.w.append(sign.w)
         self.result_yolo.append(sign.name_sign)
         self.set_car_coordinate(sign.latitude, sign.longitude)
-        self.frame_numbers.append(sign.number_frame)
+        self.frame_numbers.append(sign.frame_number)
+        self.absolute_frame_numbers.append(sign.absolute_frame_number)
         self.result_CNN.append(sign.number_sign)
         if sign.text_on_sign != "":
             self.text_on_sign.append(sign.text_on_sign)
@@ -83,6 +85,7 @@ class Sign:
         self.w += sign.w
         self.result_yolo += sign.result_yolo
         self.frame_numbers += sign.frame_numbers
+        self.absolute_frame_numbers += sign.absolute_frame_numbers
         self.result_CNN += sign.result_CNN
         self.text_on_sign += sign.text_on_sign
         self.__append_car_coordinates(sign)
@@ -110,7 +113,11 @@ class Sign:
         for item in self.text_on_sign:
             for accuracy, name in item:
                 grouped_names[name] = self.create_object_city(grouped_names, accuracy, name)
-        result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        #print(grouped_names)
+        if grouped_names != {}:
+            result_name = max(grouped_names, key=lambda x: grouped_names[x]['accuracy'])
+        else:
+            result_name = ""
         return result_name
     @staticmethod
     def create_object_city(grouped_names, accuracy, name):

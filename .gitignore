@@ -7,4 +7,13 @@ test
 new
 big_test
 segmentation
-configs/config.py
+yolov8
+errorData
+*.h5
+static
+build
+dep
+dist
+output
+*.spec
+sings

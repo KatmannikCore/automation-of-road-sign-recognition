@@ -6,11 +6,14 @@ from geojson import Feature, FeatureCollection, dump, LineString
 from configs import config as config
 from CoordinateCalculation import CoordinateCalculation
 from Detector import Detector
-from Reader import Reader
+from GPXHandler import GPXHandler
 from Converter import Converter
 from SignHandler import SignHandler
 from Frame import Frame
 from Turn import Turn
+from configs.sign_config import codes_signs
+
+
 class View:
     def __init__(self):
         self.detector = Detector()
@@ -47,7 +50,7 @@ class View:
         ]
         self.calculation = CoordinateCalculation()
         self.Converter = Converter()
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         for root, dirs, files in os.walk(config.PATH_TO_VIDEO):
             self.files = files
         self.cap = cv2.VideoCapture(config.PATH_TO_VIDEO + files[config.INDEX_OF_VIDEO])
@@ -66,15 +69,15 @@ class View:
         #Cоздание линии (2х точек) 
         line = LineString([(y1, x1), (y2, x2)])
         #создание объукта описывающего ДЗ
-        feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING})
+        feature = Feature(geometry=line, properties={"type": name_sing, "id": config.INDEX_OF_SING, "code": int(codes_signs[name_sing])})
         config.FEATURES.append(feature)
         config.INDEX_OF_SING += 1
 
     def write_geoJson(self):
         #Создание объекта хронящего все ДЗ
         feature_collection = FeatureCollection(config.FEATURES)
-        with open(config.PATH_TO_GEOJSON, 'w', encoding='cp1251') as f:
-            dump(feature_collection, f, skipkeys=False, ensure_ascii=True)
+        with open(config.PATH_TO_GEOJSON, 'w', encoding='utf-8') as f:
+            dump(feature_collection, f, skipkeys=False, ensure_ascii=False)
 
     def switch_video(self):
         if self.cap.get(cv2.CAP_PROP_FRAME_COUNT) <= config.INDEX_OF_FRAME:
@@ -97,7 +100,7 @@ class View:
                 x, y, w, h = box
                 detections.append([x, y, w, h])
 
-                x1, y1 = self.Reader.get_current_coordinate(config.INDEX_OF_GPS)
+                x1, y1 = self.GPXHandler.get_current_coordinate(config.INDEX_OF_GPS)
                 x1, y1 = self.Converter.coordinateConverter(x1, y1,"epsg:4326", "epsg:32635")
 
                 object_frame = Frame()
@@ -108,7 +111,8 @@ class View:
                 object_frame.name_sign = name_sign
                 object_frame.latitude = x1
                 object_frame.longitude = y1
-                object_frame.number_frame = config.COUNT_PROCESSED_FRAMES
+                object_frame.frame_number = int(config.COUNT_PROCESSED_FRAMES)
+                object_frame.absolute_frame_number = int(config.INDEX_OF_All_FRAME)
                 object_frame.number_sign = number_sign
                 object_frame.text_on_sign = text_on_sign
 
@@ -119,8 +123,8 @@ class View:
                            cv2.FONT_HERSHEY_COMPLEX, 0.5, color, 1)
         #if rectangles:
         if self.turn.is_turn():
-            self.turn.append_azimuths(self.Reader.get_azimuth(config.INDEX_OF_GPS + 1))
-            self.turn.append_coordinates(self.Reader.get_current_coordinate(config.INDEX_OF_GPS + 1))
+            self.turn.append_azimuths(self.GPXHandler.get_azimuth(config.INDEX_OF_GPS + 1))
+            self.turn.append_coordinates(self.GPXHandler.get_current_coordinate(config.INDEX_OF_GPS + 1))
             self.turn.last_index_of_gps = config.INDEX_OF_GPS
             self.turn.frames.append(config.COUNT_PROCESSED_FRAMES)
         if frame_for_checking:

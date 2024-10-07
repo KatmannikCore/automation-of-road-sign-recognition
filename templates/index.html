@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArcGIS JS API - Карта с векторными тайлами</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css"/>
+  <link  href="https://cdn.socket.io/4.6.0/socet.io.min.js"/>
+  <link rel="stylesheet" href="style.css">
+<script src="https://js.arcgis.com/4.23/"></script>
+  <style>
+    /* Reset and base styles  */
+    * {
+      padding: 0px;
+      margin: 0px;
+      border: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    /* Links */
+
+    a, a:link, a:visited  {
+        text-decoration: none;
+    }
+
+    a:hover  {
+        text-decoration: none;
+    }
+
+    /* Common */
+
+    aside, nav, footer, header, section, main {
+      display: block;
+    }
+
+    h1, h2, h3, h4, h5, h6, p {
+        font-size: inherit;
+      font-weight: inherit;
+    }
+
+    ul, ul li {
+      list-style: none;
+    }
+
+    img {
+      vertical-align: top;
+    }
+
+    img, svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    address {
+      font-style: normal;
+    }
+
+    /* Form */
+
+    input, textarea, button, select {
+      font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+        background-color: transparent;
+    }
+
+    input::-ms-clear {
+      display: none;
+    }
+
+    button, input[type="submit"] {
+        display: inline-block;
+        box-shadow: none;
+        background-color: transparent;
+        background: none;
+        cursor: pointer;
+    }
+
+    input:focus, input:active,
+    button:focus, button:active {
+        outline: none;
+    }
+
+    button::-moz-focus-inner {
+      padding: 0;
+      border: 0;
+    }
+
+    label {
+      cursor: pointer;
+    }
+
+    legend {
+      display: block;
+    }
+
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .track_offset{
+      display:flex;
+      justify-content: space-between;
+
+    }
+    .track_offset div{
+      display:flex;
+      align-items: center;
+    }
+    input{
+      border: 1px solid black;
+      width:50px;
+      height: 20px;
+      font-size: 12px;
+    }
+    body{
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .btn {
+      display: inline-block;	
+      box-sizing: border-box;
+      padding: 0 15px;
+      outline: none;
+      border: none;  
+      border-radius: 4px;
+      height: 36px;
+      line-height: 36px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      color: #fff;
+      background-color: #1a73e8;
+      position: relative;
+      overflow:hidden;
+      vertical-align: top;
+      cursor: pointer;
+      user-select: none;
+      appearance: none;
+      touch-action: manipulation; 
+      z-index: 1;
+    }
+    .btn span{
+      position: absolute;
+      background: #fff;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: btn_ripples 0.6s linear infinite;
+    }
+    @keyframes btn_ripples {
+      0% {
+        width: 0px;
+        height: 0px;
+        opacity: 0.5;
+      }
+      100% {
+        width: 1000px;
+        height: 1000px;
+        opacity: 0;
+      }
+    }
+    .btn:hover {
+      box-shadow: 0 1px 2px 0 rgb(26 115 232 / 45%), 0 1px 3px 1px rgb(26 115 232 / 30%);
+      background-color: #297be6;
+    }
+    .btn:active {
+      box-shadow: 0 1px 2px 0 rgb(26 115 232 / 45%), 0 2px 6px 2px rgb(26 115 232 / 30%);
+      background-color: #1a73e8 !important;
+    }
+    .btn:focus-visible {
+      box-shadow: 0 0 0 3px lightskyblue;
+    }
+    .btn:disabled {
+      pointer-events: none;
+      opacity: 0.65;
+    }
+    body {
+    font-family: Arial, sans-serif;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+  position: relative;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 400px;
+}
+
+.modal label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.modal input[type="text"],
+.modal textarea,
+.modal input[type="file"] {
+    width: calc(100% - 10px);
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.modal .save {
+  background-color: #007bff;
+  padding: 10px 15px;
+  margin-top: 5px;
+}
+.modal button {
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.modal .delete{
+  background-color: #e70c22;
+  padding: 10px 15px;
+  margin-top: 5px;
+  color: #ffffff;
+  float: right;
+}
+.modal .change{
+  background-color: #007bff;
+  padding: 3px 5px;
+  margin: 2px;
+  font-size: 12px;
+}
+.modal .delete:hover {
+  background-color: #bd232b;
+}
+.modal  .delete:disabled{
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.modal  .delete:disabled:hover {
+  background-color: #e70c22;
+  opacity: 0.75;
+}
+.modal .save:hover , .modal .change:hover{
+  background-color: #0056b3;
+}
+.modal .close:hover {
+  background-color: #6d252b;
+}
+.modal .close{
+  background-color: #d12449;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 16px;
+  padding: 5px 10px;
+  color: #ccc;
+}
+.reload{
+  margin-left: 5px;
+  background-color: #000000;
+}
+.reload:hover{
+  background-color: #000000;
+  opacity: 0.75;
+}
+.signs_content img:hover{
+  background-color: #3d3c3c;
+  opacity: 0.5;
+  border: 1px solid #000000;
+}
+  </style>
+
+</head>
+<body>
+  <div class="track_offset">
+    <div>
+      <p>Смещение трека: </p>
+      <input value="0" id= "offset"type="text">
+    </div>
+    <div>
+      <button type="button" disabled class="save_track btn">Зафиксировать трек</button>
+      <button type="button" onclick="location.reload()" class="reload btn">Перезагрузить</button>
+    </div>
+
+  </div>
+  <div id="viewDiv"></div>
+  <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
+  
+  <script  type="module" >
+document.getElementById('offset').addEventListener("input",()=>{
+  let numberOffset =parseInt( document.getElementById('offset').value);
+  let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
+  document.querySelector(".save_track").disabled = !Number.isInteger(numberOffset) ;
+  if (Number.isInteger(numberOffset)){
+    document.querySelector(".save_track").disabled = numberOffset == 0
+  }
+})
+document.querySelector(".save_track").addEventListener("click",()=>{
+  let numberOffset =parseInt( document.getElementById('offset').value);
+  if (!Number.isInteger(numberOffset)){
+    numberOffset = 0
+  }
+  if (numberOffset != 0){
+    fetch(`http://127.0.0.1:3000/save_track?index_offset_track=${numberOffset}`)
+    .then((response) => {
+      if (response.status == 200) {
+        location.reload();
+      }
+    })
+    .catch((error) =>
+      console.error("Ошибка при получении новой линии:", error)
+    );
+  }
+
+})
+const requestURL = 'http://127.0.0.1:3000/track'
+import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+
+
+const socket = io({autoConnect: false})
+
+socket.connect()
+
+const fetchGPX = async (url) => {
+  return  fetch(url).then(response => response.json());
+}
+
+fetchGPX(requestURL).then(coordinates => {
+  require([
+  "esri/Map",
+  "esri/views/MapView",
+  "esri/layers/VectorTileLayer",
+  "esri/layers/GraphicsLayer",
+  "esri/Graphic",
+  "esri/geometry/Polyline",
+  "esri/geometry/Point",
+  "esri/layers/FeatureLayer", // Import FeatureLayer
+  "esri/symbols/SimpleMarkerSymbol", // Import SimpleMarkerSymbol
+  "esri/symbols/PictureMarkerSymbol",
+  "esri/renderers/SimpleRenderer", // Import SimpleRenderer
+
+], function (
+  Map,
+  MapView,
+  VectorTileLayer,
+  GraphicsLayer,
+  Graphic,
+  Polyline,
+  Point,
+  FeatureLayer,
+  SimpleMarkerSymbol,
+  PictureMarkerSymbol,
+  SimpleRenderer,
+) {
+  const vectorTileLayer = new VectorTileLayer({
+    url: "https://gis.maps.by/arcgis/rest/services/Hosted/VectorTile_240522/VectorTileServer",
+  });
+
+  const map = new Map({
+    layers: [vectorTileLayer],
+  });
+    
+  var graphicsLayer = new GraphicsLayer();
+  map.add(graphicsLayer);
+  const view = new MapView({
+    center: [27.5, 53.9],
+    container: "viewDiv",
+    map: map,
+    zoom: 10,
+  });
+  let number_rount = 7
+  let isMoveSign = false
+  let isTurnSign = false
+  let type_for_moving = null
+  let azimuth_for_moving = null
+  let azimuth_direction = 90
+  let coordinates_for_moving
+  let geojson_id 
+  let old_line
+  let old_image = ''
+  let move_event
+  let description_sign
+  function uuidv4() {
+      return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+      );
+    }
+  function get_clicked_element(response) {
+    try {
+      let type = response.results[0].graphic._imageUrl.split('/')
+
+      type = type[type.length-1]
+      let line
+      type_for_moving = type
+      azimuth_for_moving = response.results[0].graphic.azimuth
+      let x_img = response.results[0].graphic.geometry.x.toFixed(number_rount)
+      let y_img = response.results[0].graphic.geometry.y.toFixed(number_rount)
+      graphicsLayer.graphics.forEach((item) =>{
+        if (item._imageUrl === undefined){
+          var points = item.geometry.paths[0]
+          const x_line =( (points[0][0] + points[1][0]) / 2).toFixed(number_rount)
+          const y_line =( (points[0][1] + points[1][1]) / 2).toFixed(number_rount)
+          if (x_line == x_img && y_line == y_img){
+            line = item
+          }
+        }})
+      return {line: line, img: response.results[0].graphic}
+    } catch(e) { return -1  }
+  }
+  view.on("click", async (event) => {
+    view.hitTest(event).then((response) =>{
+      if (response.results.length == 1 && isMoveSign){
+            let new_x = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+            let new_y = parseFloat(event.mapPoint.latitude.toFixed(number_rount))                
+            const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${new_x},${new_y}`;
+            fetch(url)
+            .then((response) => response.text())
+            .then((data) => {
+              let new_point = data.split(',').map(item=>{return parseFloat(item)})
+              let new_line = [[new_x, new_y], new_point ]
+              
+              createLine(new_line, geojson_id, azimuth_for_moving, description_sign, type_for_moving)
+              createImage(type_for_moving, new_line, azimuth_for_moving)
+              document.querySelector(".save_sign").disabled = false
+              isMoveSign = false
+            })
+            .catch((error) =>
+              console.error("Ошибка при получении новой линии:", error)
+            );
+        }
+      if( event.button == 0 && isTurnSign){
+          isTurnSign = false
+          move_event.remove()
+          document.querySelector(".save_sign").disabled = false
+          old_line = null
+          old_image = ''
+        }
+      if( event.button == 1 && isTurnSign){
+        azimuth_direction = azimuth_direction * -1
+      }
+      if (response.results[0].graphic.geojson_id == undefined && response.results.length == 2  && !isMoveSign){
+        let item = get_clicked_element(response).line
+        description_sign = item.description
+        if( event.button == 2){
+            isTurnSign = true
+            graphicsLayer.remove(item)
+            graphicsLayer.remove(response.results[0].graphic)
+            function move_sign(response_move){
+                let new_x = response_move.results[0].mapPoint.longitude
+                let new_y = response_move.results[0].mapPoint.latitude
+                coordinates_for_moving = item.geometry.paths[0]
+                geojson_id = item.geojson_id
+                let new_line = [coordinates_for_moving[0],[new_x, new_y]]
+                const url = `http://127.0.0.1:3000/change_azimuth?line=${new_line.toString()}`;
+                fetch(url)
+                .then((response) => response.text())
+                .then((data) => {
+                  let az =Number(data) + azimuth_direction
+                  if (old_image != null){
+                    graphicsLayer.remove(old_image)
+                    graphicsLayer.remove(old_line)
+                    old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
+                    createImage(type_for_moving, new_line, az)
+                  }
+                })
+                .catch((error) =>
+                  console.error("Ошибка при получении новой линии:", error)
+                );
+            }
+            move_event = view.on("pointer-move",(event_move)=>{
+              view.hitTest(event_move).then((response_move)=>{move_sign(response_move)})
+            });
+        }else if( event.button == 0){
+        coordinates_for_moving = item.geometry.paths[0] 
+        geojson_id = item.geojson_id
+        graphicsLayer.remove(item)
+        graphicsLayer.remove(response.results[0].graphic)
+        isMoveSign = true
+        }          
+        }
+    })});
+
+  let temp = view.on("double-click", function(event) {
+    event.stopPropagation()
+    view.hitTest(event).then((response) => {
+      let sign_object = get_clicked_element(response)
+      if (sign_object == -1) {
+        let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+        let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
+        let coordinates = {lon: lon, lat: lat}
+        createModal(coordinates)
+      }else{
+        createModal(sign_object.line, sign_object.img);
+      }
+    })
+    // Функция для создания модального окна
+    function createModal(sign, img_sign) {
+    let is_create_new_sign = false
+    // Создаем затемняющий фон
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+
+    // Создаем само модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    // Поле для типа
+    const typeLabel = document.createElement('label');
+    typeLabel.textContent = 'Тип: ';
+
+    const descriptionLabel = document.createElement('label');
+    descriptionLabel.textContent = 'Описание: ';
+    const descriptionInput = document.createElement('input');
+    descriptionInput.placeholder = 'Введите описание';
+    descriptionInput.type = 'text';
+    descriptionInput.setAttribute('id', 'description');
+
+    const changeButton = document.createElement('button');
+    changeButton.textContent = 'Выбрать тип';
+    changeButton.classList.add("change")
+    const typeInput = document.createElement('input');
+    typeInput.setAttribute('id', 'type');
+    typeInput.type = 'text';
+    typeInput.placeholder = 'Введите тип';
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Удалить';
+    deleteButton.classList.add("delete")
+    if (img_sign != undefined){
+      typeInput.value = sign.type;
+      descriptionInput.value = sign.description;
+    }else{
+      deleteButton.disabled = true;
+      descriptionInput.value = '';
+      typeInput.value = '';
+      is_create_new_sign = true;
+    }
+    const sign_img = document.createElement('img');
+    const imageUrl = getImageUrl(typeInput.value);
+    sign_img.src =imageUrl;
+    typeInput.addEventListener('change',()=>{
+      const imageUrl = getImageUrl(typeInput.value);
+      sign_img.src =imageUrl;
+    })
+    changeButton.addEventListener('click',()=>{
+      const url = `http://127.0.0.1:3000/all_img`;
+      fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        const createChoose = (img_signs) => {
+          // Создание элементов модального окна
+          const modal = document.createElement('div');
+          modal.classList.add("modal_signs")
+          modal.style.position = 'fixed';
+          modal.style.zIndex = '1000';
+          modal.style.left = '0';
+          modal.style.top = '0';
+          modal.style.width = '100%';
+          modal.style.height = '100%';
+          modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+          
+          const modalContent = document.createElement('div');
+          modalContent.classList.add("signs_content")
+          modalContent.style.backgroundColor = '#fefefe';
+          modalContent.style.margin = '5% auto';
+          modalContent.style.padding = '20px';
+          modalContent.style.border = '1px solid #888';
+          modalContent.style.width = '60%';
+          modalContent.style.maxHeight = '80%';
+          modalContent.style.overflowY = 'auto'; // Прокрутка для контента
+      
+          const closeBtn = document.createElement('span');
+          closeBtn.innerHTML = '&times;';
+          closeBtn.style.color = '#aaa';
+          closeBtn.style.float = 'right';
+          closeBtn.style.fontSize = '28px';
+          closeBtn.style.fontWeight = 'bold';
+          closeBtn.style.cursor = 'pointer';
+          closeBtn.style.zIndex = '1000';
+          closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+          };
+      
+          modalContent.appendChild(closeBtn);
+          
+          const grid = document.createElement('div');
+          grid.style.display = 'grid';
+          grid.style.gridTemplateColumns = 'repeat(10, 9%)';
+          grid.style.gap = '10px';
+          // Добавление изображений в сетку
+          const images = img_signs.map(item =>{
+            return "http://127.0.0.1:3000/img_type/" + item
+          })
+
+
+          images.forEach(src => {
+            if (src != undefined){
+              let id_type = src.split("V")[1]
+              const img = document.createElement('img');
+              img.src = src;
+              img.alt = src;
+              img.style.width = '100%';
+              img.style.height = 'auto';
+              img.setAttribute("id", id_type)
+              img.addEventListener('click', ()=>{
+                let new_id = img.id.slice(0, -4)
+                typeInput.value = new_id
+                document.body.removeChild(modal);
+                const imageUrl = getImageUrl(new_id);
+                sign_img.src =imageUrl;
+              })
+              grid.appendChild(img);
+              
+            }
+          });
+      
+          modalContent.appendChild(grid);
+          modal.appendChild(modalContent);
+          document.body.appendChild(modal);
+      
+          // Функция для открытия модального окна
+          const openModal = () => {
+              modal.style.display = 'block';
+          };
+      
+          return openModal;
+      };
+            createChoose(data)    
+      })
+   
+    })
+
+
+
+
+
+    // Поле для описания
+
+
+    // Поле для изображения
+    const imageLabel = document.createElement('label');
+    imageLabel.textContent = 'Изображение: ';
+
+
+    // Кнопка сохранить
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Сохранить';
+    saveButton.classList.add("save")
+    // Обработчик события для кнопки сохранить
+    saveButton.onclick = function() {
+        if (is_create_new_sign){
+          let lat2 = parseFloat(parseFloat(sign.lat + 0.0001).toFixed(number_rount))
+          let lon2 = parseFloat(parseFloat(sign.lon + 0.0001).toFixed(number_rount))
+          let new_line = [[lon2, lat2],[sign.lon, sign.lat]]
+          let new_geojson_id = uuidv4()
+          createLine(new_line, new_geojson_id, 0, descriptionInput.value, typeInput.value)
+          createImage(typeInput.value, new_line, 0)
+        }else{
+          graphicsLayer.remove(sign)
+          graphicsLayer.remove(img_sign)
+          createLine(sign.geometry.paths[0], sign.geojson_id, sign.azimuth, descriptionInput.value, typeInput.value)
+          createImage(typeInput.value, sign.geometry.paths[0], sign.azimuth)
+        }
+        document.querySelector(".save_sign").disabled = false
+        isMoveSign = false
+        document.body.removeChild(overlay);
+    };
+
+    // Кнопка закрыть
+    const closeButton = document.createElement('button');
+    closeButton.classList.add("close");
+    closeButton.textContent = 'X';
+    
+    // Обработчик события для кнопки закрыть
+    closeButton.onclick = function() {
+        document.body.removeChild(overlay);
+    };
+
+
+    deleteButton.onclick = function(){
+      graphicsLayer.remove(sign)
+      graphicsLayer.remove(img_sign)
+      document.querySelector(".save_sign").disabled = false
+      isMoveSign = false
+      document.body.removeChild(overlay);
+    }
+    // Добавляем элементы в модальное окно
+    modal.appendChild(typeLabel);
+    modal.appendChild(changeButton);
+    modal.appendChild(typeInput);
+    modal.appendChild(document.createElement('br'));
+    
+    modal.appendChild(descriptionLabel);
+    modal.appendChild(descriptionInput);
+    modal.appendChild(document.createElement('br'));
+    
+    modal.appendChild(imageLabel);
+    modal.appendChild(sign_img)
+    modal.appendChild(document.createElement('br'));
+    
+    modal.appendChild(saveButton);
+    modal.appendChild(closeButton);
+    modal.appendChild(deleteButton);
+
+    // Добавляем модальное окно в затемняющий фон
+    overlay.appendChild(modal);
+    
+    // Добавляем затемняющий фон в body
+    document.body.appendChild(overlay);
+}
+
+
+});
+
+  
+  const markerSymbol = {
+    type: "simple-marker",
+    color: [226, 119, 40],
+    outline: {
+      color: [255, 255, 255],
+      width: 2,
+    },
+  };
+  const points = coordinates.map(item => {
+    const point =  new Point({longitude: item[1],latitude: item[0] });
+    return new Graphic({geometry: point, symbol: markerSymbol})})
+
+  let pointLayer = new FeatureLayer({
+    source: points,
+    renderer: new SimpleRenderer({
+      symbol: new SimpleMarkerSymbol({
+        color: [226, 119, 40],
+        outline: {
+          color: [255, 255, 255],
+          width: 1,
+        },
+      }),
+    }),
+    objectIdField: "ObjectID",
+  });
+
+  map.add(pointLayer)
+  var currentPointLayer = new FeatureLayer({
+    source: [points[Math.floor(Math.random()*points.length)]],
+    renderer: new SimpleRenderer({
+      symbol: new SimpleMarkerSymbol({
+        color: [0, 0, 0],
+        outline: {
+          color: [255, 255, 255],
+          width: 1,
+        },
+      }),
+    }),
+    objectIdField: "ObjectID",
+  });
+
+  let xcoord = coordinates[0][1]
+  let ycoord = coordinates[0][0]
+
+  view.goTo({
+    center: [xcoord, ycoord],
+    zoom: 17,
+    duration: 1000,
+    easing: "ease-out",
+  });
+
+  socket.on("change_dot", function(data){
+    let numberOffset =parseInt( document.getElementById('offset').value);
+    if (!Number.isInteger(numberOffset)){
+      numberOffset = 0
+    }
+
+    let resultIndex = data + numberOffset
+    resultIndex = resultIndex < 0 ? 0: resultIndex
+    resultIndex = resultIndex > points.length ? points.length-1: resultIndex
+
+    map.remove(currentPointLayer);
+    currentPointLayer = new FeatureLayer({
+      source: [points[resultIndex]],
+      renderer: new SimpleRenderer({
+        symbol: new SimpleMarkerSymbol({
+          color: [0, 0, 0],
+          outline: {
+            color: [255, 255, 255],
+            width: 1,
+          },
+        }),
+      }),
+      objectIdField: "ObjectID",
+    });
+
+    map.add(currentPointLayer)
+  })
+
+  const displayZoomLevel = 15; 
+  function loadGeoJSON() {
+    fetch("http://127.0.0.1:3000/geojson")
+      .then((response) => response.json())
+      .then((data) => {
+        processGeoJSON(data);
+      })
+      .catch((error) =>
+        console.error("Ошибка при загрузке GeoJSON:", error)
+      );
+  }
+  function getImageUrl(type) {
+    const match = type.match(/[0-9.]+/);
+    const fileName = match ? match[0] : "";
+    return `http://127.0.0.1:3000/img_type/${fileName}`;
+  }
+  
+  function createLine(coordinates, geojson_id, azimuth, description, type){
+    const pointStart = {
+      x: coordinates[0][0],
+      y: coordinates[0][1],
+    };
+    const pointEnd = {
+      x: coordinates[1][0],
+      y: coordinates[1][1],
+    };
+    const polyline = new Polyline({
+      type: "polyline",
+      paths: [
+        [
+          [pointStart.x, pointStart.y],
+          [pointEnd.x, pointEnd.y],
+        ],
+      ],
+    });
+
+    let lineGraphic = new Graphic({
+      geometry:  polyline,
+      symbol: {
+        type: "simple-line",
+        color: [4, 90, 141],
+        width: 2,
+      },
+      geojson_id: geojson_id,
+      azimuth: azimuth,
+      description: description,
+      type: type
+    });
+    graphicsLayer.add(lineGraphic);
+    return lineGraphic
+  }
+
+  function createImage(imageType, coordinates, azimuth){
+    const imageUrl = getImageUrl(imageType);
+    const image = new Image();
+    image.src = imageUrl;
+    image.onload = function () {
+      const scaleFactor = 0.50;
+      const pictureMarkerSymbol = new PictureMarkerSymbol({
+        url: imageUrl,
+        width: image.width * scaleFactor,
+        height: image.height * scaleFactor,
+        angle: azimuth,
+      });
+
+      const imageCenterPoint = new Point({
+        x: (coordinates[0][0] + coordinates[1][0]) / 2,
+        y: (coordinates[0][1] + coordinates[1][1]) / 2,
+      });
+      const imageGraphic = new Graphic({
+        geometry: imageCenterPoint,
+        symbol: pictureMarkerSymbol,
+        azimuth:azimuth
+      });
+      imageGraphic._imageUrl = imageUrl;
+      if (isTurnSign){
+        old_image = imageGraphic
+      }
+      graphicsLayer.add(imageGraphic);
+    };
+  }
+
+  function processGeoJSON(geojson) {
+    geojson.forEach((feature) => {
+      const coordinates = feature.coordinates;
+      const azimuth = feature.azimuth;
+      const imageType = feature.type;
+      const geojson_id = feature.id
+      const description = feature.description
+      createLine(coordinates, geojson_id, azimuth, description, imageType)
+      createImage(imageType, coordinates, azimuth)
+    });
+  }
+
+  function updateVisibleGraphics() {
+    const currentZoom = view.zoom; 
+    const visibleExtent = view.extent;
+    graphicsLayer.graphics.forEach((graphic) => {
+      const point = graphic.geometry;
+        if (currentZoom >= displayZoomLevel) {
+          graphic.visible = true;
+        } else {
+          graphic.visible = false;
+        }
+    });
+  }
+
+  view.watch("stationary", function () {
+    updateVisibleGraphics();
+  });
+
+  view.watch("zoom", function () {
+    updateVisibleGraphics();
+  });
+
+  loadGeoJSON()
+  function saveGeojson() {
+    var new_points = []
+    graphicsLayer.graphics.forEach(item =>{
+      if(item.geojson_id !== undefined){
+        let id = item.geojson_id
+        let line = item.geometry.paths[0]
+        let azimuth = item.azimuth.toString()
+        let type = item.type
+        let description = item.description
+        new_points.push({id:id, line: line, azimuth: azimuth, type: type, description:description})
+        document.querySelector(".save_sign").disabled = true
+      }
+    })
+
+    fetch('http://127.0.0.1:3000/save_geojson', {
+      method: 'POST', // or 'PUT'
+      headers: {
+       'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(new_points)
+     })
+     .then(response => response.json())
+     .then(data => {
+      console.log('Success:', data);
+     })
+     .catch(error => {
+      console.error('Error:', error);
+     });
+  }
+  document.querySelector(".save_sign").addEventListener("click",()=>{saveGeojson()})})
+
+});
+
+  </script>
+
+</body>
+</html>

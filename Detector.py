@@ -1,16 +1,17 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-import random
+
+import re
 
 import cv2
-
-from skimage.color import rgb2gray
-import numpy as np
-import re
 import easyocr
+import numpy as np
+from skimage.color import rgb2gray
+
 reader = easyocr.Reader(['be'])
 import difflib
 from configs.sign_config import *
+
 
 class Detector:
     def __init__(self):
@@ -18,16 +19,17 @@ class Detector:
         self.NMS_threshold = 0.5
         self.city_names = []
         self.COLORS = [(0, 255, 0), (0, 0, 255), (255, 0, 0),
-                  (255, 255, 0), (255, 0, 255), (0, 255, 255)]
-        net = cv2.dnn.readNet(r'D:\Urban\yolov4\darknet\build\darknet\\x64\backup\sings_full_best.weights', r'D:\Urban\yolov4\darknet\build\darknet\x64\sings_full.cfg')
+                       (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        net = cv2.dnn.readNet(r'./static/Yolov4/sings_full_best.weights', r'./static/Yolov4/sings_full.cfg')
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.class_name = []
-        with open('static/classes.txt', 'r') as f:
+        with open(r'./static/classes.txt', 'r') as f:
             self.class_name = [cname.strip() for cname in f.readlines()]
         self.model = cv2.dnn_DetectionModel(net)
         self.model.setInputParams(size=(416, 416), scale=1 / 255, swapRB=True)
         self.counter = 0
+
     def find_rectangles(self, frame):
         classes, scores, boxes = self.model.detect(frame, self.Conf_threshold, self.NMS_threshold)
 
@@ -48,23 +50,24 @@ class Detector:
             result.append(item)
         return result
 
-    def remove_all_chars(self,input_string):
+    def remove_all_chars(self, input_string):
         return ''.join(char for char in input_string if char.isalnum())
+
     def find_similar_word(self, word, word_list):
         matches = difflib.get_close_matches(word, word_list)
         return matches
-    def text_handler(self,minImg, res, class_id):
 
+    def text_handler(self, minImg, res, class_id):
         text = ''
         if res in type_signs_with_text:
-            text =  re.sub(r'\D', '', self.read_text(minImg))
+            text = re.sub(r'\D', '', self.read_text(minImg))
         if self.class_name[class_id] in name_signs_city:
             text = self.read_text(minImg)
             text = self.remove_all_chars(text).lower()
             if self.city_names:
                 text = difflib.get_close_matches(text, self.city_names)
             else:
-                with open('./static/cities_be.txt', 'r', encoding='utf-8') as file:
+                with open(r'./static/cities_be.txt', 'r', encoding='utf-8') as file:
                     # Читаем строки из файла и помещаем их в массив
                     lines = file.readlines()
                 for line in lines:
@@ -82,6 +85,7 @@ class Detector:
             # оставить только цифры
             # result = re.sub(r'\D', '', result[0][1])
         return result[0][1]
+
     def __get_minImg(self, box, frame):
         x, y, w, h = box
         x1 = x + w
@@ -114,5 +118,4 @@ class Detector:
         # Если результат пустой, присваиваем "empty"
         if result_type == "":
             result_type = "empty"
-
         return result_type

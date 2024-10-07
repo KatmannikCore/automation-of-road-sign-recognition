@@ -1,5 +1,5 @@
 from configs import config
-from Reader import Reader
+from GPXHandler import GPXHandler
 
 from Converter import Converter
 
@@ -8,7 +8,7 @@ class Turn:
     def __init__(self):
         self.signs = []
         self.signs_dict = {}
-        self.Reader = Reader(config.PATH_TO_GPX)
+        self.GPXHandler = GPXHandler()
         self.coordinates = []
         self.azimuths = []
         self.was_there_turn = False
@@ -33,7 +33,7 @@ class Turn:
 
     def append_azimuths(self, item):
         if not self.azimuths:
-            self.azimuths.append(self.Reader.get_azimuth(config.INDEX_OF_GPS))
+            self.azimuths.append(self.GPXHandler.get_azimuth(config.INDEX_OF_GPS))
             self.azimuths.append(item)
         else:
             if item != self.azimuths[-1]:
@@ -44,7 +44,7 @@ class Turn:
             self.signs[index].turn_directions = self.turn_directions
     def append_coordinates(self, item):
         if not self.coordinates:
-            self.coordinates.append(self.Reader.get_current_coordinate(config.INDEX_OF_GPS))
+            self.coordinates.append(self.GPXHandler.get_current_coordinate(config.INDEX_OF_GPS))
             self.coordinates.append(item)
         else:
             if item != self.coordinates[-1]:
@@ -52,7 +52,7 @@ class Turn:
 
     def is_turn(self):
         # TODO Сделать чтобы не учитывала точки ближе метра
-        delta = self.Reader.get_azimuth(config.INDEX_OF_GPS + 1) - self.Reader.get_azimuth(config.INDEX_OF_GPS)
+        delta = self.GPXHandler.get_azimuth(config.INDEX_OF_GPS + 1) - self.GPXHandler.get_azimuth(config.INDEX_OF_GPS)
         is_turn = 355 > abs(delta) > 10
         if is_turn:
             if abs(delta) > 300:
@@ -146,5 +146,5 @@ class Turn:
         coordinate_offset = 2
         for index in range(count_points):
             index_of_gpx = self.last_index_of_gps + index + coordinate_offset
-            self.append_coordinates( self.Reader.get_current_coordinate( index_of_gpx))
-            self.append_azimuths(self.Reader.get_azimuth(index_of_gpx))
+            self.append_coordinates( self.GPXHandler.get_current_coordinate( index_of_gpx))
+            self.append_azimuths(self.GPXHandler.get_azimuth(index_of_gpx))
