@@ -274,6 +274,19 @@
   padding: 5px 10px;
   color: #ccc;
 }
+.reload{
+  margin-left: 5px;
+  background-color: #000000;
+}
+.reload:hover{
+  background-color: #000000;
+  opacity: 0.75;
+}
+.signs_content img:hover{
+  background-color: #3d3c3c;
+  opacity: 0.5;
+  border: 1px solid #000000;
+}
   </style>
 
 </head>
@@ -283,11 +296,15 @@
       <p>Смещение трека: </p>
       <input value="0" id= "offset"type="text">
     </div>
-    <button type="button" disabled class="save_track btn">Зафиксировать трек</button>
+    <div>
+      <button type="button" disabled class="save_track btn">Зафиксировать трек</button>
+      <button type="button" onclick="location.reload()" class="reload btn">Перезагрузить</button>
+    </div>
+
   </div>
   <div id="viewDiv"></div>
   <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
- 
+  
   <script  type="module" >
 document.getElementById('offset').addEventListener("input",()=>{
   let numberOffset =parseInt( document.getElementById('offset').value);
@@ -510,87 +527,16 @@ fetchGPX(requestURL).then(coordinates => {
     const typeLabel = document.createElement('label');
     typeLabel.textContent = 'Тип: ';
 
+    const descriptionLabel = document.createElement('label');
+    descriptionLabel.textContent = 'Описание: ';
+    const descriptionInput = document.createElement('input');
+    descriptionInput.placeholder = 'Введите описание';
+    descriptionInput.type = 'text';
+    descriptionInput.setAttribute('id', 'description');
+
     const changeButton = document.createElement('button');
     changeButton.textContent = 'Выбрать тип';
     changeButton.classList.add("change")
-    changeButton.addEventListener('click',()=>{
-
-      const createChoose = () => {
-    // Создание элементов модального окна
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.zIndex = '1000';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    
-    const modalContent = document.createElement('div');
-    modalContent.style.backgroundColor = '#fefefe';
-    modalContent.style.margin = '15% auto';
-    modalContent.style.padding = '20px';
-    modalContent.style.border = '1px solid #888';
-    modalContent.style.width = '80%';
-    modalContent.style.maxHeight = '80%';
-    modalContent.style.overflowY = 'auto'; // Прокрутка для контента
-
-    const closeBtn = document.createElement('span');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.style.color = '#aaa';
-    closeBtn.style.float = 'right';
-    closeBtn.style.fontSize = '28px';
-    closeBtn.style.fontWeight = 'bold';
-    closeBtn.style.cursor = 'pointer';
-
-    closeBtn.onclick = () => {
-      document.body.removeChild(modal);
-    };
-
-    modalContent.appendChild(closeBtn);
-    
-    const grid = document.createElement('div');
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
-    grid.style.gap = '10px';
-
-    // Добавление изображений в сетку
-    const images = [
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        'http://127.0.0.1:3000/img_type/5.8.10',
-        // Добавьте больше изображений по необходимости
-    ];
-
-    images.forEach(src => {
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = src;
-        img.style.width = '100%';
-        img.style.height = 'auto';
-        grid.appendChild(img);
-    });
-
-    modalContent.appendChild(grid);
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-
-    // Функция для открытия модального окна
-    const openModal = () => {
-        modal.style.display = 'block';
-    };
-
-    return openModal;
-};
-      createChoose()    
-    })
     const typeInput = document.createElement('input');
     typeInput.setAttribute('id', 'type');
     typeInput.type = 'text';
@@ -598,19 +544,6 @@ fetchGPX(requestURL).then(coordinates => {
     const deleteButton = document.createElement('button');
     deleteButton.textContent = 'Удалить';
     deleteButton.classList.add("delete")
-
-
-    typeInput.addEventListener('change',()=>{
-      const imageUrl = getImageUrl(typeInput.value);
-      img.src =imageUrl;
-    })
-    // Поле для описания
-    const descriptionLabel = document.createElement('label');
-    descriptionLabel.textContent = 'Описание: ';
-    const descriptionInput = document.createElement('input');
-    descriptionInput.placeholder = 'Введите описание';
-    descriptionInput.type = 'text';
-    descriptionInput.setAttribute('id', 'description');
     if (img_sign != undefined){
       typeInput.value = sign.type;
       descriptionInput.value = sign.description;
@@ -620,13 +553,112 @@ fetchGPX(requestURL).then(coordinates => {
       typeInput.value = '';
       is_create_new_sign = true;
     }
+    const sign_img = document.createElement('img');
+    const imageUrl = getImageUrl(typeInput.value);
+    sign_img.src =imageUrl;
+    typeInput.addEventListener('change',()=>{
+      const imageUrl = getImageUrl(typeInput.value);
+      sign_img.src =imageUrl;
+    })
+    changeButton.addEventListener('click',()=>{
+      const url = `http://127.0.0.1:3000/all_img`;
+      fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        const createChoose = (img_signs) => {
+          // Создание элементов модального окна
+          const modal = document.createElement('div');
+          modal.classList.add("modal_signs")
+          modal.style.position = 'fixed';
+          modal.style.zIndex = '1000';
+          modal.style.left = '0';
+          modal.style.top = '0';
+          modal.style.width = '100%';
+          modal.style.height = '100%';
+          modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+          
+          const modalContent = document.createElement('div');
+          modalContent.classList.add("signs_content")
+          modalContent.style.backgroundColor = '#fefefe';
+          modalContent.style.margin = '5% auto';
+          modalContent.style.padding = '20px';
+          modalContent.style.border = '1px solid #888';
+          modalContent.style.width = '60%';
+          modalContent.style.maxHeight = '80%';
+          modalContent.style.overflowY = 'auto'; // Прокрутка для контента
+      
+          const closeBtn = document.createElement('span');
+          closeBtn.innerHTML = '&times;';
+          closeBtn.style.color = '#aaa';
+          closeBtn.style.float = 'right';
+          closeBtn.style.fontSize = '28px';
+          closeBtn.style.fontWeight = 'bold';
+          closeBtn.style.cursor = 'pointer';
+          closeBtn.style.zIndex = '1000';
+          closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+          };
+      
+          modalContent.appendChild(closeBtn);
+          
+          const grid = document.createElement('div');
+          grid.style.display = 'grid';
+          grid.style.gridTemplateColumns = 'repeat(10, 9%)';
+          grid.style.gap = '10px';
+          // Добавление изображений в сетку
+          const images = img_signs.map(item =>{
+            return "http://127.0.0.1:3000/img_type/" + item
+          })
+
+
+          images.forEach(src => {
+            if (src != undefined){
+              let id_type = src.split("V")[1]
+              const img = document.createElement('img');
+              img.src = src;
+              img.alt = src;
+              img.style.width = '100%';
+              img.style.height = 'auto';
+              img.setAttribute("id", id_type)
+              img.addEventListener('click', ()=>{
+                let new_id = img.id.slice(0, -4)
+                typeInput.value = new_id
+                document.body.removeChild(modal);
+                const imageUrl = getImageUrl(new_id);
+                sign_img.src =imageUrl;
+              })
+              grid.appendChild(img);
+              
+            }
+          });
+      
+          modalContent.appendChild(grid);
+          modal.appendChild(modalContent);
+          document.body.appendChild(modal);
+      
+          // Функция для открытия модального окна
+          const openModal = () => {
+              modal.style.display = 'block';
+          };
+      
+          return openModal;
+      };
+            createChoose(data)    
+      })
+   
+    })
+
+
+
+
+
+    // Поле для описания
+
 
     // Поле для изображения
     const imageLabel = document.createElement('label');
     imageLabel.textContent = 'Изображение: ';
-    const img = document.createElement('img');
-    const imageUrl = getImageUrl(typeInput.value);
-    img.src =imageUrl;
+
 
     // Кнопка сохранить
     const saveButton = document.createElement('button');
@@ -681,7 +713,7 @@ fetchGPX(requestURL).then(coordinates => {
     modal.appendChild(document.createElement('br'));
     
     modal.appendChild(imageLabel);
-    modal.appendChild(img)
+    modal.appendChild(sign_img)
     modal.appendChild(document.createElement('br'));
     
     modal.appendChild(saveButton);

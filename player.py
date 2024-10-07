@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.create_player()
         self.create_text()
         self.create_buttons()
-        self.set_path_to_video()
+        #self.set_path_to_video()
         self.show()
 
     def create_player(self):
@@ -121,6 +121,7 @@ class MainWindow(QMainWindow):
         self.Files = os.listdir(config.PATH_TO_VIDEO)
         config.PATH_TO_GEOJSON = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
+
 
     #TODO Не используется
     def set_speed_frame(self):
