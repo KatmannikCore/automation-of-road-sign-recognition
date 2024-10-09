@@ -66,6 +66,7 @@ plate_for_signatures_without_text = ['8.3.1', '8.3.2', '8.3.3']
 plate_for_signatures = plate_for_signatures_with_text + plate_for_signatures_without_text
 
 codes_signs = {
+"empty":"10111",
 "1.1": "10111",
 "1.2": "10112",
 "1.31": "10113",

@@ -41,6 +41,7 @@ class Server:
                     for point in segment.points:
                         result.append([point.latitude, point.longitude])
             return result
+
         @self.app.route("/geojson")
         def get_geojson():
             with open(config.PATH_TO_GEOJSON, encoding='utf-8') as f:
@@ -55,6 +56,7 @@ class Server:
                     arr["description"] = item["properties"]["SEM250"] if "SEM250" in item["properties"] else ''
                     new_object.append(arr)
                 return new_object
+
         @self.app.route("/img_type/<image_id>")
         def get_img_type(image_id):
             if 'V' in image_id:
@@ -95,7 +97,6 @@ class Server:
         def get_all_img():
             img_names = os.listdir('./sings')
             return img_names
-
 
         @self.app.route('/save_geojson', methods=['POST'])
         def receive_data():

@@ -72,10 +72,10 @@ class MainWindow(QMainWindow):
         self.button_play.move(430, 540)
         self.button_play.clicked.connect(self.play)
 
-        self.button_choose_dir = QPushButton("Open Directory", self)
+        self.button_choose_dir = QPushButton("Открыть папку", self)
         self.button_choose_dir.move(960, 30)
 
-        self.button_choose_GPX = QPushButton("open GPX", self)
+        self.button_choose_GPX = QPushButton("Открыть GPX", self)
         self.button_choose_GPX.move(960, 60)
 
         self.button_choose_geojson = QPushButton("Выбрать geojson", self)
@@ -92,10 +92,10 @@ class MainWindow(QMainWindow):
         #self.button_save_as.move(960, 180)
         #self.button_save_as.clicked.connect(self.save)
 
-        self.button_end = QPushButton("Законьчить", self)
+        self.button_end = QPushButton("Закончить", self)
         self.button_end.move(960, 210)
-
         self.button_end.setEnabled(False)
+
         #self.speed_frame_box = QLineEdit(self)
         #self.speed_frame_box.move(960, 240)
         #self.speed_frame_box.setText(str(config.FRAME_STEP))
@@ -104,10 +104,10 @@ class MainWindow(QMainWindow):
         #self.button_speed_frame.move(960, 270)
         #self.button_speed_frame.clicked.connect(self.set_speed_frame)
 
-        self.button_corrector = QPushButton("Корректировать ошибки", self)
+        self.button_corrector = QPushButton("Ошибки", self)
         self.button_corrector.move(630, 540)
 
-        self.button_viewTrack = QPushButton("viewTrack ", self)
+        self.button_viewTrack = QPushButton("Карта", self)
         self.button_viewTrack.move(730, 540)
 
     def set_path_to_video(self):

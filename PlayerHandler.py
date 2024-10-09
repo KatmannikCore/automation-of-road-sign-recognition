@@ -68,6 +68,8 @@ class PlayerHandler(MainWindow):
                 break
             speed = self.GPXHandler.get_speed(config.INDEX_OF_GPS)
             config.FRAME_STEP = round(self.k * speed + self.b, 0)
+            if config.FRAME_STEP == 0:
+                config.FRAME_STEP = 1
             ret, frame = self.view.cap.read()
             if ret:
                 if config.INDEX_OF_All_FRAME + 100 > config.COUNT_FRAMES:

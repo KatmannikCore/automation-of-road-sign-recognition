@@ -648,13 +648,6 @@ fetchGPX(requestURL).then(coordinates => {
    
     })
 
-
-
-
-
-    // Поле для описания
-
-
     // Поле для изображения
     const imageLabel = document.createElement('label');
     imageLabel.textContent = 'Изображение: ';
@@ -807,7 +800,16 @@ fetchGPX(requestURL).then(coordinates => {
       objectIdField: "ObjectID",
     });
 
+    let lat = points[resultIndex].geometry.latitude
+    let lon = points[resultIndex].geometry.longitude
+
     map.add(currentPointLayer)
+    view.goTo({
+      center: [lon,lat],
+      zoom: 17,
+      duration: 1000,
+      easing: "ease-out",
+    });
   })
 
   const displayZoomLevel = 15; 
