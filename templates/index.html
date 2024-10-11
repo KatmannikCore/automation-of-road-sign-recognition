@@ -404,7 +404,7 @@ fetchGPX(requestURL).then(coordinates => {
         (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
       );
     }
-  function get_clicked_element(response) {
+  function getClickedElement(response) {
     try {
       let type = response.results[0].graphic._imageUrl.split('/')
       type = type[type.length-1]
@@ -425,12 +425,31 @@ fetchGPX(requestURL).then(coordinates => {
       return {line: line, img: response.results[0].graphic}
     } catch(e) { return -1  }
   }
-  view.on("click", async (event) => {
-    let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
-    let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))     
-    view.hitTest(event).then((response) =>{
-      if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
-        let distancesToObjects = []
+  function moveSign(response_move){
+
+    isTurnSign = true
+    let new_x = response_move.results[0].mapPoint.longitude
+    let new_y = response_move.results[0].mapPoint.latitude
+
+    let new_line = [ coordinates_for_moving[0],[new_x,new_y ]]
+
+    const url = `http://127.0.0.1:3000/change_azimuth?line=${new_line.toString()}`;
+    fetch(url)
+    .then((response) => response.text())
+    .then((data) => {
+      let az =Number(data) - azimuth_direction
+      if (old_image != null){
+
+        graphicsLayer.remove(old_line)
+        graphicsLayer.remove(old_image)
+        old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
+        createImage(type_for_moving, new_line, az)
+      }
+    })
+    .catch((error) =>console.error("Ошибка при получении новой линии:", error));
+  }
+  function getTheNearestObject(current_lon, current_lat){
+    let distancesToObjects = []
         graphicsLayer.graphics.forEach((item) =>{
           if (item.symbol.type  == "picture-marker"){
             let x2 = item.geometry.x.toFixed(number_rount)
@@ -450,70 +469,56 @@ fetchGPX(requestURL).then(coordinates => {
           }
         }
         if (distancesToObjects[minIndex] < 0.0002){
-          response.results[0].graphic = graphicsLayer.graphics.items[minIndex]
+          return graphicsLayer.graphics.items[minIndex]
+        } else {return null}
+  }
+  function getClicedImg(points){
+    let x1 = points[0][0].toFixed(number_rount)
+    let y1 = points[0][1].toFixed(number_rount)
+    let img 
+    graphicsLayer.graphics.forEach((item) =>{
+      if (item.symbol.type  == "picture-marker"){
+        let x2 = item.geometry.x.toFixed(number_rount)
+        let y2 = item.geometry.y.toFixed(number_rount)
+        if (x1 == x2 && y1 == y2){
+            img = item
         }
-
       }
-      console.log(response.results[0])
+    })
+    return img
+  }
+  function setProperties(line,img){
+    description_sign = line.description
+    coordinates_for_moving = line.geometry.paths[0]
+    geojson_id = line.geojson_id
+    type_for_moving = line.type
+  }
+  view.on("click", async (event) => {
+    let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+    let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))     
+    view.hitTest(event).then((response) =>{
+      if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
+        response.results[0].graphic = getTheNearestObject(current_lon, current_lat)
+      }
       if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-line"  && !isTurnSign){
         let line = response.results[0].graphic
         let points = response.results[0].graphic.geometry.paths[0]
-        let x1 = points[0][0].toFixed(number_rount)
-        let y1 = points[0][1].toFixed(number_rount)
-        let img
-        graphicsLayer.graphics.forEach((item) =>{
-          if (item.symbol.type  == "picture-marker"){
-            let x2 = item.geometry.x.toFixed(number_rount)
-            let y2 = item.geometry.y.toFixed(number_rount)
-            if (x1 == x2 && y1 == y2){
-                img = item
-            }
-          }
-        })
-        description_sign = line.description
-        coordinates_for_moving = line.geometry.paths[0]
-        geojson_id = line.geojson_id
-        type_for_moving = line.type
-
+        let img = getClicedImg(points)
+        setProperties(line, img)
         graphicsLayer.remove(img)
         graphicsLayer.remove(line)
-        function move_sign(response_move){
-                isTurnSign = true
-                let new_x = response_move.results[0].mapPoint.longitude
-                let new_y = response_move.results[0].mapPoint.latitude
-                let new_line = [ coordinates_for_moving[0],[new_x, new_y]]
-
-                const url = `http://127.0.0.1:3000/change_azimuth?line=${new_line.toString()}`;
-                fetch(url)
-                .then((response) => response.text())
-                .then((data) => {
-                  let az =Number(data) - azimuth_direction
-                  if (old_image != null){
-                    graphicsLayer.remove(old_line)
-                    graphicsLayer.remove(old_image)
-                    old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
-                    createImage(type_for_moving, new_line, az)
-                  }
-                })
-                .catch((error) =>
-                  console.error("Ошибка при получении новой линии:", error)
-                );
-            }
-          move_event = view.on("pointer-move",(event_move)=>{
-              view.hitTest(event_move).then((response_move)=>{move_sign(response_move)})
-          });
+        move_event = view.on("pointer-move",(event_move)=>{
+            view.hitTest(event_move).then((response_move)=>{moveSign(response_move,current_lat, current_lon)})
+        });
       }
-      else if(response.results[0].graphic.symbol == null && isMoveSign){
-
-            let new_x = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
-            let new_y = parseFloat(event.mapPoint.latitude.toFixed(number_rount))                
-            const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${new_x},${new_y}`;
+      //установка знака на новое место
+      else if(response.results[0].graphic.symbol == null && isMoveSign){           
+            const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${current_lon},${current_lat}`;
             fetch(url)
             .then((response) => response.text())
             .then((data) => {
               let new_point = data.split(',').map(item=>{return parseFloat(item)})
-              let new_line = [[new_x, new_y], new_point ]
-              
+              let new_line = [[current_lon, current_lat], new_point ]
               createLine(new_line, geojson_id, azimuth_for_moving, description_sign, type_for_moving)
               createImage(type_for_moving, new_line, azimuth_for_moving)
               document.querySelector(".save_sign").disabled = false
@@ -533,55 +538,33 @@ fetchGPX(requestURL).then(coordinates => {
       else if(event.button == 1 && isTurnSign){
         azimuth_direction = azimuth_direction * -1
       }
+      //перемещение знака
       else if ( !isMoveSign && response.results[0].graphic.symbol.type == "picture-marker"  ){
-        console.log(response.results[0])
-        let item = get_clicked_element(response).line
-        description_sign = item.description
+        let item = getClickedElement(response).line
+        setProperties(item,response.results[0].graphic)
         //Если поворот
         if( event.button == 2){
             isTurnSign = true
             graphicsLayer.remove(item)
             graphicsLayer.remove(response.results[0].graphic)
-            function move_sign(response_move){
-                let new_x = response_move.results[0].mapPoint.longitude
-                let new_y = response_move.results[0].mapPoint.latitude
-                coordinates_for_moving = item.geometry.paths[0]
-                geojson_id = item.geojson_id
-                let new_line = [coordinates_for_moving[0],[new_x, new_y]]
-                const url = `http://127.0.0.1:3000/change_azimuth?line=${new_line.toString()}`;
-                fetch(url)
-                .then((response) => response.text())
-                .then((data) => {
-                  let az = Number(data) - azimuth_direction
-                  if (old_image != null){
-                    graphicsLayer.remove(old_image)
-                    graphicsLayer.remove(old_line)
-                    old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
-                    createImage(type_for_moving, new_line, az)
-                  }
-                })
-                .catch((error) =>
-                  console.error("Ошибка при получении новой линии:", error)
-                );
-            }
             move_event = view.on("pointer-move",(event_move)=>{
-              view.hitTest(event_move).then((response_move)=>{move_sign(response_move)})
+              view.hitTest(event_move).then((response_move)=>{moveSign(response_move, current_lat, current_lon, coordinates_for_moving)})
             });
-        }//если переместить
+          }//если переместить
         else if( event.button == 0){
-        coordinates_for_moving = item.geometry.paths[0] 
-        geojson_id = item.geojson_id
-        graphicsLayer.remove(item)
-        graphicsLayer.remove(response.results[0].graphic)
-        isMoveSign = true
-        }          
+            coordinates_for_moving = item.geometry.paths[0] 
+            geojson_id = item.geojson_id
+            graphicsLayer.remove(item)
+            graphicsLayer.remove(response.results[0].graphic)
+            isMoveSign = true
+          }          
         }
     })});
 
   let temp = view.on("double-click", function(event) {
     event.stopPropagation()
     view.hitTest(event).then((response) => {
-      let sign_object = get_clicked_element(response)
+      let sign_object = getClickedElement(response)
       if (sign_object == -1) {
         let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
         let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
