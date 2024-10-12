@@ -306,14 +306,14 @@
   <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
   
   <script  type="module" >
-  document.getElementById('offset').value = localStorage.getItem("numberOffset") == null ? 0 : parseInt(localStorage.getItem("numberOffset"))
+  document.getElementById('offset').value = sessionStorage.getItem("numberOffset") == null ? 0 : parseInt(sessionStorage.getItem("numberOffset"))
   document.getElementById('offset').addEventListener("input",()=>{
     let numberOffset =parseInt( document.getElementById('offset').value);
     let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
     document.querySelector(".save_track").disabled = !Number.isInteger(numberOffset) ;
     if (Number.isInteger(numberOffset)){
       document.querySelector(".save_track").disabled = numberOffset == 0
-      localStorage.setItem('numberOffset', numberOffset);
+      sessionStorage.setItem('numberOffset', numberOffset);
     }
   })
 document.querySelector(".save_track").addEventListener("click",()=>{
@@ -817,7 +817,7 @@ fetchGPX(requestURL).then(coordinates => {
   });
 
   map.add(pointLayer)
-  let indexPoint = localStorage.getItem("indexPoint") == null ? 0 : parseInt(localStorage.getItem("indexPoint"))
+  let indexPoint = sessionStorage.getItem("indexPoint") == null ? 0 : parseInt(sessionStorage.getItem("indexPoint"))
   var currentPointLayer = new FeatureLayer({
     source: [points[indexPoint]],
     renderer: new SimpleRenderer({
@@ -834,9 +834,9 @@ fetchGPX(requestURL).then(coordinates => {
   map.add(currentPointLayer)
   let xcoord = coordinates[0][1]
   let ycoord = coordinates[0][0]
-  if (localStorage.getItem('lon') != null){
-    xcoord = parseFloat(localStorage.getItem('lon'))
-    ycoord = parseFloat(localStorage.getItem('lat'))
+  if (sessionStorage.getItem('lon') != null){
+    xcoord = parseFloat(sessionStorage.getItem('lon'))
+    ycoord = parseFloat(sessionStorage.getItem('lat'))
   }
   view.goTo({
     center: [xcoord, ycoord],
@@ -853,7 +853,7 @@ fetchGPX(requestURL).then(coordinates => {
     let resultIndex = data + numberOffset
     resultIndex = resultIndex < 0 ? 0: resultIndex
     resultIndex = resultIndex > points.length ? points.length-1: resultIndex
-    localStorage.setItem('indexPoint', resultIndex);
+    sessionStorage.setItem('indexPoint', resultIndex);
     map.remove(currentPointLayer );
     currentPointLayer = new FeatureLayer({
       source: [points[resultIndex]],
@@ -873,8 +873,8 @@ fetchGPX(requestURL).then(coordinates => {
     let lon = points[resultIndex].geometry.longitude
 
     map.add(currentPointLayer)
-    localStorage.setItem('lon', lon);
-    localStorage.setItem('lat', lat);
+    sessionStorage.setItem('lon', lon);
+    sessionStorage.setItem('lat', lat);
     view.goTo({
       center: [lon,lat],
       zoom: 17,

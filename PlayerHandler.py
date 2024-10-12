@@ -17,7 +17,7 @@ class PlayerHandler(MainWindow):
         super().__init__()
         self.thread = Thread(target=self.treatment, daemon=True)
         self.finalHandler = None
-        self.errorCorrector =None# ErrorCorrector()
+        self.errorCorrector = ErrorCorrector()
         self.viewTrack = None
 
     def start_processing(self):

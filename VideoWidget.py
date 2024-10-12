@@ -1,6 +1,7 @@
 import os
 
 from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -17,8 +18,9 @@ from PyQt5.QtWidgets import (
 
 from configs import config
 
+
 class VideoPlayerWidget(QWidget):
-    def __init__(self, server,  parent=None):
+    def __init__(self, server, parent=None):
         super().__init__(parent)
 
         self.server = server
@@ -71,10 +73,11 @@ class VideoPlayerWidget(QWidget):
         self.mediaPlayer.positionChanged.connect(self.change_dot)
 
     def change_dot(self):
-        seconds_current_video = round(self.mediaPlayer.position()/1000,0)
-        seconds_all_video =(self.index_of_video * 1060) + seconds_current_video
+        seconds_current_video = round(self.mediaPlayer.position() / 1000, 0)
+        seconds_all_video = (self.index_of_video * 1060) + seconds_current_video
         config.SECONDES_ALL_VIDEO = seconds_all_video
         self.server.change_dot(int(seconds_all_video))
+
     def change_video(self, clicked_item):
         self.change_color_current_video(clicked_item)
         self.current_path_of_video = os.path.join(config.PATH_TO_VIDEO, clicked_item.text())
