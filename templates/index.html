@@ -306,14 +306,16 @@
   <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
   
   <script  type="module" >
-document.getElementById('offset').addEventListener("input",()=>{
-  let numberOffset =parseInt( document.getElementById('offset').value);
-  let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
-  document.querySelector(".save_track").disabled = !Number.isInteger(numberOffset) ;
-  if (Number.isInteger(numberOffset)){
-    document.querySelector(".save_track").disabled = numberOffset == 0
-  }
-})
+  document.getElementById('offset').value = localStorage.getItem("numberOffset") == null ? 0 : parseInt(localStorage.getItem("numberOffset"))
+  document.getElementById('offset').addEventListener("input",()=>{
+    let numberOffset =parseInt( document.getElementById('offset').value);
+    let is_active = (!Number.isInteger(numberOffset)) && numberOffset ==0
+    document.querySelector(".save_track").disabled = !Number.isInteger(numberOffset) ;
+    if (Number.isInteger(numberOffset)){
+      document.querySelector(".save_track").disabled = numberOffset == 0
+      localStorage.setItem('numberOffset', numberOffset);
+    }
+  })
 document.querySelector(".save_track").addEventListener("click",()=>{
   let numberOffset =parseInt( document.getElementById('offset').value);
   if (!Number.isInteger(numberOffset)){
@@ -426,7 +428,6 @@ fetchGPX(requestURL).then(coordinates => {
     } catch(e) { return -1  }
   }
   function moveSign(response_move){
-
     isTurnSign = true
     let new_x = response_move.results[0].mapPoint.longitude
     let new_y = response_move.results[0].mapPoint.latitude
@@ -497,6 +498,7 @@ fetchGPX(requestURL).then(coordinates => {
     let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
     let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))     
     view.hitTest(event).then((response) =>{
+      console.log(response)
       if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
         response.results[0].graphic = getTheNearestObject(current_lon, current_lat)
       }
@@ -508,7 +510,7 @@ fetchGPX(requestURL).then(coordinates => {
         graphicsLayer.remove(img)
         graphicsLayer.remove(line)
         move_event = view.on("pointer-move",(event_move)=>{
-            view.hitTest(event_move).then((response_move)=>{moveSign(response_move,current_lat, current_lon)})
+            view.hitTest(event_move).then((response_move)=>{moveSign(response_move)})
         });
       }
       //установка знака на новое место
@@ -548,7 +550,7 @@ fetchGPX(requestURL).then(coordinates => {
             graphicsLayer.remove(item)
             graphicsLayer.remove(response.results[0].graphic)
             move_event = view.on("pointer-move",(event_move)=>{
-              view.hitTest(event_move).then((response_move)=>{moveSign(response_move, current_lat, current_lon, coordinates_for_moving)})
+              view.hitTest(event_move).then((response_move)=>{moveSign(response_move)})
             });
           }//если переместить
         else if( event.button == 0){
@@ -569,7 +571,9 @@ fetchGPX(requestURL).then(coordinates => {
         let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
         let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
         let coordinates = {lon: lon, lat: lat}
+        
         createModal(coordinates)
+        
       }else{
         createModal(sign_object.line, sign_object.img);
       }
@@ -713,8 +717,6 @@ fetchGPX(requestURL).then(coordinates => {
     // Поле для изображения
     const imageLabel = document.createElement('label');
     imageLabel.textContent = 'Изображение: ';
-
-
     // Кнопка сохранить
     const saveButton = document.createElement('button');
     saveButton.textContent = 'Сохранить';
@@ -724,10 +726,13 @@ fetchGPX(requestURL).then(coordinates => {
         if (is_create_new_sign){
           let lat2 = parseFloat(parseFloat(sign.lat + 0.0001).toFixed(number_rount))
           let lon2 = parseFloat(parseFloat(sign.lon + 0.0001).toFixed(number_rount))
-          let new_line = [[lon2, lat2],[sign.lon, sign.lat]]
-          let new_geojson_id = uuidv4()
-          createLine(new_line, new_geojson_id, 0, descriptionInput.value, typeInput.value)
-          createImage(typeInput.value, new_line, 0)
+          coordinates_for_moving = [[lon2, lat2],[sign.lon, sign.lat]]
+          geojson_id = uuidv4()
+          type_for_moving = typeInput.value
+          description_sign = descriptionInput.value
+          move_event = view.on("pointer-move",(event_move)=>{
+            view.hitTest(event_move).then((response_move)=>{moveSign(response_move)})
+        });
         }else{
           graphicsLayer.remove(sign)
           graphicsLayer.remove(img_sign)
@@ -748,7 +753,6 @@ fetchGPX(requestURL).then(coordinates => {
     closeButton.onclick = function() {
         document.body.removeChild(overlay);
     };
-
 
     deleteButton.onclick = function(){
       graphicsLayer.remove(sign)
@@ -813,8 +817,9 @@ fetchGPX(requestURL).then(coordinates => {
   });
 
   map.add(pointLayer)
+  let indexPoint = localStorage.getItem("indexPoint") == null ? 0 : parseInt(localStorage.getItem("indexPoint"))
   var currentPointLayer = new FeatureLayer({
-    source: [points[Math.floor(Math.random()*points.length)]],
+    source: [points[indexPoint]],
     renderer: new SimpleRenderer({
       symbol: new SimpleMarkerSymbol({
         color: [0, 0, 0],
@@ -826,17 +831,19 @@ fetchGPX(requestURL).then(coordinates => {
     }),
     objectIdField: "ObjectID",
   });
-
+  map.add(currentPointLayer)
   let xcoord = coordinates[0][1]
   let ycoord = coordinates[0][0]
-
+  if (localStorage.getItem('lon') != null){
+    xcoord = parseFloat(localStorage.getItem('lon'))
+    ycoord = parseFloat(localStorage.getItem('lat'))
+  }
   view.goTo({
     center: [xcoord, ycoord],
     zoom: 17,
     duration: 1000,
     easing: "ease-out",
   });
-
   socket.on("change_dot", function(data){
     let numberOffset =parseInt( document.getElementById('offset').value);
     if (!Number.isInteger(numberOffset)){
@@ -846,8 +853,8 @@ fetchGPX(requestURL).then(coordinates => {
     let resultIndex = data + numberOffset
     resultIndex = resultIndex < 0 ? 0: resultIndex
     resultIndex = resultIndex > points.length ? points.length-1: resultIndex
-
-    map.remove(currentPointLayer);
+    localStorage.setItem('indexPoint', resultIndex);
+    map.remove(currentPointLayer );
     currentPointLayer = new FeatureLayer({
       source: [points[resultIndex]],
       renderer: new SimpleRenderer({
@@ -866,6 +873,8 @@ fetchGPX(requestURL).then(coordinates => {
     let lon = points[resultIndex].geometry.longitude
 
     map.add(currentPointLayer)
+    localStorage.setItem('lon', lon);
+    localStorage.setItem('lat', lat);
     view.goTo({
       center: [lon,lat],
       zoom: 17,

@@ -133,6 +133,6 @@ class Server:
         self.socketio.emit("change_dot", number)
 
 # Создание экземпляра класса Server
-Server = Server()
-Server.run()
+#Server = Server()
+#Server.run()
 # Запуск сервера

@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.create_player()
         self.create_text()
         self.create_buttons()
-        #self.set_path_to_video()
+        self.set_path_to_video()
         self.show()
 
     def create_player(self):
@@ -111,15 +111,15 @@ class MainWindow(QMainWindow):
         self.button_viewTrack.move(730, 540)
 
     def set_path_to_video(self):
-        config.PATH_TO_GPX = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.gpx"
+        config.PATH_TO_GPX = r"D:\20,04,24-Вишевичи.gpx"
         self.GPXHandler = GPXHandler()
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
-        config.PATH_TO_VIDEO = r"D:\Urban\vid\20,06,24-Вишевичи+\100GOPRO" + "\\"
+        config.PATH_TO_VIDEO = r"D:\video" + "\\"
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
-        config.PATH_TO_GEOJSON = r"D:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"
+        config.PATH_TO_GEOJSON = r"D:\20,04,24-Вишевичи.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
 
 
