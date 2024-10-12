@@ -93,6 +93,10 @@ class Server:
 
             return str(old_direction)
 
+        @self.app.route("/switch_point")
+        def switch_point():
+            number_new_point = request.args.get('currentNumber')
+            return str(number_new_point)
         @self.app.route("/all_img")
         def get_all_img():
             img_names = os.listdir('./sings')

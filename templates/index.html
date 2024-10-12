@@ -427,6 +427,21 @@ fetchGPX(requestURL).then(coordinates => {
       return {line: line, img: response.results[0].graphic}
     } catch(e) { return -1  }
   }
+  function filterByGeometryXY(array) {
+    const result = {};
+    array.forEach(item => {
+      if (item.geojson_id == undefined ){
+        const key = `${item.geometry.x}-${item.geometry.y}`;
+        if (result[key]) {
+          result[key].push(item);
+        } else {
+          result[key] = [item];
+        }    
+      }
+    });
+    return Object.values(result).filter(group => group.length > 1)[0];
+}
+
   function moveSign(response_move){
     isTurnSign = true
     let new_x = response_move.results[0].mapPoint.longitude
@@ -440,11 +455,14 @@ fetchGPX(requestURL).then(coordinates => {
     .then((data) => {
       let az =Number(data) - azimuth_direction
       if (old_image != null){
-
         graphicsLayer.remove(old_line)
         graphicsLayer.remove(old_image)
         old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
         createImage(type_for_moving, new_line, az)
+        let deleteImages = filterByGeometryXY(graphicsLayer.graphics.items)
+        if (deleteImages != undefined){
+          deleteImages.forEach(item => {graphicsLayer.remove(item)})
+        }
       }
     })
     .catch((error) =>console.error("Ошибка при получении новой линии:", error));
@@ -498,11 +516,18 @@ fetchGPX(requestURL).then(coordinates => {
     let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
     let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))     
     view.hitTest(event).then((response) =>{
-      console.log(response)
       if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
         response.results[0].graphic = getTheNearestObject(current_lon, current_lat)
       }
-      if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-line"  && !isTurnSign){
+      if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-marker"&& !isTurnSign ){
+        let currentNumber = response.results[0].graphic.number
+        const url = `http://127.0.0.1:3000/switch_point?currentNumber=${currentNumber.toString()}`;
+        fetch(url)
+        .then((response) => response)
+        .then((data) => { console.log(data) })
+        .catch((error) =>console.error("Ошибка при получении новой линии:", error));
+      }
+      else if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-line"  && !isTurnSign){
         let line = response.results[0].graphic
         let points = response.results[0].graphic.geometry.paths[0]
         let img = getClicedImg(points)
@@ -537,9 +562,6 @@ fetchGPX(requestURL).then(coordinates => {
           old_line = null
           old_image = ''
         }
-      else if(event.button == 1 && isTurnSign){
-        azimuth_direction = azimuth_direction * -1
-      }
       //перемещение знака
       else if ( !isMoveSign && response.results[0].graphic.symbol.type == "picture-marker"  ){
         let item = getClickedElement(response).line
@@ -571,9 +593,7 @@ fetchGPX(requestURL).then(coordinates => {
         let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
         let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
         let coordinates = {lon: lon, lat: lat}
-        
         createModal(coordinates)
-        
       }else{
         createModal(sign_object.line, sign_object.img);
       }
@@ -785,8 +805,6 @@ fetchGPX(requestURL).then(coordinates => {
     // Добавляем затемняющий фон в body
     document.body.appendChild(overlay);
 }
-
-
 });
 
   
@@ -798,40 +816,28 @@ fetchGPX(requestURL).then(coordinates => {
       width: 2,
     },
   };
-  const points = coordinates.map(item => {
-    const point =  new Point({longitude: item[1],latitude: item[0] });
-    return new Graphic({geometry: point, symbol: markerSymbol})})
-
-  let pointLayer = new FeatureLayer({
-    source: points,
-    renderer: new SimpleRenderer({
-      symbol: new SimpleMarkerSymbol({
-        color: [226, 119, 40],
-        outline: {
-          color: [255, 255, 255],
-          width: 1,
-        },
-      }),
-    }),
-    objectIdField: "ObjectID",
-  });
-
+  var pointLayer = new GraphicsLayer();
   map.add(pointLayer)
-  let indexPoint = sessionStorage.getItem("indexPoint") == null ? 0 : parseInt(sessionStorage.getItem("indexPoint"))
-  var currentPointLayer = new FeatureLayer({
-    source: [points[indexPoint]],
-    renderer: new SimpleRenderer({
-      symbol: new SimpleMarkerSymbol({
-        color: [0, 0, 0],
-        outline: {
-          color: [255, 255, 255],
-          width: 1,
-        },
-      }),
-    }),
-    objectIdField: "ObjectID",
-  });
+
+  let counter = 0 
+  coordinates.map(item => {
+    const point =  new Point({longitude: item[1],latitude: item[0]});
+    pointLayer.add(new Graphic({geometry: point, symbol: markerSymbol, number:counter}))
+    counter++
+  })
+
+  var currentPointLayer = new GraphicsLayer();
   map.add(currentPointLayer)
+  
+  let points = pointLayer.graphics.items
+  let colorCurrentPoint =  {r: 0, g: 0, b: 0, a: 1}
+  let colorPoints = {r: 226, g: 119, b: 40, a: 1}
+  let indexPoint = sessionStorage.getItem("indexPoint") == null ? 0 : parseInt(sessionStorage.getItem("indexPoint"))
+
+  let new_point = pointLayer.graphics.items[indexPoint]
+  new_point.symbol.color = colorCurrentPoint
+  currentPointLayer.add(new_point)
+
   let xcoord = coordinates[0][1]
   let ycoord = coordinates[0][0]
   if (sessionStorage.getItem('lon') != null){
@@ -854,25 +860,15 @@ fetchGPX(requestURL).then(coordinates => {
     resultIndex = resultIndex < 0 ? 0: resultIndex
     resultIndex = resultIndex > points.length ? points.length-1: resultIndex
     sessionStorage.setItem('indexPoint', resultIndex);
-    map.remove(currentPointLayer );
-    currentPointLayer = new FeatureLayer({
-      source: [points[resultIndex]],
-      renderer: new SimpleRenderer({
-        symbol: new SimpleMarkerSymbol({
-          color: [0, 0, 0],
-          outline: {
-            color: [255, 255, 255],
-            width: 1,
-          },
-        }),
-      }),
-      objectIdField: "ObjectID",
-    });
+
+    currentPointLayer.remove(new_point)
+    new_point = pointLayer.graphics.items[resultIndex]
+    new_point.symbol.color = colorCurrentPoint
+    currentPointLayer.add(new_point)
 
     let lat = points[resultIndex].geometry.latitude
     let lon = points[resultIndex].geometry.longitude
 
-    map.add(currentPointLayer)
     sessionStorage.setItem('lon', lon);
     sessionStorage.setItem('lat', lat);
     view.goTo({
