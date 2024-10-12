@@ -1,25 +1,24 @@
-import os
-import gpxpy
-import gpxpy.gpx
-
-from configs import config
-
-import xml.etree.ElementTree as ET
-def rename_files(directory):
- """Переименовывает все файлы в указанном каталоге, добавляя "V" в начало имени."""
-
- for filename in os.listdir(directory):
-  # Пропускаем файлы, которые не являются обычными файлами
-  if os.path.isfile(os.path.join(directory, filename)):
-   old_path = os.path.join(directory, filename)
-   new_path = os.path.join(directory, "V" + filename)
-   os.rename(old_path, new_path)
-   print(f"Переименовано: {filename} -> {new_path}")
-
-
-# Замените "путь/к/каталогу" на фактический путь к каталогу, который нужно обработать
-rename_files("D:\sings")
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+def remove_large_numbers(file_path):
+    try:
+        new_arr = []
+        # Читаем содержимое файла
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            for line in lines:
+                line = line.replace("\t", "").replace("\n", "").strip().replace("V", "")
+                new_arr.append(line)
+        arr = new_arr
+        result = {}
+        for i in range(len(arr) - 1):
+            if  i % 2 == 0:
+                result[arr[i + 1]] = arr[i]
+        print(result)
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
 
 
-
-
+# Укажите путь к вашему текстовому файлу
+file_path = '1.txt'
+remove_large_numbers(file_path)

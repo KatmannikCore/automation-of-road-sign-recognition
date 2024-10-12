@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-PATH_TO_VIDEO = ""#r"D:\Urban\vid\test\GOPR0064"  #"./"
-VIDEOS = []
+PATH_TO_VIDEO = r"D:\video"#r"D:\Urban\vid\test\GOPR0064"  #"./"
+VIDEOS = ["GP10064.MP4", "GP130064.MP4"]
 FRAME_STEP = 5
 COUNT_PROCESSED_FRAMES = 0
 

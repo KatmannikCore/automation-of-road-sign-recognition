@@ -13,7 +13,7 @@ for num in range(0,30):
 #with alive_bar(len(dir), force_tty=True) as bar_dir:
 #    for filename in dir:
 #        bar_dir()
-#        if filename.endswith('.txt'):
+#        if filename.endswith('.1.txt'):
 #            with open(os.path.join(path, filename), 'r') as file:
 #                lines = file.readlines()
 #                for line in lines:
