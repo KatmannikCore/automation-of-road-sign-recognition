@@ -287,6 +287,41 @@
   opacity: 0.5;
   border: 1px solid #000000;
 }
+.modal_signs{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+}
+.signs_content{
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border:1px solid #888;
+  width: 60%;
+  max-height: 80%;
+  overflow-y: auto;
+}         
+.span_close{
+  color: #aaa;
+
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1000;
+}
+.modal_grid{
+  display: grid;
+  grid-template-columns: repeat(10, 9%);
+  grid-gap: 10px;
+}
+form{
+  color: #000000;
+  font-size: 16px;
+}
   </style>
 
 </head>
@@ -663,32 +698,44 @@ fetchGPX(requestURL).then(coordinates => {
           // Создание элементов модального окна
           const modal = document.createElement('div');
           modal.classList.add("modal_signs")
-          modal.style.position = 'fixed';
-          modal.style.zIndex = '1000';
-          modal.style.left = '0';
-          modal.style.top = '0';
-          modal.style.width = '100%';
-          modal.style.height = '100%';
-          modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-          
+
+          const form = document.createElement('form');
+          const label = document.createElement('label');
+          label.textContent = 'Выберите категорию: ';
+
+          const select = document.createElement('select');
+          select.name = 'categories';
+          select.classList.add('categories-select')
+          const options = [
+            { value: 'all_signs', text: 'Все категории' },
+            { value: 'warning_signs', text: 'Предупреждающие знаки' },
+            { value: 'priority_signs', text: 'Знаки приоритета' },
+            { value: 'prohibitory_signs', text: 'Запрещающие знаки' },
+            { value: 'mandatory_signs', text: 'Предписывающие знаки' },
+            { value: 'information_signs', text: 'Информационно-указательные знаки' },
+            { value: 'sirvises_signs', text: 'Знаки сервиса' },
+            { value: 'add_signs', text: 'Знаки дополнительной информации (таблички)' },
+          ];
+
+
+          options.forEach(option => {
+              const optionElement = document.createElement('option');
+              optionElement.value = option.value;
+              optionElement.text = option.text;
+              select.appendChild(optionElement);
+            });
+            // Навешиваем событие на изменение значения select
+
+
+          form.appendChild(label);
+          form.appendChild(select);
+
           const modalContent = document.createElement('div');
           modalContent.classList.add("signs_content")
-          modalContent.style.backgroundColor = '#fefefe';
-          modalContent.style.margin = '5% auto';
-          modalContent.style.padding = '20px';
-          modalContent.style.border = '1px solid #888';
-          modalContent.style.width = '60%';
-          modalContent.style.maxHeight = '80%';
-          modalContent.style.overflowY = 'auto'; // Прокрутка для контента
       
           const closeBtn = document.createElement('span');
+          modalContent.classList.add("span_close")
           closeBtn.innerHTML = '&times;';
-          closeBtn.style.color = '#aaa';
-          closeBtn.style.float = 'right';
-          closeBtn.style.fontSize = '28px';
-          closeBtn.style.fontWeight = 'bold';
-          closeBtn.style.cursor = 'pointer';
-          closeBtn.style.zIndex = '1000';
           closeBtn.onclick = () => {
             document.body.removeChild(modal);
           };
@@ -696,19 +743,17 @@ fetchGPX(requestURL).then(coordinates => {
           modalContent.appendChild(closeBtn);
           
           const grid = document.createElement('div');
-          grid.style.display = 'grid';
-          grid.style.gridTemplateColumns = 'repeat(10, 9%)';
-          grid.style.gap = '10px';
+          grid.classList.add("modal_grid")
+
           // Добавление изображений в сетку
           const images = img_signs.map(item =>{
             return "http://127.0.0.1:3000/img_type/" + item
           })
 
-
-          images.forEach(src => {
-            if (src != undefined){
-              let id_type = src.split("V")[1]
+          function add_sign_img(src){
+            let id_type = src.split("V")[1]
               const img = document.createElement('img');
+              img.classList.add("grid_image")
               img.src = src;
               img.alt = src;
               img.style.width = '100%';
@@ -722,11 +767,30 @@ fetchGPX(requestURL).then(coordinates => {
                 const imageUrl = getImageUrl(new_id);
                 sign_img.src =imageUrl;
               })
-              grid.appendChild(img);
-              
+            return img;
+          }
+          select.addEventListener('change', function(event) {
+            console.log(grid)
+            grid.innerHTML = ""
+            let value = "V" + (options.findIndex(item => item.value === select.value)).toString()
+            images.forEach(src => {
+              if (src != undefined){
+                if (src.split('/img_type/')[1].includes(value) || value == "V0"){
+                  grid.appendChild(add_sign_img(src));
+                }
+                else if(value == "V7" && src.split('/img_type/')[1].includes("V8") ){
+                  grid.appendChild(add_sign_img(src));
+                }
+              }
+            })
+          });
+
+          images.forEach(src => {
+            if (src != undefined){
+              grid.appendChild(add_sign_img(src));
             }
           });
-      
+          modalContent.appendChild(form)
           modalContent.appendChild(grid);
           modal.appendChild(modalContent);
           document.body.appendChild(modal);
