@@ -531,10 +531,23 @@ fetchGPX(requestURL).then(coordinates => {
           result[key] = [item];
         }    
       }
+      else{
+        const key = item.geometry.paths[0][0]
+        if (result[key]) {
+          result[key].push(item);
+        } else {
+          result[key] = [item];
+        }  
+      }
     });
     return Object.values(result).filter(group => group.length > 1)[0];
 }
-
+  function deleteExtraElements(){
+    let deleteImages = filterByGeometryXY(graphicsLayer.graphics.items)
+        if (deleteImages != undefined){
+          deleteImages.forEach(item => {graphicsLayer.remove(item)})
+        }
+  }
   function moveSign(response_move){
     isTurnSign = true
     let new_x = response_move.results[0].mapPoint.longitude
@@ -552,10 +565,7 @@ fetchGPX(requestURL).then(coordinates => {
         graphicsLayer.remove(old_image)
         old_line = createLine(new_line, geojson_id,az, description_sign, type_for_moving)
         createImage(type_for_moving, new_line, az)
-        let deleteImages = filterByGeometryXY(graphicsLayer.graphics.items)
-        if (deleteImages != undefined){
-          deleteImages.forEach(item => {graphicsLayer.remove(item)})
-        }
+
       }
     })
     .catch((error) =>console.error("Ошибка при получении новой линии:", error));
@@ -749,7 +759,7 @@ fetchGPX(requestURL).then(coordinates => {
         const imageUrl = getImageUrl(typeInput.value);
         sign_img.src =imageUrl;
       })
-      
+
       changeButton.addEventListener('click',()=>{
         const createChoose = (img_signs) => {
             const modalSign = document.querySelector('.modal_signs')
@@ -818,7 +828,6 @@ fetchGPX(requestURL).then(coordinates => {
 }
 });
 
-  
   const markerSymbol = {
     type: "simple-marker",
     color: [226, 119, 40],
@@ -969,6 +978,7 @@ fetchGPX(requestURL).then(coordinates => {
         old_image = imageGraphic
       }
       graphicsLayer.add(imageGraphic);
+      deleteExtraElements()
     };
   }
 
