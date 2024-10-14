@@ -380,7 +380,9 @@ fetchGPX(requestURL).then(coordinates => {
   });
     
   var graphicsLayer = new GraphicsLayer();
+
   map.add(graphicsLayer);
+
   const view = new MapView({
     center: [27.5, 53.9],
     container: "viewDiv",
@@ -426,18 +428,21 @@ fetchGPX(requestURL).then(coordinates => {
       return {line: line, img: response.results[0].graphic}
     } catch(e) { return -1  }
   }
+  
+
+
   view.on("click", async (event) => {
+    let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+    let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))      
+    
     view.hitTest(event).then((response) =>{
-      if (response.results.length == 1 && isMoveSign){
-            let new_x = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
-            let new_y = parseFloat(event.mapPoint.latitude.toFixed(number_rount))                
-            const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${new_x},${new_y}`;
+      if (response.results.length == 1 && isMoveSign){     
+            const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${current_lon},${current_lat}`;
             fetch(url)
             .then((response) => response.text())
             .then((data) => {
               let new_point = data.split(',').map(item=>{return parseFloat(item)})
-              let new_line = [[new_x, new_y], new_point ]
-              
+              let new_line = [[current_lon, current_lat], new_point ]
               createLine(new_line, geojson_id, azimuth_for_moving, description_sign, type_for_moving)
               createImage(type_for_moving, new_line, azimuth_for_moving)
               document.querySelector(".save_sign").disabled = false
@@ -497,6 +502,21 @@ fetchGPX(requestURL).then(coordinates => {
         isMoveSign = true
         }          
         }
+      
+      if (response.results[0].graphic.geojson_id != undefined){
+        let current_point = current_lon, current_lat
+        let line = response.results[0].graphic.geometry.paths[0]
+        function get_nearest_point(current_point, line) {
+          let x1 = Math.abs(line - current_lon)
+          let y1 = Math.abs(line - current_lat)
+          let d1 = x1 + y1
+          let x2 = Math.abs(line - current_lon)
+          let y2 = Math.abs(line - current_lat)
+          let d2 = x2 + y2
+          return d1 < d2 ? 1 : 0;
+        }
+        console.log(line[get_nearest_point(current_point, line)])
+      }
     })});
 
   let temp = view.on("double-click", function(event) {
@@ -749,6 +769,7 @@ fetchGPX(requestURL).then(coordinates => {
     }),
     objectIdField: "ObjectID",
   });
+
 
   map.add(pointLayer)
   var currentPointLayer = new FeatureLayer({
