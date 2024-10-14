@@ -182,7 +182,7 @@ class ErrorCorrector(QWidget):
         self.delete_files("./errorData/plates")
 
     def delete_files(self, directory):
-        """Удаляет все файлы .txt и .png в заданном каталоге, оставляя каталоги."""
+        """Удаляет все файлы .1.txt и .png в заданном каталоге, оставляя каталоги."""
         for root, folders, files in os.walk(directory):
             for file in files:
                 if file.endswith(('.geojson', '.jpg')):

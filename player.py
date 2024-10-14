@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(0, 0, 1200, 600)
         self.view = None
 
-        self.create_player()
+        #self.create_player()
         self.create_text()
         self.create_buttons()
         self.set_path_to_video()
@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         self.player = QMediaPlayer(self)
         self.player.setVolume(0)
         self.player.setVideoOutput(video)
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile("D:\\Urban\\vid\\2.mp4")))
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(rf"D:\video\GP10064.mp4")))
         self.player.setPosition(0)
         self.player.play()
 
@@ -111,15 +111,16 @@ class MainWindow(QMainWindow):
         self.button_viewTrack.move(730, 540)
 
     def set_path_to_video(self):
-        config.PATH_TO_GPX = r"E:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.gpx"
+
+        config.PATH_TO_GPX = r"E:\Urban\vid\test\07,07,20211.gpx"
         self.GPXHandler = GPXHandler()
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")
 
-        config.PATH_TO_VIDEO = r"E:\Urban\vid\20,06,24-Вишевичи+\vid\\"
+        config.PATH_TO_VIDEO = r"E:\Urban\vid\test\GOPR0064" + "\\"
         config.VIDEOS = os.listdir(config.PATH_TO_VIDEO)
         self.label_dir.setText("{}".format(config.PATH_TO_VIDEO))
         self.Files = os.listdir(config.PATH_TO_VIDEO)
-        config.PATH_TO_GEOJSON = r"E:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"
+        config.PATH_TO_GEOJSON = r"E:\Urban\vid\test\city1.geojson"
         self.label_geojson.setText("{}".format(config.PATH_TO_GEOJSON))
 
 

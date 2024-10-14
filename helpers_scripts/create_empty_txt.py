@@ -9,6 +9,6 @@ images = sorted(glob.glob(rf'{path}*.jpg'))
 with alive_bar(len(images), force_tty=True) as bar_dir:
     for img in images:
         bar_dir()
-        name = os.path.splitext(os.path.basename(img))[0]+'.txt'
+        name = os.path.splitext(os.path.basename(img))[0]+'.1.txt'
         open(path + name, "w+")
         #print(path + na me)

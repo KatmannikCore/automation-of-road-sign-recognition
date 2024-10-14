@@ -1,6 +1,7 @@
 import os
 
 from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -17,8 +18,9 @@ from PyQt5.QtWidgets import (
 
 from configs import config
 
+
 class VideoPlayerWidget(QWidget):
-    def __init__(self, server,  parent=None):
+    def __init__(self, server, parent=None):
         super().__init__(parent)
 
         self.server = server
@@ -68,19 +70,31 @@ class VideoPlayerWidget(QWidget):
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.current_path_of_video)))
         self.playButton.setEnabled(True)
 
+        self.server.changePoint.signal.connect(self.on_clicked)
+
         self.mediaPlayer.positionChanged.connect(self.change_dot)
 
+    def on_clicked(self):
+        position = self.server.number_point * 1000
+        self.index_of_video = int(position/ 1060000)
+        position = position  % 1060000
+        self.set_media(config.VIDEOS[self.index_of_video])
+        self.mediaPlayer.setPosition(position)
+
     def change_dot(self):
-        seconds_current_video = round(self.mediaPlayer.position()/1000,0)
-        seconds_all_video =(self.index_of_video * 1060) + seconds_current_video
-        config.SECONDES_ALL_VIDEO = seconds_all_video
+        seconds_current_video = round(self.mediaPlayer.position() / 1000, 0)
+        seconds_all_video = (self.index_of_video * 1060) + seconds_current_video
+        config.SECONDS_ALL_VIDEO = seconds_all_video
         self.server.change_dot(int(seconds_all_video))
+
     def change_video(self, clicked_item):
         self.change_color_current_video(clicked_item)
-        self.current_path_of_video = os.path.join(config.PATH_TO_VIDEO, clicked_item.text())
-        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.current_path_of_video)))
+        self.set_media(clicked_item.text())
         self.index_of_video = config.VIDEOS.index(clicked_item.text())
         self.play()
+    def set_media(self, vidio_name):
+        self.current_path_of_video = os.path.join(config.PATH_TO_VIDEO, vidio_name)
+        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.current_path_of_video)))
 
     def change_color_current_video(self, clicked_item):
         for i in range(self.listVideos.count()):

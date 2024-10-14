@@ -4,6 +4,7 @@ import flask
 import geojson
 import gpxpy
 import jinja2
+from PyQt5.QtCore import pyqtSignal, QObject
 from flask import Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -17,11 +18,15 @@ from configs.sign_config import type_signs_with_text, codes_signs
 template_dir = os.path.join(os.getcwd(), "templates")
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
 
-
+class SignalChangePoint(QObject):
+    # создаем свой сигнал
+    signal = pyqtSignal()
 class Server:
     def __init__(self):
         self.app = Flask(__name__, template_folder='../templates')
         CORS(self.app)
+        self.number_point = 0
+        self.changePoint = SignalChangePoint()
         self.GPXHandler = GPXHandler()
         self.socketio = SocketIO()
         self.socketio.init_app(self.app, cors_allowed_origins="*", async_mode="threading")
@@ -93,6 +98,14 @@ class Server:
 
             return str(old_direction)
 
+        @self.app.route("/switch_point")
+        def switch_point():
+            number_new_point = int(request.args.get('currentNumber'))
+            self.number_point = number_new_point
+            self.changePoint.signal.emit()
+
+            self.change_dot(number_new_point)
+            return str(number_new_point)
         @self.app.route("/all_img")
         def get_all_img():
             img_names = os.listdir('./sings')
