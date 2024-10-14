@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         #self.create_player()
         self.create_text()
         self.create_buttons()
-        self.set_path_to_video()
+        #self.set_path_to_video()
         self.show()
 
     def create_player(self):

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-PATH_TO_VIDEO = r"E:\Urban\vid\test\GOPR0064"  #"./"
+PATH_TO_VIDEO = r""  #"./"
 VIDEOS = []
 
 FRAME_STEP = 5
@@ -14,15 +14,14 @@ INDEX_OF_GPS = int(round(INDEX_OF_All_FRAME / 60, 0))
 
 INDEX_OF_SING = 0
 
-PATH_TO_GEOJSON = r"E:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.geojson"#r"D:\Urban\vid\test\city3.geojson"  #"./"
-PATH_TO_GPX = r"E:\Urban\vid\20,06,24-Вишевичи+\20,04,24-Вишевичи.gpx"#r"D:\Urban\vid\test\07,07,20211.gpx"  #"./"#
+PATH_TO_GEOJSON = r""#r"D:\Urban\vid\test\city3.geojson"  #"./"
+PATH_TO_GPX = r""#r"D:\Urban\vid\test\07,07,20211.gpx"  #"./"#
 
 COUNT_FRAMES = 0
 
 ClASSIFIER = {}
 ###63600
 FEATURES = []
-
 
 SECONDS_ALL_VIDEO = 0
 

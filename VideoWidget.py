@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -39,7 +40,10 @@ class VideoPlayerWidget(QWidget):
         self.errorLabel = QLabel()
         self.errorLabel.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
-        # Create layouts
+        self.speed_combo = QComboBox()
+        self.speed_combo.addItems(["0.5x", "1.0x", "1.5x", "2.0x", "2.5x", "3.0x", "3.5x", "3.5x", "4.0x", "4.5x", "5.0x"])
+        self.speed_combo.setFixedWidth(100)
+        self.speed_combo.currentIndexChanged.connect(self.change_speed)
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
         controlLayout.addWidget(self.playButton)
@@ -49,6 +53,7 @@ class VideoPlayerWidget(QWidget):
         layout_player.addWidget(self.videoWidget)
         layout_player.addLayout(controlLayout)
         layout_player.addWidget(self.errorLabel)
+        layout_player.addWidget(self.speed_combo)
 
         self.listVideos = QListWidget()
         self.listVideos.setFixedWidth(100)
@@ -74,6 +79,9 @@ class VideoPlayerWidget(QWidget):
 
         self.mediaPlayer.positionChanged.connect(self.change_dot)
 
+    def change_speed(self):
+        speed_value = float(self.speed_combo.currentText().replace("x", ""))  # Извлекаем значение скорости
+        self.mediaPlayer.setPlaybackRate(speed_value)
     def on_clicked(self):
         position = self.server.number_point * 1000
         self.index_of_video = int(position/ 1060000)

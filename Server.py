@@ -92,7 +92,6 @@ class Server:
         @self.app.route("/change_azimuth")
         def change_azimuth():
             second_line = [float(item) for item in request.args.get('line').split(",")]
-
             lon1, lat1, lon2, lat2 = second_line
             old_direction = CoordinateCalculation.calculate_direction(lon1, lat1, lon2, lat2)[0]
 
@@ -133,14 +132,6 @@ class Server:
 
     def run(self):
         self.app.run(port=int(os.environ.get("PORT", 3000)))
-
-
-    def shutdown_server(self):
-        print("Остановка сервера...")
-        # Вызываем сигнал остановки
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is not None:
-            func()
 
     def change_dot(self, number):
         self.socketio.emit("change_dot", number)
