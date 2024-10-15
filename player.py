@@ -18,6 +18,7 @@ from configs import config
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Главная")
         self.converter = Converter()
 
         self.calculation = None
@@ -72,13 +73,13 @@ class MainWindow(QMainWindow):
         self.button_play.move(430, 540)
         self.button_play.clicked.connect(self.play)
 
-        self.button_choose_dir = QPushButton("Открыть папку", self)
+        self.button_choose_dir = QPushButton("Выбрать папку", self)
         self.button_choose_dir.move(960, 30)
 
-        self.button_choose_GPX = QPushButton("Открыть GPX", self)
+        self.button_choose_GPX = QPushButton("Выбрать GPX", self)
         self.button_choose_GPX.move(960, 60)
 
-        self.button_choose_geojson = QPushButton("Выбрать geojson", self)
+        self.button_choose_geojson = QPushButton("Выбрать или создать geojson", self)
         self.button_choose_geojson.move(960, 90)
 
         self.button_treatment = QPushButton("Начать обработку", self)
@@ -104,14 +105,13 @@ class MainWindow(QMainWindow):
         #self.button_speed_frame.move(960, 270)
         #self.button_speed_frame.clicked.connect(self.set_speed_frame)
 
-        self.button_corrector = QPushButton("Ошибки", self)
-        self.button_corrector.move(630, 540)
+        #self.button_corrector = QPushButton("Ошибки", self)
+        #self.button_corrector.move(630, 540)
 
         self.button_viewTrack = QPushButton("Карта", self)
         self.button_viewTrack.move(730, 540)
 
     def set_path_to_video(self):
-
         config.PATH_TO_GPX = r"E:\Urban\vid\test\07,07,20211.gpx"
         self.GPXHandler = GPXHandler()
         self.label_gpx.setText("<font color=black>" + str(config.PATH_TO_GPX) + "</font>")

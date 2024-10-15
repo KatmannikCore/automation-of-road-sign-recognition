@@ -2,7 +2,7 @@ import os
 
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtCore import Qt, QUrl, QSize
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (
@@ -30,7 +30,9 @@ class VideoPlayerWidget(QWidget):
         self.videoWidget = QVideoWidget()
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)
-        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        icon = self.style().standardIcon(QStyle.SP_MediaPlay)
+        self.playButton.setIcon(icon)
+        self.playButton.setIconSize(QSize(50,50))
         self.playButton.clicked.connect(self.play)
 
         self.positionSlider = QSlider(Qt.Horizontal)

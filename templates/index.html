@@ -282,7 +282,7 @@
   background-color: #000000;
   opacity: 0.75;
 }
-.signs_content img:hover{
+.modal_grid div:hover{
   background-color: #3d3c3c;
   opacity: 0.5;
   border: 1px solid #000000;
@@ -316,8 +316,9 @@
 }
 .modal_grid{
   display: grid;
-  grid-template-columns: repeat(10, 9%);
-  grid-gap: 10px;
+  overflow-y: hidden;
+
+  grid-template-columns: repeat(10, 10%);
 }
 .modal_grid img{
   width: 100%;
@@ -326,6 +327,9 @@
 form{
   color: #000000;
   font-size: 16px;
+}
+.categories-select{
+  border: 1px solid #000000;
 }
   </style>
 
@@ -521,7 +525,7 @@ fetchGPX(requestURL).then(coordinates => {
     } catch(e) { return -1  }
   }
   function filterByGeometryXY(array) {
-    const result = {};
+    let result = {};
     array.forEach(item => {
       if (item.geojson_id == undefined ){
         const key = `${item.geometry.x}-${item.geometry.y}`;
@@ -540,7 +544,11 @@ fetchGPX(requestURL).then(coordinates => {
         }  
       }
     });
-    return Object.values(result).filter(group => group.length > 1)[0];
+    result = Object.values(result).filter(group => group.length > 1)[0]
+    if (result){
+      result.pop()
+    }
+    return result
 }
   function deleteExtraElements(){
     let deleteImages = filterByGeometryXY(graphicsLayer.graphics.items)
@@ -621,15 +629,12 @@ fetchGPX(requestURL).then(coordinates => {
       if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
         response.results[0].graphic = getTheNearestObject(current_lon, current_lat)
       }
-      if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-marker"&& !isTurnSign ){
+      if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol.type == "simple-marker" ){
         let currentNumber = response.results[0].graphic.number
         const url = `http://127.0.0.1:3000/switch_point?currentNumber=${currentNumber.toString()}`;
-        fetch(url)
-        .then((response) => response)
-        .then((data) => { console.log(data) })
-        .catch((error) =>console.error("Ошибка при получении новой линии:", error));
+        fetch(url)  .catch((error) =>console.error("Ошибка при получении новой линии:", error));
       }
-      else if (!isMoveSign && response.results[0].graphic.symbol.type == "simple-line"  && !isTurnSign){
+      else if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol.type == "simple-line"  ){
         let line = response.results[0].graphic
         let points = response.results[0].graphic.geometry.paths[0]
         let img = getClicedImg(points)
@@ -641,7 +646,7 @@ fetchGPX(requestURL).then(coordinates => {
         });
       }
       //установка знака на новое место
-      else if(response.results[0].graphic.symbol == null && isMoveSign){           
+      else if( isMoveSign&& response.results[0].graphic.symbol == null ){           
             const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${current_lon},${current_lat}`;
             fetch(url)
             .then((response) => response.text())
@@ -774,13 +779,14 @@ fetchGPX(requestURL).then(coordinates => {
             
             // Добавление изображений в сетку
             function add_sign_img(src){
+              let div = document.createElement('div')
               let id_type = src.split("V")[1]
                 const img = document.createElement('img');
                 img.classList.add("grid_image")
                 img.src = src;
                 img.alt = src;
                 img.setAttribute("id", id_type)
-                img.addEventListener('click', ()=>{
+                div.addEventListener('click', ()=>{
                   let new_id = img.id.slice(0, -4)
                   typeInput.value = new_id
                   nameSign.textContent = names_signs_by_type.get(new_id);
@@ -788,7 +794,8 @@ fetchGPX(requestURL).then(coordinates => {
                   const imageUrl = getImageUrl(new_id);
                   sign_img.src =imageUrl;
                 })
-              return img;
+              div.appendChild(img)
+              return div;
             }
             select.addEventListener('change', function(event) {
               grid.innerHTML = ""
@@ -876,8 +883,15 @@ fetchGPX(requestURL).then(coordinates => {
     duration: 1000,
     easing: "ease-out",
   });
+  let isDragMap = true
+  view.on("drag", function(event){
+    if (event.action == "start"){
+      isDragMap = false;
+    }else if (event.action == "end"){
+      isDragMap = true
+    }
+   });
   socket.on("change_dot", function(data){
-    console.log(data)
     let numberOffset =parseInt( document.getElementById('offset').value);
     if (!Number.isInteger(numberOffset)){
       numberOffset = 0
@@ -897,12 +911,13 @@ fetchGPX(requestURL).then(coordinates => {
 
     sessionStorage.setItem('lon', lon);
     sessionStorage.setItem('lat', lat);
-    view.goTo({
-      center: [lon,lat],
-      zoom: 17,
-      duration: 1000,
-      easing: "ease-out",
-    });
+    if (isDragMap){
+      view.goTo({
+        center: [lon, lat],
+        duration: 1000,
+        easing: "ease-out",
+      });
+    }
   })
 
   const displayZoomLevel = 15; 

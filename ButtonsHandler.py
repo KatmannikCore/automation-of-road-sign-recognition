@@ -55,7 +55,7 @@ class ButtonsHandler(PlayerHandler):
     def check_for_filling_of_data(self):
         is_filled_all = len(config.PATH_TO_GEOJSON) > 3 and len(config.PATH_TO_GPX) > 3 and len(config.PATH_TO_VIDEO) > 3
         self.button_treatment.setEnabled(is_filled_all)
-        self.button_corrector.setEnabled(is_filled_all)
+        #self.button_corrector.setEnabled(is_filled_all)
         self.button_viewTrack.setEnabled(is_filled_all)
         if is_filled_all:
             self.viewTrack = ViewTrack()
@@ -71,7 +71,7 @@ class ButtonsHandler(PlayerHandler):
         self.check_for_filling_of_data()
 
     def connect_buttons(self):
-        self.button_corrector.clicked.connect(self.open_error_corrector)
+        #self.button_corrector.clicked.connect(self.open_error_corrector)
         self.button_viewTrack.clicked.connect(self.open_view_track)
         self.button_choose_geojson.clicked.connect(self.choose_geojson)
         self.button_choose_GPX.clicked.connect(self.choose_GPX)

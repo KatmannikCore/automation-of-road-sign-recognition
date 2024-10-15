@@ -17,7 +17,7 @@ class ErrorCorrector(QWidget):
     def __init__(self):
         super().__init__()
         self.setGeometry(0, 0, 1200, 600)
-
+        self.setWindowTitle("Исправление ошибок")
         self.mainLayout = QtWidgets.QGridLayout()
 
         self.signCreator = SignChangerWidget()

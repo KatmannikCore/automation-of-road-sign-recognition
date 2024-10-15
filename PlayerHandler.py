@@ -27,7 +27,7 @@ class PlayerHandler(MainWindow):
         self.thread.start()
 
     def toggle_button_activity(self):
-        self.button_corrector.setEnabled(not self.button_corrector.isEnabled())
+        #self.button_corrector.setEnabled(not self.button_corrector.isEnabled())
         self.button_viewTrack.setEnabled(not self.button_viewTrack.isEnabled())
         self.button_choose_dir.setEnabled(not self.button_choose_dir.isEnabled())
         self.button_choose_GPX.setEnabled(not self.button_choose_GPX.isEnabled())

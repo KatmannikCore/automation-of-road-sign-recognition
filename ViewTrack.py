@@ -44,7 +44,7 @@ class WebForm(object):
 
   def retranslateUi(self, Form):
     _translate = QtCore.QCoreApplication.translate
-    Form.setWindowTitle("ИНСТРУКЦИЯ")
+    Form.setWindowTitle("Карта")
 
   # Функция для открытия видеоплеера в отдельном окне
   def openPlayerWindow(self):
@@ -71,6 +71,5 @@ class ViewTrack(QtWidgets.QWidget, WebForm):
         self.webView.load(QtCore.QUrl('http://127.0.0.1:3000'))
 
     def closeEvent(self, e):
-        self.player.play()
         e.ignore()
         self.hide()
