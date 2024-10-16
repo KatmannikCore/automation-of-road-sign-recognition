@@ -1,1 +1,0 @@
-D:\Urban\yolov4\automation-of-road-sign-recognition\templates

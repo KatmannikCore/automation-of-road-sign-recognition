@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(0, 0, 1200, 600)
         self.view = None
 
-        #self.create_player()
+        self.create_player()
         self.create_text()
         self.create_buttons()
         #self.set_path_to_video()
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.player = QMediaPlayer(self)
         self.player.setVolume(0)
         self.player.setVideoOutput(video)
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile(rf"D:\video\GP10064.mp4")))
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile("")))
         self.player.setPosition(0)
         self.player.play()
 

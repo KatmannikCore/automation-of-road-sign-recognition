@@ -344,10 +344,13 @@ form{
       <button type="button" disabled class="save_track btn">Зафиксировать трек</button>
       <button type="button" onclick="location.reload()" class="reload btn">Перезагрузить</button>
     </div>
-
   </div>
   <div id="viewDiv"></div>
-  <div class="footer"> <button type="button" disabled class="save_sign btn">Сохранить знаки</button></div>
+  <div class="footer"> 
+    <button type="button" disabled class="save_sign btn">Сохранить знаки</button> 
+    <input type="checkbox" id="autosave" />
+    <label for="autosave">Автосохранение</label> 
+  </div>
   <div class="overlay" >
     <div class="modal">
       <label>Тип: </label>
@@ -413,6 +416,14 @@ form{
           sessionStorage.setItem('numberOffset', numberOffset);
         }
       })
+let checkBoxAutosave = document.querySelector("#autosave")
+checkBoxAutosave.addEventListener("click",(event)=>{
+  if (checkBoxAutosave.checked) {
+    document.querySelector(".save_sign").style.display = "none" ;
+  } else {
+    document.querySelector(".save_sign").style.display = "inline-block" ;
+  }
+  });
 document.querySelector(".save_track").addEventListener("click",()=>{
   let numberOffset =parseInt( document.getElementById('offset').value);
   if (!Number.isInteger(numberOffset)){
@@ -489,6 +500,7 @@ fetchGPX(requestURL).then(coordinates => {
   let number_rount = 7
   let isMoveSign = false
   let isTurnSign = false
+  let isCopySign = false
   let type_for_moving = null
   let azimuth_for_moving = null
   let azimuth_direction = 90
@@ -498,6 +510,8 @@ fetchGPX(requestURL).then(coordinates => {
   let old_image = ''
   var move_event
   let description_sign
+  let copyLine = null
+  let copyImg = null
   function uuidv4() {
       return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
         (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
@@ -626,13 +640,33 @@ fetchGPX(requestURL).then(coordinates => {
     let current_lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
     let current_lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))     
     view.hitTest(event).then((response) =>{
-      if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol == null ){
+      if (!isMoveSign && !isTurnSign && !isCopySign && response.results[0].graphic.symbol == null ){
         response.results[0].graphic = getTheNearestObject(current_lon, current_lat)
       }
-      if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol.type == "simple-marker" ){
+      if (isCopySign && response.results[0].graphic.geometry == null){
+        const newCurrentLon = current_lon + 0.00001
+        const newCurrentLat = current_lat + 0.00001
+        coordinates_for_moving = [[current_lon, current_lat], [newCurrentLon, newCurrentLat]]
+        geojson_id = uuidv4()
+        let az = copyLine.azimuth
+        description_sign = copyLine.description
+        type_for_moving = copyLine.type
+        isTurnSign = true
+        old_line = createLine(coordinates_for_moving, geojson_id,az, description_sign, type_for_moving)
+        createImage(type_for_moving, coordinates_for_moving, az)
+
+        isCopySign = false
+        copyLine = null
+        copyImg = null
+
+        move_event = view.on("pointer-move",(event_move)=>{
+          view.hitTest(event_move).then((response_move)=>{moveSign(response_move)})
+      });
+      }
+      else if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol.type == "simple-marker" ){
         let currentNumber = response.results[0].graphic.number
         const url = `http://127.0.0.1:3000/switch_point?currentNumber=${currentNumber.toString()}`;
-        fetch(url)  .catch((error) =>console.error("Ошибка при получении новой линии:", error));
+        fetch(url).catch((error) =>console.error("Ошибка при получении новой линии:", error));
       }
       else if (!isMoveSign && !isTurnSign && response.results[0].graphic.symbol.type == "simple-line"  ){
         let line = response.results[0].graphic
@@ -646,7 +680,7 @@ fetchGPX(requestURL).then(coordinates => {
         });
       }
       //установка знака на новое место
-      else if( isMoveSign&& response.results[0].graphic.symbol == null ){           
+      else if( isMoveSign && response.results[0].graphic.symbol == null ){           
             const url = `http://127.0.0.1:3000/create_new_line?old_line=${coordinates_for_moving.toString()}&new_point=${current_lon},${current_lat}`;
             fetch(url)
             .then((response) => response.text())
@@ -656,11 +690,11 @@ fetchGPX(requestURL).then(coordinates => {
               createLine(new_line, geojson_id, azimuth_for_moving, description_sign, type_for_moving)
               createImage(type_for_moving, new_line, azimuth_for_moving)
               document.querySelector(".save_sign").disabled = false
-              isMoveSign = false
             })
             .catch((error) =>
               console.error("Ошибка при получении новой линии:", error)
             );
+            isMoveSign = false
         }
       else if(event.button == 0 && isTurnSign){
           isTurnSign = false
@@ -670,7 +704,7 @@ fetchGPX(requestURL).then(coordinates => {
           old_image = ''
         }
       //перемещение знака
-      else if ( !isMoveSign && response.results[0].graphic.symbol.type == "picture-marker"  ){
+      else if (!isMoveSign && response.results[0].graphic.symbol.type == "picture-marker"){
         let item = getClickedElement(response).line
         setProperties(item,response.results[0].graphic)
         //Если поворот
@@ -690,19 +724,31 @@ fetchGPX(requestURL).then(coordinates => {
             isMoveSign = true
           }          
         }
+      if (!isMoveSign && !isTurnSign && !isCopySign && checkBoxAutosave.checked){
+        saveGeojson()
+      }
     })});
-
-  let temp = view.on("double-click", function(event) {
+  view.on("double-click", function(event) {
     event.stopPropagation()
     view.hitTest(event).then((response) => {
-      let sign_object = getClickedElement(response)
-      if (sign_object == -1) {
-        let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
-        let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
-        let coordinates = {lon: lon, lat: lat}
-        openModal(coordinates)
-      }else{
-        openModal(sign_object.line, sign_object.img);
+      if (event.button == 0){
+        let sign_object = getClickedElement(response)
+        if (sign_object == -1) {
+          let lon = parseFloat(event.mapPoint.longitude.toFixed(number_rount))
+          let lat = parseFloat(event.mapPoint.latitude.toFixed(number_rount))
+          let coordinates = {lon: lon, lat: lat}
+          openModal(coordinates)
+        }else{
+          openModal(sign_object.line, sign_object.img);
+        }
+      }
+      else if(event.button == 2){
+        if (response.results[0].graphic._imageUrl != undefined){
+          let obj = getClickedElement(response)
+          isCopySign = true
+          copyLine = obj.line
+          copyImg = obj.img
+        }
       }
     })
     // Функция для создания модального окна
@@ -721,11 +767,12 @@ fetchGPX(requestURL).then(coordinates => {
       const changeButton = overlay.querySelector('.change')
       const closeButton = overlay.querySelector('.close')
       const saveButton = overlay.querySelector('.save')
-
+      
       if (img_sign != undefined){
         typeInput.value = sign.type;
         descriptionInput.value = sign.description;
         nameSign.textContent = names_signs_by_type.get(sign.type);
+        deleteButton.disabled = false;
       }
       else{
         deleteButton.disabled = true;
@@ -752,10 +799,14 @@ fetchGPX(requestURL).then(coordinates => {
           graphicsLayer.remove(img_sign)
           createLine(sign.geometry.paths[0], sign.geojson_id, sign.azimuth, descriptionInput.value, typeInput.value)
           createImage(typeInput.value, sign.geometry.paths[0], sign.azimuth)
+          if (!isMoveSign && !isTurnSign && !isCopySign && checkBoxAutosave.checked){
+            saveGeojson()
+          }
         }
         document.querySelector(".save_sign").disabled = false
         isMoveSign = false
         overlay.style.display ="none";
+
     };
       const imageUrl = getImageUrl(typeInput.value);
       sign_img.src =imageUrl;
@@ -830,6 +881,9 @@ fetchGPX(requestURL).then(coordinates => {
         document.querySelector(".save_sign").disabled = false
         isMoveSign = false
         overlay.style.display ="none";
+        if (!isMoveSign && !isTurnSign && !isCopySign && checkBoxAutosave.checked){
+          saveGeojson()
+        }
       }
 }
 });

@@ -13,16 +13,16 @@ class GPXHandler:
         ET.register_namespace("", "http://www.topografix.com/GPX/1/0")
 
     def get_azimuth(self, indexOfGPS):
-        return self.gpx.tracks[0].segments[0].points[indexOfGPS].course
+        return self.gpx.tracks[0].segments[0].points[indexOfGPS+1].course
 
     def get_current_coordinate(self, indexOfGPS):
-        latitude = self.gpx.tracks[0].segments[0].points[indexOfGPS].latitude
-        longitude = self.gpx.tracks[0].segments[0].points[indexOfGPS].longitude
+        latitude = self.gpx.tracks[0].segments[0].points[indexOfGPS+1].latitude
+        longitude = self.gpx.tracks[0].segments[0].points[indexOfGPS+1].longitude
         return latitude, longitude  #self.conventer.coordinateConverter(latitude, longitude, "epsg:4326", "epsg:32635")
 
     def get_prew_coordinate(self, indexOfGPS):
-        latitude = self.gpx.tracks[0].segments[0].points[indexOfGPS - 1].latitude
-        longitude = self.gpx.tracks[0].segments[0].points[indexOfGPS - 1].longitude
+        latitude = self.gpx.tracks[0].segments[0].points[indexOfGPS ].latitude
+        longitude = self.gpx.tracks[0].segments[0].points[indexOfGPS].longitude
         return latitude, longitude  #self.conventer.coordinateConverter(latitude, longitude, "epsg:4326", "epsg:32635")
 
     def get_count_dot(self):
